@@ -1,0 +1,404 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+""" A module to produce a plot of via SVD-assisted-GlobalFit-reconstructed data on the GUI.
+"""
+
+import gc
+import numpy as np
+import seaborn as sns
+import tkinter as tk
+import os
+import lmfit
+
+# my own modules
+from FunctionsUsedByPlotClasses import get_DAS_from_lSVs_res_amplitudes, get_SVD_GlobalFit_reconstructed_data_for_GUI, get_TA_data_after_start_time, get_retained_rightSVs_leftSVs_singularvs, get_SVDGFit_parameters
+from FunctionsUsedByPlotClasses import get_closest_nr_from_array_like
+from SupportClasses import ToolTip, saveData
+from ToplevelClasses import Kinetics_Spectrum_Toplevel, new_decay_times_Toplevel
+
+class SVDGF_Heatmap():
+    def __init__(self, parent, filename, start_time, components_list, temp_resolution, time_zero, tab_idx, tab_idx_difference):
+        """ A class to make a heatmap of via SVD_GlobalFit reconstructed TA data.\n\n
+            * parent is the Gui App that creates the instance of this class\n
+            * filename is the full path of the datafile to be reconstructed\n
+            * start_time is the value of the start time. Starting from this time delay value, the data will be used for the reconstruction and plotting\n
+            * compononets_list is a list of integers that represent the SVD components to be used for the reconstruction\n
+            * temp_resolution is a number that represents the temporal resolution of the used detector setup in data collection (FWHM) (used for convolution)\n
+            * time_zero is a number used in the convolution of the fitting function\n
+            * tab_idx is used to put the plot on the correct that of the ttk notebook of the GUI\n
+            * tab_idx_difference is the the same as tab_idx but used with the difference notebook\n\n
+
+            * the global fit should:    # fit the selection (the selected components)\n
+                                        # of right_singular_vector * singular_value to a fit function\n
+                                        # composed of a sum of exponential decays * the convolution factor\n
+                                        # the number of exponential decays is determined by the number of selected components\n
+                                        # the decay constants are shared fit parameters for all the right singular vectors\n
+                                        # the amplitudes of the exp decays are individual fit parameters\n
+            * the fit results are:      # the decay constants and the amplitudes of the exp decays.\n
+                                        # using the resulting amplitudes, the DAS (decay associated spectra) will be computed,\n
+                                        # from those the original data will be reconstructed as the sum: DAS_i(lambda)*exp(-t/decay_constant_i)
+        """
+
+        self.parent = parent
+        self.filename = filename
+        self.start_time = start_time
+        self.tab_idx = tab_idx
+        self.tab_idx_difference = tab_idx_difference
+        self.components_list = components_list
+        self.temp_resolution = temp_resolution
+        self.time_zero = time_zero
+
+        self.DAS_to_update_with = [i for i in range(len(self.components_list))]
+        self.indeces_for_DAS_matrix = self.DAS_to_update_with
+
+        self.SVDGF_reconstructed_data_selected_DAS = None
+
+        self.user_selected_decay_times = None
+
+        return None
+
+    def make_reconstruction_plot(self, update_with_selected_DAS=False):
+        sns.set(font_scale = 1.3, rc={"xtick.bottom" : True, "ytick.left" : True})
+
+        # create axes on parent.figure with correct index:
+        self.axes = self.parent.nbCon_SVDGF.figs[self.tab_idx].add_subplot(1,1,1)
+        # adjust figsize as computed correspondingly to gui size:
+        self.axes.get_figure().set_figwidth(self.parent.heatmaps_figure_geometry_list[0])
+        self.axes.get_figure().set_figheight(self.parent.heatmaps_figure_geometry_list[1])
+
+        self.data = self.SVDGF_reconstructed_data.astype(float)
+        if update_with_selected_DAS:
+            self.data = self.SVDGF_reconstructed_data_selected_DAS.astype(float)
+        self.base_filename = os.path.splitext(os.path.basename(self.filename))[0]
+        self.time_index = self.time_delays.index(str(self.start_time))
+        self.time_delays = self.time_delays[self.time_index:]
+
+        self.num_ticks = 10
+        self.label_format = '{:,.2f}'
+
+        # the index of the position of self.yticks
+        self.yticks = np.linspace(0, len(self.wavelengths) - 1, self.num_ticks, dtype=np.int)
+        self.xticks = np.linspace(0, len(self.time_delays) - 1, self.num_ticks, dtype=np.int)
+        # the content of labels of these self.yticks
+        self.yticklabels = [float(self.wavelengths[idx]) for idx in self.yticks]
+        self.xticklabels = [float(self.time_delays[idx]) for idx in self.xticks]
+
+        self.yticklabels = [self.label_format.format(x) for x in self.yticklabels]
+        self.xticklabels = [self.label_format.format(x) for x in self.xticklabels]
+
+        self.cm = sns.diverging_palette(220, 20, as_cmap=True)
+        sns.heatmap(self.data, ax = self.axes, cbar_kws={'label': 'rel transmission'}, cmap=self.cm)
+
+        self.axes.set_yticks(self.yticks)
+        self.axes.set_yticklabels(self.yticklabels, fontsize=14)
+        self.axes.set_xticks(self.xticks)
+        self.axes.set_xticklabels(self.xticklabels, rotation=30, fontsize=14)
+
+        self.axes.set_ylabel("wavelengths [nm]", fontsize=16)
+        self.axes.set_xlabel("time since overlap [ps]", fontsize=16)
+
+        self.axes.set_title(self.base_filename+" SVDGF data, fit comps: " + str(self.components_list) + " DAS: " + str(self.indeces_for_DAS_matrix))
+
+        self.parent.nbCon_SVDGF.figs[self.tab_idx].tight_layout()
+
+        return None
+
+    def make_difference_plot(self):
+        sns.set(font_scale = 1.3, rc={"xtick.bottom" : True, "ytick.left" : True})
+
+        self.axes_difference = self.parent.nbCon_difference.figs[self.tab_idx_difference].add_subplot(1,1,1)
+        # adjust figsize as computed correspondingly to gui size:
+        self.axes_difference.get_figure().set_figwidth(self.parent.heatmaps_figure_geometry_list[0])
+        self.axes_difference.get_figure().set_figheight(self.parent.heatmaps_figure_geometry_list[1])
+
+        self.difference_data = self.difference_matrix_selected_DAS.astype(float)
+
+        self.num_ticks = 10
+        self.label_format = '{:,.2f}'
+
+        # the index of the position of self.yticks
+        self.yticks = np.linspace(0, len(self.wavelengths) - 1, self.num_ticks, dtype=np.int)
+        self.xticks = np.linspace(0, len(self.time_delays) - 1, self.num_ticks, dtype=np.int)
+        # the content of labels of these self.yticks
+        self.yticklabels = [float(self.wavelengths[idx]) for idx in self.yticks]
+        self.xticklabels = [float(self.time_delays[idx]) for idx in self.xticks]
+
+        self.yticklabels = [self.label_format.format(x) for x in self.yticklabels]
+        self.xticklabels = [self.label_format.format(x) for x in self.xticklabels]
+
+        self.cm = sns.diverging_palette(220, 20, as_cmap=True)
+        sns.heatmap(self.difference_data, ax = self.axes_difference, cbar_kws={'label': 'rel transmission'}, cmap=self.cm)
+
+        self.axes_difference.set_yticks(self.yticks)
+        self.axes_difference.set_yticklabels(self.yticklabels, fontsize=14)
+        self.axes_difference.set_xticks(self.xticks)
+        self.axes_difference.set_xticklabels(self.xticklabels, rotation=30, fontsize=14)
+
+        self.axes_difference.set_ylabel("wavelengths [nm]", fontsize=16)
+        self.axes_difference.set_xlabel("time since overlap [ps]", fontsize=16)
+
+        self.axes_difference.set_title(self.base_filename+" diff: orig - SVDGF "+str(self.components_list)+ " DAS: " + str(self.indeces_for_DAS_matrix))
+
+        self.parent.nbCon_difference.figs[self.tab_idx_difference].tight_layout()
+
+        return None
+
+    # this is done in main gui thread.
+    def make_canvas(self):
+        self.make_reconstruction_plot()
+        self.make_difference_plot()
+
+        self.btn_save_data = tk.Button(self.parent.nbCon_SVDGF.figure_frames[self.tab_idx], text=f"save data", fg=self.parent.violet, command=self.save_data_to_file)
+        self.ttp_btn_save_data = ToolTip.CreateToolTip(self.btn_save_data, \
+        'This also saves the corresponding difference heatmap and data. ')
+        self.btn_save_data.grid(row=1, column=0, sticky="sw")
+
+        self.btn_update_with_DAS = tk.Button(self.parent.nbCon_SVDGF.figure_frames[self.tab_idx], text="update with:", fg=self.parent.violet, command=lambda: self.update_canvases_with_selected_DAS(self.checkbutton_vars))
+        self.ttp_btn_update_with_DAS = ToolTip.CreateToolTip(self.btn_update_with_DAS, \
+        'This updates this plot and the difference plot with data computed using only the selected DAS. '
+        'It also opens up a quick dialog field, where the decay times for the DAS decays could be changed', optional_y_direction_bump=60, optional_x_direction_bump=50)
+        self.btn_update_with_DAS.grid(row=1, column=1, sticky="s")
+
+        self.make_DAS_checkbuttons()
+
+        self.btn_delete_attrs = tk.Button(self.parent.nbCon_SVDGF.figure_frames[self.tab_idx], text=f"remove tab", fg=self.parent.violet, command=lambda: self.remove_SVDGF_and_difference_tabs(self.parent.nbCon_SVDGF.tab_control, self.parent.nbCon_difference.tab_control))
+        self.ttp_btn_delete_attrs = ToolTip.CreateToolTip(self.btn_delete_attrs, \
+        'This also removes the corresponding difference tab. ')
+        self.btn_delete_attrs.grid(row=1, column=2+len(self.components_list), sticky="se")
+
+        # set dimensions of figure frame as computed correspondingly to gui size
+        self.configure_figure_frame_size(self.parent.nbCon_SVDGF, self.tab_idx)
+
+        self.parent.nbCon_SVDGF.canvases[self.tab_idx].get_tk_widget().grid(row=0, column=0, sticky="nsew", columnspan=3+len(self.components_list))
+
+        self.btn_inspect_diff_matrix = tk.Button(self.parent.nbCon_difference.figure_frames[self.tab_idx_difference], text="inspect matrix", fg=self.parent.violet, command=self.inspect_difference_matrix_via_toplevel)
+        self.ttp_btn_inspect_diff_matrix = ToolTip.CreateToolTip(self.btn_inspect_diff_matrix, \
+        'This opens a window to inspect this difference matrix. ')
+        self.btn_inspect_diff_matrix.grid(row=1, column=0, sticky="se")
+
+        # set dimensions of figure frame as computed correspondingly to gui size
+        self.configure_figure_frame_size(self.parent.nbCon_difference, self.tab_idx_difference)
+
+        self.parent.nbCon_difference.canvases[self.tab_idx_difference].get_tk_widget().grid(row=0, column=0, sticky="nsew")
+
+        return None
+
+    def configure_figure_frame_size(self, nbContainer, tab_idx):
+        """ like this, a frame gets resized. """
+        nbContainer.figure_frames[tab_idx].configure(width=self.parent.heatmaps_geometry_list[0])
+        nbContainer.figure_frames[tab_idx].configure(height=self.parent.heatmaps_geometry_list[1])
+        nbContainer.figure_frames[tab_idx].grid_propagate(False)
+
+        return None
+
+    def inspect_difference_matrix_via_toplevel(self):
+        Kinetics_Spectrum_Toplevel.Kinetics_Spectrum_Window(self.parent, self.tab_idx_difference, self, type="fitted_data")
+
+        return None
+
+    def make_DAS_checkbuttons(self):
+        self.nr_of_checkbuttons = len(self.components_list)
+        self.checkbutton_vars = [tk.IntVar(0) for _ in range(self.nr_of_checkbuttons)]
+
+        for i in range(self.nr_of_checkbuttons):
+            self.checkbutton_vars[i].set(1)
+
+        self.checkbuttons = [tk.Checkbutton(self.parent.nbCon_SVDGF.figure_frames[self.tab_idx], text=self.indeces_for_DAS_matrix[checkbox], variable=self.checkbutton_vars[checkbox], onvalue=1, offvalue=0) for checkbox in range(self.nr_of_checkbuttons)]
+
+        for checkbox in range(self.nr_of_checkbuttons):
+            self.checkbuttons[checkbox].grid(row=1, column=checkbox+2, sticky='sew')
+
+        return None
+
+    def update_canvases_with_selected_DAS(self, int_vars):
+        self.DAS_to_update_with = []
+        self.indeces_for_DAS_matrix = []
+        for i, checkbox in enumerate(range(len(int_vars))):
+            if int_vars[checkbox].get() == 1:
+                self.DAS_to_update_with.append(self.components_list[i])
+                self.indeces_for_DAS_matrix.append(i)
+
+        try:
+            if self.DAS_to_update_with == []:
+                raise ValueError('You did not select any components for the plot you want to see!')
+            # get the new decay times if user assigns new ones:
+            self.how_to_continue = self.display_toplevel_to_change_decay_times_used_for_DAS()
+
+            if self.how_to_continue == "abort":
+                raise ValueError("you should put in values that can be parsed to floats!\nComputation is halted!\n\nalso, explicit \"nan\" values are not accepted!")
+            if self.how_to_continue == "compute with old decay times":
+                self.SVDGF_reconstructed_data_selected_DAS = get_SVD_GlobalFit_reconstructed_data_for_GUI.run(self.DAS[:,self.indeces_for_DAS_matrix], self.resulting_SVDGF_fit_parameters, self.time_delays, self.wavelengths, self.DAS_to_update_with, self.filename, self.start_time)
+            if self.how_to_continue == "compute with new decay times":
+                # need to implement that still
+                self.SVDGF_reconstructed_data_selected_DAS = get_SVD_GlobalFit_reconstructed_data_for_GUI.run(self.DAS[:,self.indeces_for_DAS_matrix], self.resulting_SVDGF_fit_parameters, self.time_delays, self.wavelengths, self.DAS_to_update_with, self.filename, self.start_time)
+
+            self.difference_matrix_selected_DAS = self.TA_data_after_time.astype(float) - self.SVDGF_reconstructed_data_selected_DAS.astype(float)
+
+        except ValueError as error:
+            tk.messagebox.showerror("Warning, an exception occurred!", f"Exception {type(error)} message: \n"+ str(error))
+            return None
+
+        # draw new figures after clearing old ones
+        self.axes.get_figure().clear()
+        self.axes_difference.get_figure().clear()
+
+        # self.parent.heatmaps_figure_geometry_list = [12,8]
+        self.make_reconstruction_plot(update_with_selected_DAS=True)
+        self.make_difference_plot()
+
+        # draw new figures on canvases
+        self.parent.nbCon_SVDGF.canvases[self.tab_idx].draw_idle()
+        self.parent.nbCon_difference.canvases[self.tab_idx_difference].draw_idle()
+
+        return None
+
+    def handle_new_times_assignement(self, user_selected_decay_times):
+        self.user_selected_decay_times = user_selected_decay_times
+
+        return None
+
+    def display_toplevel_to_change_decay_times_used_for_DAS(self):
+        self.new_times_toplevel = new_decay_times_Toplevel.new_decay_times_Window(self.parent, self.resulting_SVDGF_fit_parameters, self.components_list, self.indeces_for_DAS_matrix, self.tab_idx, self.handle_new_times_assignement, self.user_selected_decay_times)
+        # this makes that the program wait and execute further only once the toplevel has been closed
+        self.parent.wait_window(self.new_times_toplevel)
+
+        if self.user_selected_decay_times == "invalid":
+            # reassign these times so when the user opens the "update" toplevel again, the entries are filled with useful values
+            self.user_selected_decay_times = ['{:,.2f}'.format(self.resulting_SVDGF_fit_parameters['tau_component%i' % (j)].value) for j in self.components_list]
+            print(f'\n user has put in invalid times, stop computation!\n')
+            return "abort"
+        if self.user_selected_decay_times is None:
+            self.user_selected_decay_times = ['{:,.2f}'.format(self.resulting_SVDGF_fit_parameters['tau_component%i' % (j)].value) for j in self.components_list]
+            print(f'\n user has continued without changing decay times, continue computation with old decay times!\n')
+            return "compute with old decay times"
+
+        # user has put in useable decay times
+        print(f"\nuser has put in useable decay times! {self.user_selected_decay_times=}")
+        return "compute with new decay times"
+
+    # this is done in thread separate from gui main thread.
+    def make_data(self):
+        # compute the SVDGF data for plot. the needed data (SVDGF_reconstructed_data, time_delays and wavelengths) are assigned to self
+        try:
+            self.TA_data_after_time, self.time_delays, self.wavelengths = get_TA_data_after_start_time.run(self.filename, self.start_time)
+            # update start time to the actual time delay that is closest to user input
+            self.start_time = str(get_closest_nr_from_array_like.run(self.time_delays, float(self.start_time)))
+            if (self.start_time == self.time_delays[-1]):
+                raise ValueError("The start time you entered was above the last time delay. Thus it was moved to the last time delay.\n"+
+                                "However, an SVD and thus a fit wont work in that case.")
+
+            # already set paths to which data from this data object is to be saved - this way the path stays the same
+            # and can also be used in corresponding Toplevel classes!
+            # i can not do this in __init__, as there the start time is not corrected yet!
+            self.date_dir, self.final_dir = saveData.get_directory_paths(self.start_time, self.tab_idx, components=self.components_list)
+            self.base_directory = os.getcwd()
+            self.full_path_to_final_dir = saveData.get_final_path(self.base_directory, self.date_dir, "/SVDGF_reconstruction_data/", self.final_dir, self.filename)
+
+        except ValueError as error:
+            tk.messagebox.showerror("Warning,", "an exception occurred!""\nProbably due to a problem with the entered start time!\n"+
+                                    f"Exception {type(error)} message: \n"+ str(error)+"\n")
+
+            # return gui to initial state if above data preparation failed
+            self.parent.return_some_gui_widgets_to_initial_state(button=self.parent.btn_show_SVDGF_reconstructed_data_heatmap, label=self.parent.lbl_reassuring_SVDGF, tab_control=self.parent.nbCon_SVDGF.tab_control)
+            self.parent.return_some_gui_widgets_to_initial_state(tab_control=self.parent.nbCon_difference.tab_control)
+            self.delete_attributes()
+
+            return None
+
+        # get the selected rSVs, singular values and lSVs - input is TA data after time and self.components_list
+        self.retained_rSVs, self.retained_lSVs, self.retained_singular_values = get_retained_rightSVs_leftSVs_singularvs.run(self.TA_data_after_time, self.components_list)
+
+        # do the fit: input: selected rSVs and singular values, self.temp_resolution, self.components_list - output: decay constants, amplitudes
+        try:
+            self.fit_result, self.resulting_SVDGF_fit_parameters = get_SVDGFit_parameters.run(self.retained_rSVs, self.retained_singular_values, self.components_list, self.time_delays, self.start_time, self.time_zero, self.temp_resolution)
+        except ValueError as error:
+            tk.messagebox.showerror("Warning, an exception occurred!", f"Exception {type(error)} message: \n"+ str(error)+ "\n"+
+                                    "\nProbably due to a ValueError occurring in fit down the line, \ni.e.: the fit might not have converged. "+
+                                    "Try using another start time value or a different set of components for the fitting.")
+
+            # return gui to initial state if above data preparation failed
+            self.parent.return_some_gui_widgets_to_initial_state(button=self.parent.btn_show_SVDGF_reconstructed_data_heatmap, label=self.parent.lbl_reassuring_SVDGF, tab_control=self.parent.nbCon_SVDGF.tab_control)
+            self.parent.return_some_gui_widgets_to_initial_state(tab_control=self.parent.nbCon_difference.tab_control)
+            self.delete_attributes()
+
+        # get the DAS: input: selected lSVs and resulting amplitudes
+        self.DAS = get_DAS_from_lSVs_res_amplitudes.run(self.retained_lSVs, self.resulting_SVDGF_fit_parameters, self.components_list, self.wavelengths, self.filename, self.start_time)
+
+        # get the SVD-GFit reconstructed data: inputs: DAS, resulting decay consts
+        # self.fit_result_decay_times = ['{:,.2f}'.format(self.resulting_SVDGF_fit_parameters['tau_component%i' % (j)].value).replace(',', '') for j in self.components_list]
+        # self.fit_parameters = ['{:,.2f}'.format(self.resulting_SVDGF_fit_parameters['tau_component%i' % (j)].value) for j in self.components_list]
+        # print(f'\n\n in make data: {self.fit_parameters=}')
+        # print(F'{self.fit_result_decay_times=}\n')
+        self.SVDGF_reconstructed_data = get_SVD_GlobalFit_reconstructed_data_for_GUI.run(self.DAS, self.resulting_SVDGF_fit_parameters, self.time_delays, self.wavelengths, self.components_list, self.filename, self.start_time)
+
+        # the difference matrix between full reconstruction data and original data
+        self.difference_matrix = self.TA_data_after_time.astype(float) - self.SVDGF_reconstructed_data.astype(float)
+        # the difference matrix between reconstruction data using only selected DAS and original data
+        # is used in Kinetics_Spectrum_Toplevel class, thus i set it here already
+        self.difference_matrix_selected_DAS = self.difference_matrix
+
+        return None
+
+    def save_data_to_file(self):
+        print(f"\nsaving data: SVDGF reconstruction object at tab: {self.tab_idx+1}\n")
+
+        # check if directory exists:
+        if not os.path.exists(self.full_path_to_final_dir):
+            os.makedirs(self.full_path_to_final_dir)
+
+        # save data
+        self.parent.nbCon_SVDGF.figs[self.tab_idx].savefig(self.full_path_to_final_dir+"/reconstruction_heatmap_DAS"+str(self.indeces_for_DAS_matrix)+".png")
+        self.parent.nbCon_difference.figs[self.tab_idx_difference].savefig(self.full_path_to_final_dir+"/difference_heatmap_DAS"+str(self.indeces_for_DAS_matrix)+".png")
+        saveData.make_log_file(self.full_path_to_final_dir, filename=self.filename, start_time=self.start_time, components=self.components_list)
+        self.result_data_to_save = {"retained_sing_values": self.retained_singular_values, "DAS": self.DAS, "fit_report_complete": lmfit.fit_report(self.fit_result), "time_delays": self.time_delays, "wavelengths": self.wavelengths}
+        saveData.save_result_data(self.full_path_to_final_dir, self.result_data_to_save)
+
+        # save data matrices
+        self.data_matrices_to_save = {"SVDGF_reconstruction_matrix": self.SVDGF_reconstructed_data.T, "difference_matrix": self.difference_data.T, "TA_after_start_time_matrix": self.TA_data_after_time.T, "difference_matrix_selected_DAS"+str(self.indeces_for_DAS_matrix): self.difference_matrix_selected_DAS.T}
+        saveData.save_formatted_data_matrix_after_time(self.full_path_to_final_dir, self.time_delays, self.wavelengths, self.data_matrices_to_save)
+
+        return None
+
+    # to delete instance attributes to free up memory. is called when tab is removed.
+    def delete_attributes(self):
+        attr_lst = list(vars(self))
+        for attr in attr_lst:
+            delattr(self, attr)
+
+        del attr_lst
+        del self
+
+        gc.collect()
+
+        return None
+
+    # remove the tabs with plot from gui
+    def remove_SVDGF_and_difference_tabs(self, nb_SVDGF, nb_difference):
+        nb_SVDGF.forget("current")
+        self.parent.remove_correct_tab_from_difference_nb(self.tab_idx_difference + 1)
+
+        if nb_SVDGF.index(tk.END) == 0:
+            nb_SVDGF.grid_remove()
+
+        if nb_difference.index(tk.END) == 0:
+            nb_difference.grid_remove()
+
+        for checkbox in range(self.nr_of_checkbuttons):
+            self.checkbuttons[checkbox].grid_remove()
+        self.btn_update_with_DAS.grid_remove()
+        self.btn_delete_attrs.grid_remove()
+        self.btn_save_data.grid_remove()
+        self.btn_inspect_diff_matrix.grid_remove()
+
+        self.axes.get_figure().clear()
+        self.axes_difference.get_figure().clear()
+
+        self.parent.nbCon_SVDGF.figure_frames[self.tab_idx].grid_propagate(True)
+        self.parent.nbCon_difference.figure_frames[self.tab_idx_difference].grid_propagate(True)
+        self.parent.nbCon_SVDGF.canvases[self.tab_idx].get_tk_widget().configure(height=0, width=0)
+        self.parent.nbCon_difference.canvases[self.tab_idx].get_tk_widget().configure(height=0, width=0)
+
+
+        self.delete_attributes()
+
+        return None
