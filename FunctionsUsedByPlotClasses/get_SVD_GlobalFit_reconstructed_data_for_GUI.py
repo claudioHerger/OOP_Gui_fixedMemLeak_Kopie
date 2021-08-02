@@ -9,7 +9,6 @@ Returns: \n
 * data matrix reconstructed from DAS that decay exponentially with time_delay/decay consts from resulting fit params\n
 """
 
-from tkinter import constants
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
