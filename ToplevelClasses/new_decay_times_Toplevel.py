@@ -1,9 +1,21 @@
 import tkinter as tk
+from tkinter.constants import DISABLED
 
 from SupportClasses import ToolTip
 
 class new_decay_times_Window(tk.Toplevel):
     def __init__(self, parent, fit_results, components_list, indeces_for_DAS_matrix, tab_idx, assign_method, decay_times_used=None):
+        """toplevel to let the user enter new decay times for DAS when updating the SVDGF heatmap plot with a selection of DAS
+
+        Args:
+            parent (tk.Frame): the root window.
+            fit_results (fit_parameters): the result of the fit procedure. contains the resulting decay times and other stuff.
+            components_list (list): list of integers, which SVD components were used in the fit.
+            indeces_for_DAS_matrix (list): list of integers, which DAS are selected for updating the plot.
+            tab_idx (integer): for toplevel title string.
+            assign_method (function): method that handles the assignement of user entered new decay times in data object which instantiates the toplevel.
+            decay_times_used (None or not NoneType, optional): if None, the initially displayed decay times in entries are the ones from the fit result. else, the previously accepted ones are initially displayed in entries. Defaults to None.
+        """
         super().__init__(parent)
         self.parent = parent
         self.fit_results = fit_results
@@ -64,14 +76,17 @@ class new_decay_times_Window(tk.Toplevel):
             new_decay_times_labels.append(tk.Label(self, text=f"DAS {self.components_list[i]}: new decay time:"))
             self.new_decay_times_entries.append(tk.Entry(self, width=10))
 
-
         for i in range(self.nr_of_components):
-            new_decay_times_labels[i].grid(column=1, row=i+1, padx=10, sticky="nsew")
             if self.decay_times_used is not None:
                 # user has already changed the decay times to be used at least once!
                 self.new_decay_times_entries[i].insert(0, self.decay_times_used[i])
             else:
                 self.new_decay_times_entries[i].insert(0, self.decay_constants_from_fit[i])
+            # make the entries and labels for DAS that are not selected grey
+            if i not in self.indeces_for_DAS_matrix:
+                new_decay_times_labels[i].configure(fg="grey")
+                self.new_decay_times_entries[i].configure(fg="grey", state=DISABLED)
+            new_decay_times_labels[i].grid(column=1, row=i+1, padx=10, sticky="nsew")
             self.new_decay_times_entries[i].grid(column=2, row=i+1, padx=10, sticky="nsew")
 
         return None

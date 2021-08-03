@@ -242,7 +242,6 @@ class SVDGF_Heatmap():
         self.axes.get_figure().clear()
         self.axes_difference.get_figure().clear()
 
-        # self.parent.heatmaps_figure_geometry_list = [12,8]
         self.make_reconstruction_plot(update_with_selected_DAS=True)
         self.make_difference_plot()
 
@@ -259,7 +258,7 @@ class SVDGF_Heatmap():
 
     def display_toplevel_to_change_decay_times_used_for_DAS(self):
         self.new_times_toplevel = new_decay_times_Toplevel.new_decay_times_Window(self.parent, self.resulting_SVDGF_fit_parameters, self.components_list, self.indeces_for_DAS_matrix, self.tab_idx, self.handle_new_times_assignement, self.user_selected_decay_times)
-        # this makes that the program wait and execute further only once the toplevel has been closed
+        # this lets the program wait and execute further only once the toplevel has been closed
         self.parent.wait_window(self.new_times_toplevel)
 
         if self.user_selected_decay_times == "invalid":
@@ -273,7 +272,7 @@ class SVDGF_Heatmap():
             return "compute with old decay times"
 
         # user has put in useable decay times
-        print(f"\nuser has put in useable decay times! {self.user_selected_decay_times=}")
+        print(f"\nuser has put in useable new decay times! {self.user_selected_decay_times=}")
         return "compute with new decay times"
 
     # this is done in thread separate from gui main thread.

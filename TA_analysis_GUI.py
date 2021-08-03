@@ -7,7 +7,6 @@ import tkinter.ttk as ttk
 import matplotlib
 matplotlib.use('TkAgg')         # to be able to use plt.close() without the gui closing too! - and/or some other things
 import platform
-import datetime
 import os
 import traceback
 import collections              # e.g. to check whether an object is iterable, has size attribute etc
