@@ -33,26 +33,31 @@ def run(DAS, decay_constants, time_delays, wavelengths, retained_DAS, start_time
     time_delays = [float(time_delay) for time_delay in time_delays]
     time_delays = np.array(time_delays)
 
-    # decay_constants = [resulting_fit_params['tau_component%i' % (j)].value for j in retained_components]
     decay_constants = [float(decay_constant) for decay_constant in decay_constants]
     nr_of_wavelenghts = len(wavelengths)
     nr_of_time_delays = len(time_delays)
 
     DAS = DAS.T
 
-    print(f'{decay_constants=}')
-    print(F'{DAS.shape=}')
-    print(f'{retained_DAS=}')
+    # print(f'\nnew method: {decay_constants=}\n')
 
     """ SVD_GlobalFit TA data computed with loop """
     SVDGF_reconstructed_data_matrix = np.zeros((nr_of_wavelenghts, nr_of_time_delays))
 
-    for component in range(len(retained_DAS)):
-        DAS_component = DAS[component, :]
-        decay_constant_component = decay_constants[component]
-        # print(DAS_component.shape)
-        # print(decay_constant_component)
-        for index, amplitude in enumerate(DAS_component):
-            SVDGF_reconstructed_data_matrix[index, :] += exp_decay(amplitude, time_delays, decay_constant_component)
+    # to get numpy RuntimeWarnings as catchable Exceptions
+    # e.g. when dividing by zero, or otherwise nan produced
+    np.seterr(all='raise')
+
+    try:
+        for component in range(len(retained_DAS)):
+            DAS_component = DAS[component, :]
+            decay_constant_component = decay_constants[component]
+            for index, amplitude in enumerate(DAS_component):
+                SVDGF_reconstructed_data_matrix[index, :] += exp_decay(amplitude, time_delays, decay_constant_component)
+    except FloatingPointError:
+        raise
+
+    # reset the np warnings setting to warn in console only
+    np.seterr(all='warn')
 
     return SVDGF_reconstructed_data_matrix

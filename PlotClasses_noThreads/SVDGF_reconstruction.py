@@ -11,7 +11,7 @@ import os
 import lmfit
 
 # my own modules
-from FunctionsUsedByPlotClasses import get_DAS_from_lSVs_res_amplitudes, get_SVD_GlobalFit_reconstructed_data_for_GUI, get_TA_data_after_start_time, get_retained_rightSVs_leftSVs_singularvs, get_SVDGFit_parameters
+from FunctionsUsedByPlotClasses import get_DAS_from_lSVs_res_amplitudes, get_TA_data_after_start_time, get_retained_rightSVs_leftSVs_singularvs, get_SVDGFit_parameters
 from FunctionsUsedByPlotClasses import get_closest_nr_from_array_like, get_SVDGF_reconstructed_data
 from SupportClasses import ToolTip, saveData
 from ToplevelClasses import Kinetics_Spectrum_Toplevel, new_decay_times_Toplevel
@@ -102,7 +102,7 @@ class SVDGF_Heatmap():
 
         title_string = self.base_filename+" SVDGF data, fit comps: " + str(self.components_list) + " DAS: " + str(self.indeces_for_DAS_matrix)
         if update_with_selected_DAS:
-            title_string = r"updated! $\tau_i$ ="+str([self.user_selected_decay_times[x] for x in self.indeces_for_DAS_matrix])+"\n"  + title_string
+            title_string = r"updated! $\tau_i$ ="+str(['{:.4f}'.format(float(self.user_selected_decay_times[x])) for x in self.indeces_for_DAS_matrix])+"\n"  + title_string
         self.axes.set_title(title_string)
 
         self.parent.nbCon_SVDGF.figs[self.tab_idx].tight_layout()
@@ -148,7 +148,7 @@ class SVDGF_Heatmap():
 
         title_string = self.base_filename+" diff: orig - SVDGF "+str(self.components_list)+ " DAS: " + str(self.indeces_for_DAS_matrix)
         if update_with_selected_DAS:
-            title_string = r"updated! $\tau_i$ ="+str([self.user_selected_decay_times[x] for x in self.indeces_for_DAS_matrix])+"\n" + title_string
+            title_string = r"updated! $\tau_i$ ="+str(['{:.4f}'.format(float(self.user_selected_decay_times[x])) for x in self.indeces_for_DAS_matrix])+"\n" + title_string
         self.axes_difference.set_title(title_string)
 
         self.parent.nbCon_difference.figs[self.tab_idx_difference].tight_layout()
@@ -239,16 +239,15 @@ class SVDGF_Heatmap():
             if self.how_to_continue == "abort":
                 raise ValueError("you should put in values that can be parsed to floats!\nComputation is halted!\n\nalso, explicit \"nan\" values are not accepted!")
             if self.how_to_continue == "compute with old decay times":
-                self.SVDGF_reconstructed_data_selected_DAS = get_SVD_GlobalFit_reconstructed_data_for_GUI.run(self.DAS[:,self.indeces_for_DAS_matrix], self.resulting_SVDGF_fit_parameters, self.time_delays, self.wavelengths, self.DAS_to_update_with, self.filename, self.start_time)
-            if self.how_to_continue == "compute with new decay times":
-                # need to implement that still
                 self.SVDGF_reconstructed_data_selected_DAS = get_SVDGF_reconstructed_data.run(self.DAS[:,self.indeces_for_DAS_matrix], [self.user_selected_decay_times[x] for x in self.indeces_for_DAS_matrix], self.time_delays, self.wavelengths, self.indeces_for_DAS_matrix, self.start_time)
-                # self.SVDGF_reconstructed_data_selected_DAS = get_SVD_GlobalFit_reconstructed_data_for_GUI.run(self.DAS[:,self.indeces_for_DAS_matrix], self.resulting_SVDGF_fit_parameters, self.time_delays, self.wavelengths, self.DAS_to_update_with, self.filename, self.start_time)
+            if self.how_to_continue == "compute with new decay times":
+                self.SVDGF_reconstructed_data_selected_DAS = get_SVDGF_reconstructed_data.run(self.DAS[:,self.indeces_for_DAS_matrix], [self.user_selected_decay_times[x] for x in self.indeces_for_DAS_matrix], self.time_delays, self.wavelengths, self.indeces_for_DAS_matrix, self.start_time)
 
             self.difference_matrix_selected_DAS = self.TA_data_after_time.astype(float) - self.SVDGF_reconstructed_data_selected_DAS.astype(float)
 
-        except ValueError as error:
-            tk.messagebox.showerror("Warning, an exception occurred!", f"Exception {type(error)} message: \n"+ str(error))
+        except (ValueError,FloatingPointError) as error:
+            tk.messagebox.showerror("Warning, an exception occurred!", f"Exception {type(error)} message: \n"+ str(error)
+                                    +"if FloatingPointError: probably happened in "+ str(os.path.basename(get_SVDGF_reconstructed_data.__file__)))
             return None
 
         # draw new figures after clearing old ones
@@ -276,11 +275,11 @@ class SVDGF_Heatmap():
 
         if self.user_selected_decay_times == "invalid":
             # reassign these times so when the user opens the "update" toplevel again, the entries are filled with useful values
-            self.user_selected_decay_times = ['{:,.2f}'.format(self.resulting_SVDGF_fit_parameters['tau_component%i' % (j)].value) for j in self.components_list]
+            self.user_selected_decay_times = ['{:.9f}'.format(self.resulting_SVDGF_fit_parameters['tau_component%i' % (j)].value) for j in self.components_list]
             print(f'\n user has put in invalid times, stop computation!\n')
             return "abort"
         if self.user_selected_decay_times is None:
-            self.user_selected_decay_times = ['{:,.2f}'.format(self.resulting_SVDGF_fit_parameters['tau_component%i' % (j)].value) for j in self.components_list]
+            self.user_selected_decay_times = ['{:.9f}'.format(self.resulting_SVDGF_fit_parameters['tau_component%i' % (j)].value) for j in self.components_list]
             print(f'\n user has continued without changing decay times, continue computation with old decay times!\n')
             return "compute with old decay times"
 
@@ -337,11 +336,8 @@ class SVDGF_Heatmap():
         self.DAS = get_DAS_from_lSVs_res_amplitudes.run(self.retained_lSVs, self.resulting_SVDGF_fit_parameters, self.components_list, self.wavelengths, self.filename, self.start_time)
 
         # get the SVD-GFit reconstructed data: inputs: DAS, resulting decay consts
-        # self.fit_result_decay_times = ['{:,.2f}'.format(self.resulting_SVDGF_fit_parameters['tau_component%i' % (j)].value).replace(',', '') for j in self.components_list]
-        # self.fit_parameters = ['{:,.2f}'.format(self.resulting_SVDGF_fit_parameters['tau_component%i' % (j)].value) for j in self.components_list]
-        # print(f'\n\n in make data: {self.fit_parameters=}')
-        # print(F'{self.fit_result_decay_times=}\n')
-        self.SVDGF_reconstructed_data = get_SVD_GlobalFit_reconstructed_data_for_GUI.run(self.DAS, self.resulting_SVDGF_fit_parameters, self.time_delays, self.wavelengths, self.components_list, self.filename, self.start_time)
+        self.fit_result_decay_times = ['{:.9f}'.format(self.resulting_SVDGF_fit_parameters['tau_component%i' % (j)].value) for j in self.components_list]
+        self.SVDGF_reconstructed_data = get_SVDGF_reconstructed_data.run(self.DAS[:,self.indeces_for_DAS_matrix], [self.fit_result_decay_times[x] for x in self.indeces_for_DAS_matrix], self.time_delays, self.wavelengths, self.indeces_for_DAS_matrix, self.start_time)
 
         # the difference matrix between full reconstruction data and original data
         self.difference_matrix = self.TA_data_after_time.astype(float) - self.SVDGF_reconstructed_data.astype(float)
