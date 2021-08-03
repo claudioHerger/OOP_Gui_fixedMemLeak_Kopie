@@ -12,7 +12,7 @@ import lmfit
 
 # my own modules
 from FunctionsUsedByPlotClasses import get_DAS_from_lSVs_res_amplitudes, get_SVD_GlobalFit_reconstructed_data_for_GUI, get_TA_data_after_start_time, get_retained_rightSVs_leftSVs_singularvs, get_SVDGFit_parameters
-from FunctionsUsedByPlotClasses import get_closest_nr_from_array_like
+from FunctionsUsedByPlotClasses import get_closest_nr_from_array_like, get_SVDGF_reconstructed_data
 from SupportClasses import ToolTip, saveData
 from ToplevelClasses import Kinetics_Spectrum_Toplevel, new_decay_times_Toplevel
 
@@ -63,8 +63,11 @@ class SVDGF_Heatmap():
         # create axes on parent.figure with correct index:
         self.axes = self.parent.nbCon_SVDGF.figs[self.tab_idx].add_subplot(1,1,1)
         # adjust figsize as computed correspondingly to gui size:
-        self.axes.get_figure().set_figwidth(self.parent.heatmaps_figure_geometry_list[0])
-        self.axes.get_figure().set_figheight(self.parent.heatmaps_figure_geometry_list[1])
+        # stupid hack for stupid problem: not done when plot is updated with selected DAS,
+        # as that leads to a strange plot size for reasons unknown
+        if not update_with_selected_DAS:
+            self.axes.get_figure().set_figwidth(self.parent.heatmaps_figure_geometry_list[0])
+            self.axes.get_figure().set_figheight(self.parent.heatmaps_figure_geometry_list[1])
 
         self.data = self.SVDGF_reconstructed_data.astype(float)
         if update_with_selected_DAS:
@@ -97,19 +100,25 @@ class SVDGF_Heatmap():
         self.axes.set_ylabel("wavelengths [nm]", fontsize=16)
         self.axes.set_xlabel("time since overlap [ps]", fontsize=16)
 
-        self.axes.set_title(self.base_filename+" SVDGF data, fit comps: " + str(self.components_list) + " DAS: " + str(self.indeces_for_DAS_matrix))
+        title_string = self.base_filename+" SVDGF data, fit comps: " + str(self.components_list) + " DAS: " + str(self.indeces_for_DAS_matrix)
+        if update_with_selected_DAS:
+            title_string = r"updated! $\tau_i$ ="+str([self.user_selected_decay_times[x] for x in self.indeces_for_DAS_matrix])+"\n"  + title_string
+        self.axes.set_title(title_string)
 
         self.parent.nbCon_SVDGF.figs[self.tab_idx].tight_layout()
 
         return None
 
-    def make_difference_plot(self):
+    def make_difference_plot(self, update_with_selected_DAS=False):
         sns.set(font_scale = 1.3, rc={"xtick.bottom" : True, "ytick.left" : True})
 
         self.axes_difference = self.parent.nbCon_difference.figs[self.tab_idx_difference].add_subplot(1,1,1)
         # adjust figsize as computed correspondingly to gui size:
-        self.axes_difference.get_figure().set_figwidth(self.parent.heatmaps_figure_geometry_list[0])
-        self.axes_difference.get_figure().set_figheight(self.parent.heatmaps_figure_geometry_list[1])
+        # stupid hack for stupid problem: not done when plot is updated with selected DAS,
+        # as that leads to a strange plot size for reasons unknown
+        if not update_with_selected_DAS:
+            self.axes_difference.get_figure().set_figwidth(self.parent.heatmaps_figure_geometry_list[0])
+            self.axes_difference.get_figure().set_figheight(self.parent.heatmaps_figure_geometry_list[1])
 
         self.difference_data = self.difference_matrix_selected_DAS.astype(float)
 
@@ -137,7 +146,10 @@ class SVDGF_Heatmap():
         self.axes_difference.set_ylabel("wavelengths [nm]", fontsize=16)
         self.axes_difference.set_xlabel("time since overlap [ps]", fontsize=16)
 
-        self.axes_difference.set_title(self.base_filename+" diff: orig - SVDGF "+str(self.components_list)+ " DAS: " + str(self.indeces_for_DAS_matrix))
+        title_string = self.base_filename+" diff: orig - SVDGF "+str(self.components_list)+ " DAS: " + str(self.indeces_for_DAS_matrix)
+        if update_with_selected_DAS:
+            title_string = r"updated! $\tau_i$ ="+str([self.user_selected_decay_times[x] for x in self.indeces_for_DAS_matrix])+"\n" + title_string
+        self.axes_difference.set_title(title_string)
 
         self.parent.nbCon_difference.figs[self.tab_idx_difference].tight_layout()
 
@@ -230,7 +242,8 @@ class SVDGF_Heatmap():
                 self.SVDGF_reconstructed_data_selected_DAS = get_SVD_GlobalFit_reconstructed_data_for_GUI.run(self.DAS[:,self.indeces_for_DAS_matrix], self.resulting_SVDGF_fit_parameters, self.time_delays, self.wavelengths, self.DAS_to_update_with, self.filename, self.start_time)
             if self.how_to_continue == "compute with new decay times":
                 # need to implement that still
-                self.SVDGF_reconstructed_data_selected_DAS = get_SVD_GlobalFit_reconstructed_data_for_GUI.run(self.DAS[:,self.indeces_for_DAS_matrix], self.resulting_SVDGF_fit_parameters, self.time_delays, self.wavelengths, self.DAS_to_update_with, self.filename, self.start_time)
+                self.SVDGF_reconstructed_data_selected_DAS = get_SVDGF_reconstructed_data.run(self.DAS[:,self.indeces_for_DAS_matrix], [self.user_selected_decay_times[x] for x in self.indeces_for_DAS_matrix], self.time_delays, self.wavelengths, self.indeces_for_DAS_matrix, self.start_time)
+                # self.SVDGF_reconstructed_data_selected_DAS = get_SVD_GlobalFit_reconstructed_data_for_GUI.run(self.DAS[:,self.indeces_for_DAS_matrix], self.resulting_SVDGF_fit_parameters, self.time_delays, self.wavelengths, self.DAS_to_update_with, self.filename, self.start_time)
 
             self.difference_matrix_selected_DAS = self.TA_data_after_time.astype(float) - self.SVDGF_reconstructed_data_selected_DAS.astype(float)
 
@@ -243,7 +256,7 @@ class SVDGF_Heatmap():
         self.axes_difference.get_figure().clear()
 
         self.make_reconstruction_plot(update_with_selected_DAS=True)
-        self.make_difference_plot()
+        self.make_difference_plot(update_with_selected_DAS=True)
 
         # draw new figures on canvases
         self.parent.nbCon_SVDGF.canvases[self.tab_idx].draw_idle()

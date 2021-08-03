@@ -75,7 +75,7 @@ def run(DAS, resulting_fit_params, time_delays, wavelengths, retained_components
 
     DAS = DAS.T
 
-    print(f'resulting decay constants given before reconstructing data with DAS: {decay_constants}')
+    # print(f'resulting decay constants given before reconstructing data with DAS: {decay_constants}')
 
     """ SVD_GlobalFit TA data computed with loop """
     SVDGF_reconstructed_data_matrix = np.zeros((nr_of_wavelenghts, nr_of_time_delays))
