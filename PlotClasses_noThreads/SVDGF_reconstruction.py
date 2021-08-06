@@ -247,7 +247,7 @@ class SVDGF_Heatmap():
 
         except (ValueError,FloatingPointError) as error:
             tk.messagebox.showerror("Warning, an exception occurred!", f"Exception {type(error)} message: \n"+ str(error)
-                                    +"if FloatingPointError: probably happened in "+ str(os.path.basename(get_SVDGF_reconstructed_data.__file__)))
+                                    +"\nif FloatingPointError: probably happened in "+ str(os.path.basename(get_SVDGF_reconstructed_data.__file__)))
             return None
 
         # draw new figures after clearing old ones
