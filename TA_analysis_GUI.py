@@ -31,13 +31,10 @@ class GuiAppTAAnalysis(tk.Frame):
         tk.Frame.__init__(self, master)
         self.parent = master
 
-        # check the operating system:
-        self.operating_system = platform.system()
-
         self.curr_reconstruct_data_file_strVar = tk.StringVar()
         self.curr_reconstruct_data_file_strVar.set("no file selected")
         # self.curr_reconstruct_data_file_strVar.set(base_directory+"/DataFiles/simulatedTAData_formatted.txt")
-        self.curr_reconstruct_data_file_strVar.set(base_directory+"/DataFiles/data_full_0.txt")
+        # self.curr_reconstruct_data_file_strVar.set(base_directory+"/DataFiles/data_full_0.txt")
         self.curr_reconstruct_data_file_strVar.trace_add("write", self.update_title_callback)
         self.curr_reconstruct_data_start_time_value = tk.DoubleVar()
         self.curr_reconstruct_data_start_time_value.trace_add("write", self.update_title_callback)
@@ -87,6 +84,8 @@ class GuiAppTAAnalysis(tk.Frame):
 
     def make_window_fullscreen(self):
         """ depending on OS different command"""
+        # check the operating system:
+        self.operating_system = platform.system()
 
         # Windows:
         if self.operating_system == 'Windows':
