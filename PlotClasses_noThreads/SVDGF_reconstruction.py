@@ -245,7 +245,7 @@ class SVDGF_Heatmap():
 
             self.difference_matrix_selected_DAS = self.TA_data_after_time.astype(float) - self.SVDGF_reconstructed_data_selected_DAS.astype(float)
 
-        except (ValueError,FloatingPointError) as error:
+        except (ValueError, FloatingPointError) as error:
             tk.messagebox.showerror("Warning, an exception occurred!", f"Exception {type(error)} message: \n"+ str(error)
                                     +"\nif FloatingPointError: probably happened in "+ str(os.path.basename(get_SVDGF_reconstructed_data.__file__)))
             return None
@@ -336,8 +336,22 @@ class SVDGF_Heatmap():
         self.DAS = get_DAS_from_lSVs_res_amplitudes.run(self.retained_lSVs, self.resulting_SVDGF_fit_parameters, self.components_list, self.wavelengths, self.filename, self.start_time)
 
         # get the SVD-GFit reconstructed data: inputs: DAS, resulting decay consts
-        self.fit_result_decay_times = ['{:.9f}'.format(self.resulting_SVDGF_fit_parameters['tau_component%i' % (j)].value) for j in self.components_list]
-        self.SVDGF_reconstructed_data = get_SVDGF_reconstructed_data.run(self.DAS[:,self.indeces_for_DAS_matrix], [self.fit_result_decay_times[x] for x in self.indeces_for_DAS_matrix], self.time_delays, self.wavelengths, self.indeces_for_DAS_matrix, self.start_time)
+        try:
+            self.fit_result_decay_times = ['{:.9f}'.format(self.resulting_SVDGF_fit_parameters['tau_component%i' % (j)].value) for j in self.components_list]
+            print(f'{self.fit_result_decay_times=}')
+            self.SVDGF_reconstructed_data = get_SVDGF_reconstructed_data.run(self.DAS[:,self.indeces_for_DAS_matrix], [self.fit_result_decay_times[x] for x in self.indeces_for_DAS_matrix], self.time_delays, self.wavelengths, self.indeces_for_DAS_matrix, self.start_time)
+        except (ValueError,FloatingPointError) as error:
+            tk.messagebox.showerror("Warning, an exception occurred!", f"Exception {type(error)} message: \n"+ str(error)
+                                    +"\nif FloatingPointError: probably happened in "+ str(os.path.basename(get_SVDGF_reconstructed_data.__file__))
+                                    +"\n\nLikely due to some error in fit procedure which lead to very small fitted decay constants in course of which we get numbers like exp(-bigNumber),"
+                                    +" which underflows a float."
+                                    +f"\n{self.fit_result_decay_times=}")
+            # return gui to initial state if above data preparation failed
+            self.parent.return_some_gui_widgets_to_initial_state(button=self.parent.btn_show_SVDGF_reconstructed_data_heatmap, label=self.parent.lbl_reassuring_SVDGF, tab_control=self.parent.nbCon_SVDGF.tab_control)
+            self.parent.return_some_gui_widgets_to_initial_state(tab_control=self.parent.nbCon_difference.tab_control)
+            self.delete_attributes()
+
+            return None
 
         # the difference matrix between full reconstruction data and original data
         self.difference_matrix = self.TA_data_after_time.astype(float) - self.SVDGF_reconstructed_data.astype(float)

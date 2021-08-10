@@ -106,7 +106,7 @@ class DAS_Window(tk.Toplevel):
         if self.which_DAS_list != []:
             self.update_DAS_plot()
         else:
-            tk.messagebox.showerror("No DAS selected to plot!")
+            tk.messagebox.showerror("No DAS selected to plot!", "at least one checkbox must be checked for me to do something!")
             self.lift()
             return None
 
