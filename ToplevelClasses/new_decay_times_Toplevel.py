@@ -114,14 +114,13 @@ class new_decay_times_Window(tk.Toplevel):
                 self.new_decay_times = "invalid"
                 break
 
-        # print(f'after extraction: {self.new_decay_times=}')
         return self.new_decay_times
 
     def string_is_number(self, some_string):
         try:
-            if some_string.lower() == "nan":
+            if some_string.lower() == "nan" or some_string.lower() == "-nan":
                 return False
-            float(some_string)
+            float(some_string.lstrip("0"))      # lstrip("0") removes leading "0"s. i think at some point python did use if i did not remove leading "0"s octal numeral system (base 8)
             return True
         except ValueError:
             return False

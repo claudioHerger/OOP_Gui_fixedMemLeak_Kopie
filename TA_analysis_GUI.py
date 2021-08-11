@@ -11,19 +11,20 @@ import os
 import traceback
 import collections              # e.g. to check whether an object is iterable, has size attribute etc
 import lmfit
+import ast
 
 # threading
 import threading
 
 # PlotClasses - used to create plots on gui
-from PlotClasses_noThreads import ORIGData, SVDGF_reconstruction, SVD_reconstruction, SingularValues
+from PlotClasses_noThreads import ORIGData, SVDGF_reconstruction, SVD_reconstruction
 
 # SupportClasses - used to e.g. explain functionality of widget in gui
 from SupportClasses import ToolTip, NotebookContainer
-from ToplevelClasses import FitResult_Toplevel, DAS_Toplevel
+from ToplevelClasses import FitResult_Toplevel, DAS_Toplevel, initial_fit_parameter_values_Toplevel
 
-# this variable should be changed if someone uses the program on their pc
-base_directory = os.getcwd()
+# the directory from where program is started
+base_directory = os.getcwd()        # SHOULD BE ADJUSTED! Leads to Error if program is not started from directory where it is in
 
 class GuiAppTAAnalysis(tk.Frame):
 
@@ -31,10 +32,31 @@ class GuiAppTAAnalysis(tk.Frame):
         tk.Frame.__init__(self, master)
         self.parent = master
 
+        # get initial fit parameter values from file:
+        self.initial_fit_parameter_values_file = base_directory+"/Initial_fit_parameter_values.txt"
+        if not os.path.exists(self.initial_fit_parameter_values_file):
+            # if user has for some reason deleted the file that stores initial fit parameter dictionary, set default fit parameter values:
+            self.initial_fit_parameter_values = {"time_constants": 50, "amplitudes": 0.7}
+            with open(self.initial_fit_parameter_values_file, mode='w') as dict_file:
+                dict_file.write(str(self.initial_fit_parameter_values))
+
+        else:
+            try:
+                with open(self.initial_fit_parameter_values_file, mode='r') as dict_file:
+                    self.initial_fit_parameter_values = ast.literal_eval(dict_file.readline().strip())
+            except SyntaxError as error:
+                tk.messagebox.showwarning(title="Warning, problem with fit parameters file!",
+                                        message="initial fit parameter values file can not be evaluated correctly!\n\n"
+                                        +f"error: {error}"
+                                        +"\n\nIt should contain only one python dictionary and nothing else!"
+                                        +"\n\nProgram will use default values: {\"time_constants\": 50, \"amplitudes\": 0.7}")
+                self.initial_fit_parameter_values = {"time_constants": 50, "amplitudes": 0.7}
+
+        # set initial data file variable etc.
         self.curr_reconstruct_data_file_strVar = tk.StringVar()
         self.curr_reconstruct_data_file_strVar.set("no file selected")
         # self.curr_reconstruct_data_file_strVar.set(base_directory+"/DataFiles/simulatedTAData_formatted.txt")
-        # self.curr_reconstruct_data_file_strVar.set(base_directory+"/DataFiles/data_full_0.txt")
+        self.curr_reconstruct_data_file_strVar.set(base_directory+"/DataFiles/data_full_0.txt")
         self.curr_reconstruct_data_file_strVar.trace_add("write", self.update_title_callback)
         self.curr_reconstruct_data_start_time_value = tk.DoubleVar()
         self.curr_reconstruct_data_start_time_value.trace_add("write", self.update_title_callback)
@@ -64,7 +86,7 @@ class GuiAppTAAnalysis(tk.Frame):
 
         # geometry, title etc of window
         self.parent.config(bg=self.violet)
-        self.parent.title("time-resolved data analysis gui - current data file: " + os.path.basename(self.curr_reconstruct_data_file_strVar.get()) + "; approximate start time value: " + str(self.curr_reconstruct_data_start_time_value.get()))
+        self.parent.title("time-resolved data analysis gui - current data file: " + os.path.basename(self.curr_reconstruct_data_file_strVar.get()) + ";  approximate start time value: " + str(self.curr_reconstruct_data_start_time_value.get()) + ";  initial fit parameter values: " + str(self.initial_fit_parameter_values))
         self.make_window_fullscreen()
         root.update_idletasks()         # has to be done before checking the widget dimensions with winfo_.. as it else returns 1!
         root.minsize(1000, 550)
@@ -105,12 +127,12 @@ class GuiAppTAAnalysis(tk.Frame):
     """ callback methods """
     def update_title_callback(self, name, idx, mode):
         """
-        name = internal variable name of traced variable
-        idx = list index of traced variable if name is a list variable, else an empty string
-        mode = tells you which operation triggered the callback
-        they are necessary to have a correct syntax
+        name = internal variable name of traced variable\n
+        idx = list index of traced variable if name is a list variable, else an empty string\n
+        mode = tells you which operation triggered the callback\n
+        they are apparently necessary to have a correct syntax with trace_add method
         """
-        self.parent.title("time-resolved data analysis gui - current data file: " + os.path.basename(self.curr_reconstruct_data_file_strVar.get()) + "; approximate start time value: " + str(self.curr_reconstruct_data_start_time_value.get()))
+        self.parent.title("time-resolved data analysis gui - current data file: " + os.path.basename(self.curr_reconstruct_data_file_strVar.get()) + ";  approximate start time value: " + str(self.curr_reconstruct_data_start_time_value.get()) + ";  initial fit parameter values: " + str(self.initial_fit_parameter_values))
 
     def test_value_digits_only(self, inStr, acttyp):
         if acttyp == '1': #insert
@@ -251,6 +273,14 @@ class GuiAppTAAnalysis(tk.Frame):
         if start_time_value_candidate!=None and self.string_is_number(start_time_value_candidate):
             start_time_value_candidate.lstrip("0")
             self.curr_reconstruct_data_start_time_value.set(float(start_time_value_candidate))
+
+        return None
+
+    def set_initial_fit_parameter_values(self):
+        self.initial_fit_parameter_values_window = initial_fit_parameter_values_Toplevel.initial_fit_parameters_Window(self, self.initial_fit_parameter_values_file, self.initial_fit_parameter_values)
+        self.wait_window(self.initial_fit_parameter_values_window)
+
+        self.update_title_callback("","","")
 
         return None
 
@@ -686,9 +716,19 @@ class GuiAppTAAnalysis(tk.Frame):
         # placing widgets on tab 1
         self.initialize_tab1()
 
+        # button to change initial fit parameter values
+        self.btn_set_initial_fit_parameter_values = tk.Button(self.parent, text="Set initial fit parameter values", command=self.set_initial_fit_parameter_values)
+        ttp_btn_set_intitial_fit_parameter_values = ToolTip.CreateToolTip(self.btn_set_initial_fit_parameter_values, \
+        'Open a window to display and possibly change the values that are used '
+        'as initial parameter values in SVDGF procedure.'
+        '\n\nWhenever these values are changed, the new ones will be used for each fit until the user selects to change them again.'
+        '\nTo be able to reuse the latest user selected values when user quits and restarts program, the values are written to a file.',
+        optional_y_direction_bump=200, optional_x_direction_bump=150)
+        self.btn_set_initial_fit_parameter_values.grid(sticky="sw", padx=0, pady=3, ipady=2, ipadx=0)
+
         # quit button
         self.btn_quit = tk.Button(self.parent, text="Quit App", command=quit)
-        self.btn_quit.grid(sticky="se", padx=5, pady=3, ipady=2, ipadx=5)
+        self.btn_quit.grid(sticky="se", padx=5, pady=3, ipady=2, ipadx=5, row=self.btn_set_initial_fit_parameter_values.grid_info()["row"])
 
 if __name__ == '__main__':
     root=tk.Tk()

@@ -8,6 +8,7 @@ Inputs: \n
 * temporal_resolution is used for convolution in fit function\n
 * retained_compontents = retained components for data reconstruction, the number of components determines the number of exp decays used in fit function.\n\n
 * time_delays = all the time steps in datafile at which data is taken - are used in exp decays of fit\n
+* initial fit parameter values = dictionary of values to use as initial fit parameter values\n
 * time_zero, is also used for convolution in fit function and to reduce the number of time_delays.\n
 The fit parameters: \n
 * the decay consts of exp decays in fit function - shared parameters\n
@@ -133,7 +134,7 @@ def get_gaussian_for_convolution(time_delays, time_zero, temp_resolution, index_
 
     return gaussian_for_convolution
 
-def start_the_fit(retained_components, time_delays, retained_rSVs, retained_singular_values, time_zero, temp_resolution):
+def start_the_fit(retained_components, time_delays, retained_rSVs, retained_singular_values, initial_fit_parameter_values, time_zero, temp_resolution):
     """ initialize vectors to fit and fit parameters, then calls lmfit function """
     # multiplication of each retained right SV with its respective singular value:
     vectors_to_fit = np.zeros((len(retained_components), len(time_delays)))
@@ -145,9 +146,9 @@ def start_the_fit(retained_components, time_delays, retained_rSVs, retained_sing
     # initialize fit parameters
     fit_params = lmfit.Parameters()
     for component in retained_components:
-        fit_params.add( 'tau_component%i' % (component), value=50)
+        fit_params.add( 'tau_component%i' % (component), value=initial_fit_parameter_values["time_constants"])
         for i in range(0, len(retained_components)):
-            fit_params.add( 'amp_rSV%i_component%i' % (i, component), value=0.7)
+            fit_params.add( 'amp_rSV%i_component%i' % (i, component), value=initial_fit_parameter_values["amplitudes"])
 
 
     # need this index for the convolution in fit procedure:
@@ -167,7 +168,7 @@ def start_the_fit(retained_components, time_delays, retained_rSVs, retained_sing
 
     return result
 
-def run(retained_rSVs, retained_singular_values, retained_components, time_delays, start_time, time_zero, temp_resolution):
+def run(retained_rSVs, retained_singular_values, retained_components, time_delays, start_time, initial_fit_parameter_values, time_zero, temp_resolution):
 
     # for the fit function we need the time_delays reduced to the ones after start_time
     start_time_index = time_delays.index(str(start_time))
@@ -176,10 +177,10 @@ def run(retained_rSVs, retained_singular_values, retained_components, time_delay
     time_delays = np.array(time_delays)
 
     try:
-        result = start_the_fit(retained_components, time_delays, retained_rSVs, retained_singular_values, time_zero, temp_resolution)
+        result = start_the_fit(retained_components, time_delays, retained_rSVs, retained_singular_values, initial_fit_parameter_values, time_zero, temp_resolution)
         resulting_fit_params = result.params
 
-    except Exception as error:
+    except ValueError as error:
         raise  # raises the caught exception again
 
 

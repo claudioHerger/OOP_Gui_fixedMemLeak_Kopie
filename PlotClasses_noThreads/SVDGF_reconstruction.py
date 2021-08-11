@@ -55,6 +55,8 @@ class SVDGF_Heatmap():
 
         self.user_selected_decay_times = None
 
+        self.initial_fit_parameter_values = parent.initial_fit_parameter_values
+
         return None
 
     def make_reconstruction_plot(self, update_with_selected_DAS=False):
@@ -263,13 +265,13 @@ class SVDGF_Heatmap():
 
         return None
 
-    def handle_new_times_assignement(self, user_selected_decay_times):
+    def handle_new_decay_times_assignement(self, user_selected_decay_times):
         self.user_selected_decay_times = user_selected_decay_times
 
         return None
 
     def display_toplevel_to_change_decay_times_used_for_DAS(self):
-        self.new_times_toplevel = new_decay_times_Toplevel.new_decay_times_Window(self.parent, self.resulting_SVDGF_fit_parameters, self.components_list, self.indeces_for_DAS_matrix, self.tab_idx, self.handle_new_times_assignement, self.user_selected_decay_times)
+        self.new_times_toplevel = new_decay_times_Toplevel.new_decay_times_Window(self.parent, self.resulting_SVDGF_fit_parameters, self.components_list, self.indeces_for_DAS_matrix, self.tab_idx, self.handle_new_decay_times_assignement, self.user_selected_decay_times)
         # this lets the program wait and execute further only once the toplevel has been closed
         self.parent.wait_window(self.new_times_toplevel)
 
@@ -321,11 +323,11 @@ class SVDGF_Heatmap():
 
         # do the fit: input: selected rSVs and singular values, self.temp_resolution, self.components_list - output: decay constants, amplitudes
         try:
-            self.fit_result, self.resulting_SVDGF_fit_parameters = get_SVDGFit_parameters.run(self.retained_rSVs, self.retained_singular_values, self.components_list, self.time_delays, self.start_time, self.time_zero, self.temp_resolution)
+            self.fit_result, self.resulting_SVDGF_fit_parameters = get_SVDGFit_parameters.run(self.retained_rSVs, self.retained_singular_values, self.components_list, self.time_delays, self.start_time, self.initial_fit_parameter_values, self.time_zero, self.temp_resolution)
         except ValueError as error:
             tk.messagebox.showerror("Warning, an exception occurred!", f"Exception {type(error)} message: \n"+ str(error)+ "\n"+
-                                    "\nProbably due to a ValueError occurring in fit down the line, \ni.e.: the fit might not have converged. "+
-                                    +"\nMaybe try it with changed initial fit values (button in bottom left corner),"
+                                    "\nProbably due to a ValueError occurring in fit down the line, \ni.e.: the fit might not have converged. "
+                                    +"\n\nMaybe try it with changed initial fit parameter values (button in bottom left corner),"
                                     +" or another set of components or another start time-value...")
 
             # return gui to initial state if above data preparation failed
@@ -346,7 +348,7 @@ class SVDGF_Heatmap():
                                     +"\n\nLikely due to some error in fit procedure which lead to very small fitted decay constants in course of which we get numbers like exp(-bigNumber),"
                                     +" which underflows a float."
                                     +f"\n{self.fit_result_decay_times=}"
-                                    +"\nMaybe try it with changed initial fit values (button in bottom left corner),"
+                                    +"\n\nMaybe try it with changed initial fit parameter values (button in bottom left corner),"
                                     +" or another set of components or another start time-value...")
             # return gui to initial state if above data preparation failed
             self.parent.return_some_gui_widgets_to_initial_state(button=self.parent.btn_show_SVDGF_reconstructed_data_heatmap, label=self.parent.lbl_reassuring_SVDGF, tab_control=self.parent.nbCon_SVDGF.tab_control)
