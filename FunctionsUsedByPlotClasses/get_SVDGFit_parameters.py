@@ -145,7 +145,7 @@ def start_the_fit(retained_components, time_delays, retained_rSVs, retained_sing
     # initialize fit parameters
     fit_params = lmfit.Parameters()
     for component in retained_components:
-        fit_params.add( 'tau_component%i' % (component), value=30)
+        fit_params.add( 'tau_component%i' % (component), value=50)
         for i in range(0, len(retained_components)):
             fit_params.add( 'amp_rSV%i_component%i' % (i, component), value=0.7)
 

@@ -64,7 +64,7 @@ class GuiAppTAAnalysis(tk.Frame):
 
         # geometry, title etc of window
         self.parent.config(bg=self.violet)
-        self.parent.title("OOP TA data analysis gui - " + "curr data file - " + os.path.basename(self.curr_reconstruct_data_file_strVar.get()) + "; approximate start time value - " + str(self.curr_reconstruct_data_start_time_value.get()))
+        self.parent.title("time-resolved data analysis gui - current data file: " + os.path.basename(self.curr_reconstruct_data_file_strVar.get()) + "; approximate start time value: " + str(self.curr_reconstruct_data_start_time_value.get()))
         self.make_window_fullscreen()
         root.update_idletasks()         # has to be done before checking the widget dimensions with winfo_.. as it else returns 1!
         root.minsize(1000, 550)
@@ -110,7 +110,7 @@ class GuiAppTAAnalysis(tk.Frame):
         mode = tells you which operation triggered the callback
         they are necessary to have a correct syntax
         """
-        self.parent.title("TA data analysis gui of hell - " + "curr data file - " + os.path.basename(self.curr_reconstruct_data_file_strVar.get()) + "; start time value - " + str(self.curr_reconstruct_data_start_time_value.get()))
+        self.parent.title("time-resolved data analysis gui - current data file: " + os.path.basename(self.curr_reconstruct_data_file_strVar.get()) + "; approximate start time value: " + str(self.curr_reconstruct_data_start_time_value.get()))
 
     def test_value_digits_only(self, inStr, acttyp):
         if acttyp == '1': #insert
@@ -522,44 +522,6 @@ class GuiAppTAAnalysis(tk.Frame):
 
         return None
 
-    """ not really used at the moment, as only the first tab is initialized"""
-    def show_singular_values(self):
-        if self.too_many_such_tabs(self.nbCon_singValues.tab_control, "next_tab_idx_singValues", self.NR_OF_TABS):
-            return None
-
-        # check how many singular values are to be plotted:
-        if self.ent_singular_values.get() == "" or self.ent_singular_values.get() == "0":
-            tk.messagebox.showerror("Warning!", "Will only plot a non-zero number of singular values!")
-            return None     # user entered non-valid nr of singular values to plot
-        self.nr_of_sing_values_to_plot = int(self.ent_singular_values.get())
-
-        # check whether a file and start time has been selected at all to create a heatmap from
-        self.check_curr_fileVar_and_start_timeVar_value_exist(self.curr_reconstruct_data_file_strVar, self.curr_reconstruct_data_start_time_value)
-
-        # disabling used button
-        self.btn_show_singular_values["state"] = tk.DISABLED
-        # showing reassuring label
-        self.lbl_reassuring_singValues.grid(columnspan=2)
-
-        # make tabs with heatmap plots:
-        self.next_tab_idx_singValues = self.get_index_of_next_tab_for_nb(self.nbCon_singValues.tab_control, self.NR_OF_TABS)
-        if not self.nbCon_singValues.tab_control.winfo_ismapped():
-            self.nbCon_singValues.tab_control.grid(row=0, column=1, sticky="nw")
-        self.nbCon_singValues.add_indexed_tab(self.next_tab_idx_singValues, title=str(self.nr_of_sing_values_to_plot))
-
-        self.nbCon_singValues.data_objs[self.next_tab_idx_singValues] = SingularValues.SingularValues_Plot(self, self.curr_reconstruct_data_file_strVar.get(), self.curr_reconstruct_data_start_time_value.get(), self.next_tab_idx_singValues, self.nr_of_sing_values_to_plot)
-        thread_instance_singValues = threading.Thread(target=self.nbCon_singValues.data_objs[self.next_tab_idx_singValues].make_data)
-        thread_instance_singValues.start()
-        self.monitor_thread(thread_instance_singValues, self.nbCon_singValues.data_objs[self.next_tab_idx_singValues], self.btn_show_singular_values, self.lbl_reassuring_singValues)
-
-        return None
-
-    def show_left_singular_vectors(self):
-        pass
-
-    def show_right_singular_vectors(self):
-        pass
-
     """ set up Gui """
     def initialize_tabs_and_frames(self):
         """
@@ -716,60 +678,6 @@ class GuiAppTAAnalysis(tk.Frame):
         """ notebook for difference matrices """
         self.nbCon_difference = NotebookContainer.NotebookContainer(self, self.frm_main_tab1, self.NR_OF_DIFFERENCE_TABS, figsize=(10,5))
 
-    def initialize_tab2(self):
-        """
-        in this tab one can select a file and a start time
-        then plot a number of singular values, left and right singular vectors
-        """
-        # widgets for file and time changes
-        self.frm_input_options_tab2 = tk.Frame(self.frm_main_tab2, bg=self.gold,)
-        self.frm_input_options_tab2.grid(row=0, column=0, sticky="nsw", rowspan=2)
-
-        self.btn_update_curr_reconstruct_data_file_strVar1 = tk.Button(self.frm_input_options_tab2, text="change data file", command= lambda x=self.curr_reconstruct_data_file_strVar: self.set_curr_fileVar(x))
-        self.btn_change_reconstruct_start_time_value1 = tk.Button(self.frm_input_options_tab2, text="change start time value", command=lambda x=self.curr_reconstruct_data_start_time_value: self.set_curr_start_time_value(x))
-        self.btn_update_curr_reconstruct_data_file_strVar1.grid(row=0, column=0, padx=3, pady=5, sticky="ew", columnspan=2)
-        self.btn_change_reconstruct_start_time_value1.grid(row=1, column=0, padx=3, pady=5, sticky="ew", columnspan=2)
-
-        # widgets for singular values plot
-        self.lbl_singular_values = tk.Label(self.frm_input_options_tab2, text="nr of SVs: ", fg=self.violet)
-        self.ent_singular_values = tk.Entry(self.frm_input_options_tab2, width=5, fg=self.violet, validate="key", validatecommand=(self.register(self.test_value_digits_only),'%P','%d'))
-        self.ent_singular_values.insert(0, 10)
-        self.btn_show_singular_values = tk.Button(self.frm_input_options_tab2, text="plot Svalues", command=self.show_singular_values)
-
-        self.lbl_singular_values.grid(row=2, column=0, padx=3, pady=5, sticky="w")
-        self.ent_singular_values.grid(row=2, column=1, padx=3, pady=5, sticky="e")
-        self.btn_show_singular_values.grid(row=3, column=0, padx=3, pady=5, sticky="ew", columnspan=2)
-
-        # widgets for left, right singular vectors plot
-        self.lbl_singular_vectors = tk.Label(self.frm_input_options_tab2, text="select Svectors for plot", fg=self.violet)
-        self.lbl_singular_vectors.grid(row=4, column=0, padx=3, pady=5, sticky="ew", columnspan=2)
-        nr_checkboxes_left_SVs = 10
-        self.checkbutton_vars_left_SVs= [tk.IntVar(0) for var in range(nr_checkboxes_left_SVs)]
-        checkbuttons_left_SVs = [tk.Checkbutton(self.frm_input_options_tab2, text="left "+str(checkbox), variable=self.checkbutton_vars_left_SVs[checkbox], onvalue=1, offvalue=0, ) for checkbox in range(nr_checkboxes_left_SVs)]
-
-        for checkbox in range(nr_checkboxes_left_SVs):
-            checkbuttons_left_SVs[checkbox].grid(row=checkbox+5, column=0, sticky='sew', padx=3)
-
-        nr_checkboxes_right_SVs = 10
-        self.checkbutton_vars_right_SVs= [tk.IntVar(0) for var in range(nr_checkboxes_right_SVs)]
-        checkbuttons_right_SVs = [tk.Checkbutton(self.frm_input_options_tab2, text="right "+str(checkbox), variable=self.checkbutton_vars_right_SVs[checkbox], onvalue=1, offvalue=0, ) for checkbox in range(nr_checkboxes_right_SVs)]
-
-        for checkbox in range(nr_checkboxes_right_SVs):
-            checkbuttons_right_SVs[checkbox].grid(row=checkbox+5, column=1, sticky='sew', padx=3)
-
-        self.btn_show_left_singular_vectors = tk.Button(self.frm_input_options_tab2, text="plot ORIGs left Svectors", command=self.show_left_singular_vectors)
-        self.btn_show_right_singular_vectors = tk.Button(self.frm_input_options_tab2, text="plot ORIGs right Svectors", command=self.show_right_singular_vectors)
-
-        self.btn_show_left_singular_vectors.grid(column=0, padx=3, pady=5, sticky="ew", columnspan=2)
-        self.btn_show_right_singular_vectors.grid(column=0, padx=3, pady=5, sticky="ew", columnspan=2)
-
-        # reassuring label on main frame 2
-        self.lbl_reassuring_singValues = tk.Label(self.frm_input_options_tab2, text="patience, padawan")
-
-        # notebook containers - singular values and vectors
-        self.nbCon_singValues = NotebookContainer.NotebookContainer(self, self.frm_main_tab2, self.NR_OF_TABS, figsize=(10,8))
-
-
     # Widget layout of GUI
     def initialize_GUI(self):
         # Tabs and frames setup
@@ -777,12 +685,6 @@ class GuiAppTAAnalysis(tk.Frame):
 
         # placing widgets on tab 1
         self.initialize_tab1()
-
-        # placing widgets on tab 2
-        # not really needed as all features planned on this tab now also accessible in tab1
-        # self.initialize_tab2()
-
-        # placing widgets on tab 3
 
         # quit button
         self.btn_quit = tk.Button(self.parent, text="Quit App", command=quit)
