@@ -43,7 +43,7 @@ class GuiAppTAAnalysis(tk.Frame):
         else:
             try:
                 with open(self.initial_fit_parameter_values_file, mode='r') as dict_file:
-                    self.initial_fit_parameter_values = ast.literal_eval(dict_file.readline().strip())
+                    self.initial_fit_parameter_values = ast.literal_eval(dict_file.read().strip())
             except SyntaxError as error:
                 tk.messagebox.showwarning(title="Warning, problem with fit parameters file!",
                                         message="initial fit parameter values file can not be evaluated correctly!\n\n"
@@ -86,6 +86,7 @@ class GuiAppTAAnalysis(tk.Frame):
 
         # geometry, title etc of window
         self.parent.config(bg=self.violet)
+        self.truncated_filename = (os.path.basename(self.curr_reconstruct_data_file_strVar.get())[:20] + '...') if len(os.path.basename(self.curr_reconstruct_data_file_strVar.get())) > 23 else os.path.basename(self.curr_reconstruct_data_file_strVar.get())
         self.parent.title("time-resolved data analysis gui - current data file: " + os.path.basename(self.curr_reconstruct_data_file_strVar.get()) + ";  approximate start time value: " + str(self.curr_reconstruct_data_start_time_value.get()) + ";  initial fit parameter values: " + str(self.initial_fit_parameter_values))
         self.make_window_fullscreen()
         root.update_idletasks()         # has to be done before checking the widget dimensions with winfo_.. as it else returns 1!
@@ -96,7 +97,7 @@ class GuiAppTAAnalysis(tk.Frame):
         # initializing gui
         self.initialize_GUI()
 
-        # only becomes necessary due to DAS toplevel... strange!
+        # only becomes necessary due to fit result toplevel... strange!
         # so that one can take the main gui into focus again while toplevels are open
         self.parent.bind("<Button-1>", lambda event: self.parent.lift())
 
@@ -132,6 +133,7 @@ class GuiAppTAAnalysis(tk.Frame):
         mode = tells you which operation triggered the callback\n
         they are apparently necessary to have a correct syntax with trace_add method
         """
+        self.truncated_filename = (os.path.basename(self.curr_reconstruct_data_file_strVar.get())[:20] + '...') if len(os.path.basename(self.curr_reconstruct_data_file_strVar.get())) > 23 else os.path.basename(self.curr_reconstruct_data_file_strVar.get())
         self.parent.title("time-resolved data analysis gui - current data file: " + os.path.basename(self.curr_reconstruct_data_file_strVar.get()) + ";  approximate start time value: " + str(self.curr_reconstruct_data_start_time_value.get()) + ";  initial fit parameter values: " + str(self.initial_fit_parameter_values))
 
     def test_value_digits_only(self, inStr, acttyp):
@@ -457,9 +459,9 @@ class GuiAppTAAnalysis(tk.Frame):
         self.next_tab_idx_orig = self.get_index_of_next_tab_for_nb(self.nbCon_orig.tab_control, self.NR_OF_TABS)
         if not self.nbCon_orig.tab_control.winfo_ismapped():
             self.nbCon_orig.tab_control.grid(row=0, column=2, sticky="ne")
-        self.nbCon_orig.add_indexed_tab(self.next_tab_idx_orig, title=str(self.curr_reconstruct_data_start_time_value.get()) + " " + os.path.splitext(os.path.basename(self.curr_reconstruct_data_file_strVar.get()))[0])
+        self.nbCon_orig.add_indexed_tab(self.next_tab_idx_orig, title=str(self.curr_reconstruct_data_start_time_value.get()) + " " + os.path.splitext(self.truncated_filename)[0])
 
-        self.nbCon_orig.data_objs[self.next_tab_idx_orig] = ORIGData.ORIGData_Heatmap(self, self.next_tab_idx_orig, self.curr_reconstruct_data_file_strVar.get(), self.curr_reconstruct_data_start_time_value.get())
+        self.nbCon_orig.data_objs[self.next_tab_idx_orig] = ORIGData.ORIGData_Heatmap(self, self.next_tab_idx_orig, self.curr_reconstruct_data_file_strVar.get(), self.curr_reconstruct_data_start_time_value.get(), self.truncated_filename)
         thread_instance_orig = threading.Thread(target=self.nbCon_orig.data_objs[self.next_tab_idx_orig].make_data)
         thread_instance_orig.start()
         self.monitor_thread(thread_instance_orig, self.nbCon_orig.data_objs[self.next_tab_idx_orig], self.btn_show_orig_data_heatmap, self.lbl_reassuring_orig)

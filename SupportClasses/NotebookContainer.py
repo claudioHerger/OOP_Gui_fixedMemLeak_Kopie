@@ -2,7 +2,7 @@ import tkinter as tk
 import tkinter.ttk as ttk
 
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 class NotebookContainer():
     """a class to contain all the notebook frames, figures, FigureCanvasTkAgg and data_objects as needed\n
@@ -53,7 +53,7 @@ class NotebookContainer():
 
         Args:
             tab_idx (int): the position of the new tab in the notebook.
-            title (String): String to be added to tab text. Default is empty String.
+            title (optional String): String to be added to tab text. Default is empty String.
         """
         # you should NOT change the text string of these tabs!
         # the method get_next_tab_index depends on its layout!!

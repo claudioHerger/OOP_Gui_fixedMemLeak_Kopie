@@ -16,18 +16,21 @@ from SupportClasses import saveData
 from ToplevelClasses import SVD_inspection_Toplevel
 
 class ORIGData_Heatmap():
-    def __init__(self, parent, tab_idx, filename, start_time):
+    def __init__(self, parent, tab_idx, filename, start_time, tab_title_filename):
         """ A class used to show the heatmap of an input (TA) data file starting from input start time value on the OOP Gui. \n
         The plot will be put on a tab of a ttk notebook.\n\n
         * parent is the Gui App that creates the instance of this class\n
         * tab_idx is the index of the tab that is added to the ttk notebook.\n
         * filename is the full path of the datafile\n
-        * start_time is the value of the start time starting from which the data will be used for the plot
+        * start_time is the value of the start time starting from which the data will be used for the plot\n
+        * self.tab_title_filename (string): filename possibly truncated so that tab titles do not become too large
         """
         self.parent = parent
         self.filename = filename
         self.start_time = start_time
         self.tab_idx = tab_idx
+        self.tab_title_filename = tab_title_filename
+
 
         return None
 
@@ -80,7 +83,7 @@ class ORIGData_Heatmap():
     def make_canvas(self):
         self.make_plot()
 
-        self.tab_title = '{:,.1f}'.format(float(self.start_time)) + " " + os.path.splitext(os.path.basename(self.filename))[0]
+        self.tab_title = '{:,.1f}'.format(float(self.start_time)) + " " + os.path.splitext(self.tab_title_filename)[0]
         self.parent.nbCon_orig.tab_control.tab(self.parent.nbCon_orig.tab_control.index("current"), text=f'{self.tab_idx+1}: ' + self.tab_title)
 
         self.btn_delete_attrs = tk.Button(self.parent.nbCon_orig.figure_frames[self.tab_idx], text="remove tab", fg=self.parent.violet, command=lambda: self.remove_tab(self.parent.nbCon_orig))
