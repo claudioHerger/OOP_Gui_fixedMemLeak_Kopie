@@ -38,8 +38,6 @@ def convolute_first_part_of_fit_function(sum_of_exponentials, time_delays, index
 
     return convolution
 
-
-
 def model_func(time_delays, amplitudes, decay_constants, index_of_first_increased_time_interval, gaussian_for_convolution):
     """ model function for fit: a sum of exponentials (as many as SVD components are used for SVDGF reconstruction).\n
     the amplitudes of the expontials are individual fit parameters, the decay constants are shared fit parameters.\n
