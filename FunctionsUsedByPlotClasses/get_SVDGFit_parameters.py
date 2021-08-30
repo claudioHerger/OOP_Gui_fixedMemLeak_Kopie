@@ -21,6 +21,7 @@ import numpy as np
 import lmfit
 import math
 import scipy.signal
+import asteval
 
 
 def convolute_first_part_of_fit_function(sum_of_exponentials, time_delays, index_of_first_increased_time_interval, gaussian_for_convolution):
@@ -37,6 +38,20 @@ def convolute_first_part_of_fit_function(sum_of_exponentials, time_delays, index
     convolution = convolution
 
     return convolution
+
+def model_func_user_defined(time_delays, amplitudes, decay_constants, retained_components, user_function_summands):
+    taus = {}
+    for (i,comp) in enumerate(retained_components):
+        taus[f"component{comp}"] = decay_constants[i]
+
+    exp_sum = np.zeros(len(time_delays))
+    for i in range(len(user_function_summands)):
+        exp_sum += amplitudes[i]*asteval(user_function_summands[i])
+
+
+    return exp_sum
+
+
 
 def model_func(time_delays, amplitudes, decay_constants, index_of_first_increased_time_interval, gaussian_for_convolution):
     """ model function for fit: a sum of exponentials (as many as SVD components are used for SVDGF reconstruction).\n
