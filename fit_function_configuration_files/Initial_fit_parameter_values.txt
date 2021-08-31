@@ -1,0 +1,1 @@
+{'time_constants': 30.0, 'amplitudes': 0.7}

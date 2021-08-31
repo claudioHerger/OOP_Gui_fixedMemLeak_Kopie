@@ -1,1 +1,0 @@
-{'summand 0': '50.0 +23', 'summand 1': 'exp(-t/k1)-exp(-t/k2)+21'}

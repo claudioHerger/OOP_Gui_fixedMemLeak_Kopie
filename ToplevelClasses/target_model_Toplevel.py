@@ -25,7 +25,7 @@ class target_model_Window(tk.Toplevel):
 
         self.title('Define a fit function.')
 
-        self.lbl_short_how_to = tk.Label(self, text="use \"k1\" as decay constant of component 1, \"t\" for time, \"exp()\" for exponential, only use () as brackets. get more info =>")
+        self.lbl_short_how_to = tk.Label(self, text="use \"k1\" as decay constant of component 1, \"t\" for time, \"exp()\" for exponential, only use \"()\" as brackets. get more info =>")
         self.lbl_short_how_to.grid(padx=10, sticky="nsew", row=0, columnspan=3)
         self.btn_display_help_text = tk.Button(self, text="more info", command=self.display_help_window)
         ttp_btn_display_help_text = ToolTip.CreateToolTip(self.btn_display_help_text, text="displays a window with some additional information")
@@ -41,9 +41,10 @@ class target_model_Window(tk.Toplevel):
         'The program will try to parse what you have entered, and will display a window to show what the '
         'parsed fit function would look like in code.')
         self.btn_parse_from_entries.grid(padx=10, pady=10, sticky="sw", row=99, column=0)
+        self.parsed_new_summands_labels = []
 
-        self.read_and_parse_old_summands_from_file()
-        self.display_summand_labels()
+        self.get_old_summands_from_file()
+        self.display_summand_labels_and_entries()
 
         self.grab_set()         # to keep the window in front of application until it gets closed
         self.focus_set()
@@ -64,11 +65,13 @@ class target_model_Window(tk.Toplevel):
         as i do not want you to have to write actual code here, i will parse your entries:
         as indicated, \"k1\" will be parsed to the fit parameter for the decay constant of the first component.
         each summand will be multiplied with an amplitude parameter, for more info on that, check how your entries are parsed via button.
+
+        The parsing is not very sophisticated, so if you e.g. miss a bracket, the fit procedure may fail.
         """
         tk.messagebox.showinfo(title="hopefully helpful information window", message=re.sub('^[ \t]*',"",helpful_information, flags=re.MULTILINE), parent=self, default = "ok", )
         return None
 
-    def read_and_parse_old_summands_from_file(self):
+    def get_old_summands_from_file(self):
         try:
             with open(self.file_name, mode='r') as dict_file:
                 self.old_summands_dict_from_file = ast.literal_eval(dict_file.read().strip())
@@ -80,6 +83,40 @@ class target_model_Window(tk.Toplevel):
                                     +"If it does, it should contain only one python dictionary with strings as values and keys and nothing else!\nMaybe have a look at it..?\n\n"
                                     +"If you enter a fit function that can be successfully parsed, a new file will be written.")
             self.old_summands_dict_from_file = {}
+
+    def display_summand_labels_and_entries(self):
+        self.summand_labels = []
+        self.parsed_old_summand_labels = []
+        self.summand_entries = []
+        for i in range(len(self.components)):
+            self.summand_labels.append(tk.Label(self, text=f"summand {i}:", justify=tk.RIGHT))
+            self.parsed_old_summand_labels.append(tk.Label(self, justify=tk.RIGHT))
+            self.summand_entries.append(tk.Entry(self, width=50, justify=tk.RIGHT))
+            if f"summand {i}" in self.old_summands_dict_from_file.keys():
+                self.parsed_old_summand_labels[i]["text"] = self.old_summands_dict_from_file[f"summand {i}"]
+                self.summand_entries[i].insert(0, self.old_summands_dict_from_file[f"summand {i}"])
+            else:
+                self.summand_entries[i].insert(0, "0")
+            self.summand_labels[i].grid(padx=10, sticky="e", row=i+2, column=0)
+            self.parsed_old_summand_labels[i].grid(padx=10, sticky="nsew", row=i+2, column=1)
+            # some key-binding for user experience.
+            if i+1 < len(self.components):
+                self.summand_entries[i].bind("<Key-Down>", lambda event, idx=i: self.handle_down_key_press(event, idx))
+            if i > 0:
+                self.summand_entries[i].bind("<Key-Up>", lambda event, idx=i: self.handle_up_key_press(event, idx))
+            self.summand_entries[i].grid(sticky="nsew", row=i+2, column=2)
+
+        return None
+
+    def handle_up_key_press(self, event, index):
+        self.summand_entries[index-1].focus()
+        self.summand_entries[index-1].icursor(tk.END)
+        return None
+
+    def handle_down_key_press(self, event, index):
+        self.summand_entries[index+1].focus()
+        self.summand_entries[index+1].icursor(tk.END)
+        return None
 
     def parse_new_summands_from_entries(self):
         # disable any new input into entries until user says they are not happy with how it has been parsed:
@@ -96,14 +133,19 @@ class target_model_Window(tk.Toplevel):
         return self.parsed_new_summands_from_entries
 
     def display_parsed_new_summands_on_window(self, parsed_new_summands: dict):
-        self.parsed_new_summands_labels = []
-        colors=["orange", "darkmagenta"]
+        colors=["navyblue", "darkmagenta"]
 
-        self.lbl_fit_function = tk.Label(self, text="fit function is: ")
+        self.lbl_fit_function = tk.Label(self, text="i-th fit function is: ")
         self.lbl_fit_function.grid(row=self.btn_ignore_and_quit.grid_info()["row"]+1, column=0, sticky="ew")
 
         self.lbl_right_singular_vector_i = tk.Label(self, text="right singular vector i = ")
         self.lbl_right_singular_vector_i.grid(row=self.btn_ignore_and_quit.grid_info()["row"]+2, sticky="e")
+
+        # destroy labels if they exist already
+        if len(self.parsed_new_summands_labels) != 0:
+            for label in self.parsed_new_summands_labels:
+                label.destroy()
+        self.parsed_new_summands_labels = []
 
         nr_of_summands = len(self.components)
         for i, (component, summand) in enumerate(zip(self.components, parsed_new_summands.values())):
@@ -143,10 +185,14 @@ class target_model_Window(tk.Toplevel):
         self.btn_use_parsed_summands.grid(padx=10, pady=10, sticky="sw", column=0)
         self.btn_rewrite_summands.grid(padx=10, pady=10, sticky="se", column=3, row = self.btn_use_parsed_summands.grid_info()["row"])
 
+        self.lbl_warning_because_of_eval = tk.Label(self, text="Warning: your fit function will be evaluated via \"asteval\",\n so if you write in code to e.g. delete all files, this might just get executed!", font=("Helvetica", 14))
+        self.lbl_warning_because_of_eval.grid(columnspan=10)
+
         return None
 
     def write_new_summands_to_file(self):
         self.parent.checkbox_use_target_model["state"] = tk.ACTIVE
+        self.parent.checkbox_use_target_model.flash()
         self.parent.checkbox_var_use_target_model.set(1) # set the checkbox so that the user defined fit function will be used
 
         self.new_summands_dict = {}
@@ -160,26 +206,10 @@ class target_model_Window(tk.Toplevel):
     def rewrite_summands(self):
         self.btn_use_parsed_summands.destroy()
         self.btn_rewrite_summands.destroy()
+        self.lbl_warning_because_of_eval.destroy()
 
         for entry in self.summand_entries:
             entry["state"] = "normal"
-
-        return None
-
-    def display_summand_labels(self):
-        self.summand_labels = []
-        self.parsed_old_summand_labels = []
-        self.summand_entries = []
-        for i in range(len(self.components)):
-            self.summand_labels.append(tk.Label(self, text=f"summand {i}:", justify=tk.RIGHT))
-            self.parsed_old_summand_labels.append(tk.Label(self, justify=tk.RIGHT))
-            self.summand_entries.append(tk.Entry(self, width=50, justify=tk.RIGHT))
-            if f"summand {i}" in self.old_summands_dict_from_file.keys():
-                self.parsed_old_summand_labels[i]["text"] = self.old_summands_dict_from_file[f"summand {i}"]
-                self.summand_entries[i].insert(0, self.old_summands_dict_from_file[f"summand {i}"])
-            self.summand_labels[i].grid(padx=10, sticky="e", row=i+2, column=0)
-            self.parsed_old_summand_labels[i].grid(padx=10, sticky="nsew", row=i+2, column=1)
-            self.summand_entries[i].grid(sticky="nsew", row=i+2, column=2)
 
         return None
 

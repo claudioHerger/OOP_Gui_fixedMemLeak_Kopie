@@ -20,7 +20,7 @@ class FitResult_Window(tk.Toplevel):
         self.btn_close = tk.Button(self, text='Close', fg=self.parent.violet, command=self.destroy_and_give_focus_to_other_toplevel)
         self.btn_close.grid(padx=3, pady=5, sticky="se")
 
-        self.btn_close_all = tk.Button(self, text='Kill all my brethren', fg=self.parent.violet, command=self.destroy_all)
+        self.btn_close_all = tk.Button(self, text='Close all', fg=self.parent.violet, command=self.destroy_all)
         self.btn_close_all.grid(padx=3, pady=5, sticky="sw", row=self.btn_close.grid_info()["row"])
 
         return None

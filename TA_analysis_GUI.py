@@ -32,25 +32,7 @@ class GuiAppTAAnalysis(tk.Frame):
         tk.Frame.__init__(self, master)
         self.parent = master
 
-        # get initial fit parameter values from file:
-        self.initial_fit_parameter_values_file = base_directory+"/Initial_fit_parameter_values.txt"
-        if not os.path.exists(self.initial_fit_parameter_values_file):
-            # if user has for some reason deleted the file that stores initial fit parameter dictionary, set default fit parameter values:
-            self.initial_fit_parameter_values = {"time_constants": 50, "amplitudes": 0.7}
-            with open(self.initial_fit_parameter_values_file, mode='w') as dict_file:
-                dict_file.write(str(self.initial_fit_parameter_values))
-
-        else:
-            try:
-                with open(self.initial_fit_parameter_values_file, mode='r') as dict_file:
-                    self.initial_fit_parameter_values = ast.literal_eval(dict_file.read().strip())
-            except SyntaxError as error:
-                tk.messagebox.showwarning(title="Warning, problem with fit parameters file!",
-                                        message="initial fit parameter values file can not be evaluated correctly!\n\n"
-                                        +f"error: {error}"
-                                        +"\n\nIt should contain only one python dictionary and nothing else!"
-                                        +"\n\nProgram will use default values: {\"time_constants\": 50, \"amplitudes\": 0.7}")
-                self.initial_fit_parameter_values = {"time_constants": 50, "amplitudes": 0.7}
+        self.get_initial_fit_parameter_values_from_file()
 
         # set initial data file variable etc.
         self.curr_reconstruct_data_file_strVar = tk.StringVar()
@@ -74,7 +56,7 @@ class GuiAppTAAnalysis(tk.Frame):
         self.complementary_blue = "#0028FF"
         self.violet = "darkmagenta"
         self.grey = "lavender"
-        self.flashwidgetcolor = "#0028FF"
+        self.flashwidgetcolor = "navyblue"
 
         # self.light_magenta ="#bca9e1"
         # self.violet = self.light_magenta
@@ -104,6 +86,28 @@ class GuiAppTAAnalysis(tk.Frame):
         self.parent.bind("<Button-1>", lambda event: self.parent.lift())
 
         self.parent.bind("<Configure>", lambda _: self.update_heatmaps_frame_size_if_root_window_resized())
+
+        return None
+
+    def get_initial_fit_parameter_values_from_file(self):
+        self.initial_fit_parameter_values_file = base_directory+"/fit_function_configuration_files"+"/Initial_fit_parameter_values.txt"
+        if not os.path.exists(self.initial_fit_parameter_values_file):
+            # if user has for some reason deleted the file that stores initial fit parameter dictionary, set default fit parameter values:
+            self.initial_fit_parameter_values = {"time_constants": 50, "amplitudes": 0.7}
+            with open(self.initial_fit_parameter_values_file, mode='w') as dict_file:
+                dict_file.write(str(self.initial_fit_parameter_values))
+
+        else:
+            try:
+                with open(self.initial_fit_parameter_values_file, mode='r') as dict_file:
+                    self.initial_fit_parameter_values = ast.literal_eval(dict_file.read().strip())
+            except SyntaxError as error:
+                tk.messagebox.showwarning(title="Warning, problem with fit parameters file!",
+                                        message="initial fit parameter values file can not be evaluated correctly!\n\n"
+                                        +f"error: {error}"
+                                        +"\n\nIt should contain only one python dictionary and nothing else!"
+                                        +"\n\nProgram will use default values: {\"time_constants\": 50, \"amplitudes\": 0.7}")
+                self.initial_fit_parameter_values = {"time_constants": 50, "amplitudes": 0.7}
 
         return None
 
@@ -313,13 +317,11 @@ class GuiAppTAAnalysis(tk.Frame):
             # getting components failed, do nothing
             return None
 
-        self.target_model_fit_function_file = base_directory+"/target_model_fit_function.txt"
+        self.target_model_fit_function_file = base_directory+"/fit_function_configuration_files"+"/target_model_summands.txt"
         self.define_target_model_window = target_model_Toplevel.target_model_Window(self, self.components_to_use, self.target_model_fit_function_file)
         self.wait_window(self.define_target_model_window)
 
         return None
-
-
 
     def check_curr_fileVar_and_start_timeVar_value_exist(self, file_var, start_time_var):
         # check whether a file and start time has been selected at all to create a heatmap from
@@ -571,7 +573,7 @@ class GuiAppTAAnalysis(tk.Frame):
             self.nbCon_difference.tab_control.grid(row=1, column=2, sticky="ne")
         self.nbCon_difference.add_indexed_tab(self.next_tab_idx_difference, title="SVDGF "+str(self.next_tab_idx_SVDGF+1))
 
-        self.nbCon_SVDGF.data_objs[self.next_tab_idx_SVDGF] = SVDGF_reconstruction.SVDGF_Heatmap(self, self.curr_reconstruct_data_file_strVar.get(), self.curr_reconstruct_data_start_time_value.get(), self.components_to_use, self.temporal_resolution_in_ps, self.time_zero_in_ps, self.next_tab_idx_SVDGF, self.next_tab_idx_difference)
+        self.nbCon_SVDGF.data_objs[self.next_tab_idx_SVDGF] = SVDGF_reconstruction.SVDGF_Heatmap(self, self.curr_reconstruct_data_file_strVar.get(), self.curr_reconstruct_data_start_time_value.get(), self.components_to_use, self.temporal_resolution_in_ps, self.time_zero_in_ps, self.next_tab_idx_SVDGF, self.next_tab_idx_difference, self.initial_fit_parameter_values, bool(self.checkbox_var_use_target_model.get()))
         thread_instance_SVDGF = threading.Thread(target=self.nbCon_SVDGF.data_objs[self.next_tab_idx_SVDGF].make_data)
         thread_instance_SVDGF.start()
         self.monitor_thread(thread_instance_SVDGF, self.nbCon_SVDGF.data_objs[self.next_tab_idx_SVDGF], self.btn_show_SVDGF_reconstructed_data_heatmap, self.lbl_reassuring_SVDGF)
