@@ -120,6 +120,8 @@ class SVDGF_Heatmap():
         self.axes.set_xlabel("time since overlap [ps]", fontsize=16)
 
         title_string = self.base_filename+" SVDGF data, fit comps: " + str(self.components_list) + " DAS: " + str(self.indeces_for_DAS_matrix)
+        if self.use_user_defined_fit_function:
+            title_string = "user defined fit function was used\n"  + title_string
         if update_with_selected_DAS:
             title_string = r"updated! $\tau_i$ ="+str(['{:.4f}'.format(float(self.user_selected_decay_times[x])) for x in self.indeces_for_DAS_matrix])+"\n"  + title_string
         self.axes.set_title(title_string)
@@ -166,6 +168,8 @@ class SVDGF_Heatmap():
         self.axes_difference.set_xlabel("time since overlap [ps]", fontsize=16)
 
         title_string = self.base_filename+" diff: orig - SVDGF "+str(self.components_list)+ " DAS: " + str(self.indeces_for_DAS_matrix)
+        if self.use_user_defined_fit_function:
+            title_string = "user defined fit function was used\n"  + title_string
         if update_with_selected_DAS:
             title_string = r"updated! $\tau_i$ ="+str(['{:.4f}'.format(float(self.user_selected_decay_times[x])) for x in self.indeces_for_DAS_matrix])+"\n" + title_string
         self.axes_difference.set_title(title_string)
