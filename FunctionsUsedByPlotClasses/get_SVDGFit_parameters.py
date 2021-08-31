@@ -24,9 +24,6 @@ import math
 import scipy.signal
 import asteval
 
-global asteval_interpreter
-asteval_interpreter = asteval.Interpreter(use_numpy=True)
-
 def convolute_first_part_of_fit_function(sum_of_exponentials, time_delays, index_of_first_increased_time_interval, gaussian_for_convolution):
     """ convolutes the part of the fit function (sum of exponentials) that corresponds to the small initial time intervals
     with a gaussian that corresponds to the IRF (instrument response function) defined by time_zero and the temp_resolution. """
@@ -42,13 +39,11 @@ def convolute_first_part_of_fit_function(sum_of_exponentials, time_delays, index
 
     return convolution
 
-def model_func_user_defined(time_delays, amplitudes, decay_constants, retained_components, parsed_user_defined_summands):
+def model_func_user_defined(time_delays, amplitudes, decay_constants, retained_components, parsed_user_defined_summands, asteval_interpreter: asteval.Interpreter):
     taus = {}
     for (i,comp) in enumerate(retained_components):
         taus[f"component{comp}"] = decay_constants[i]
 
-    # syms = asteval.make_symbol_table(use_numpy=True, taus=taus, time_delays=time_delays)
-    # asteval_interpreter = asteval.Interpreter(symtable=syms)
     asteval_interpreter.symtable["taus"] = taus
     asteval_interpreter.symtable["time_delays"] = time_delays
 
@@ -57,8 +52,6 @@ def model_func_user_defined(time_delays, amplitudes, decay_constants, retained_c
         exp_sum += amplitudes[i]*asteval_interpreter(parsed_user_defined_summands[i])
 
     return exp_sum
-
-
 
 def model_func(time_delays, amplitudes, decay_constants, index_of_first_increased_time_interval, gaussian_for_convolution):
     """ model function for fit: a sum of exponentials (as many as SVD components are used for SVDGF reconstruction).\n
@@ -79,7 +72,7 @@ def model_func(time_delays, amplitudes, decay_constants, index_of_first_increase
 
     return exp_sum
 
-def model_func_dataset(time_delays, idx_of_vector, fit_params, retained_components, index_of_first_increased_time_interval, gaussian_for_convolution, parsed_user_defined_summands):
+def model_func_dataset(time_delays, idx_of_vector, fit_params, retained_components, index_of_first_increased_time_interval, gaussian_for_convolution, parsed_user_defined_summands, asteval_interpreter):
     """ calc model func from fit params for vectors_to_fit[idx_of_vector] """
     decay_constants = [fit_params['tau_component%i' % (j)] for j in retained_components]
 
@@ -88,7 +81,7 @@ def model_func_dataset(time_delays, idx_of_vector, fit_params, retained_componen
 
     if parsed_user_defined_summands:    # an empty list [] evaluates to False, thus this is not executed if list is empty.
         try:
-            return model_func_user_defined(time_delays, amplitudes, decay_constants, retained_components, parsed_user_defined_summands)
+            return model_func_user_defined(time_delays, amplitudes, decay_constants, retained_components, parsed_user_defined_summands, asteval_interpreter)
         except TypeError as error:
             raise TypeError("some problem arised in expression for asteval_interpreter!\n"
                             +f"error: {str(error)}\n"
@@ -97,7 +90,7 @@ def model_func_dataset(time_delays, idx_of_vector, fit_params, retained_componen
     else:
         return model_func(time_delays, amplitudes, decay_constants, index_of_first_increased_time_interval, gaussian_for_convolution)
 
-def objective(fit_params, time_delays, vectors_to_fit, retained_components, index_of_first_increased_time_interval, gaussian_for_convolution, parsed_user_defined_summands):
+def objective(fit_params, time_delays, vectors_to_fit, retained_components, index_of_first_increased_time_interval, gaussian_for_convolution, parsed_user_defined_summands, asteval_interpreter):
     """ calculate total residual for fits to several \"vectors\" held
     in a 2-D array, and modeled by model function """
     nr_of_vectors = len(retained_components)
@@ -105,7 +98,7 @@ def objective(fit_params, time_delays, vectors_to_fit, retained_components, inde
 
     # make residuals for vectors in vectors_to_fit
     for i in range(0, nr_of_vectors):
-        resid[i, :] = vectors_to_fit[i, :] - model_func_dataset(time_delays, i, fit_params, retained_components, index_of_first_increased_time_interval, gaussian_for_convolution, parsed_user_defined_summands)
+        resid[i, :] = vectors_to_fit[i, :] - model_func_dataset(time_delays, i, fit_params, retained_components, index_of_first_increased_time_interval, gaussian_for_convolution, parsed_user_defined_summands, asteval_interpreter)
 
     # now flatten this to a 1D array, as minimize() needs
     return resid.flatten()
@@ -187,13 +180,12 @@ def start_the_fit(retained_components, time_delays, retained_rSVs, retained_sing
     # with which the first part of the fit function is convoluted in fit function
     gaussian_for_convolution = get_gaussian_for_convolution(time_delays, time_zero, temp_resolution, index_of_first_increased_time_interval)
 
+    # instantiate the asteval Interpreter, is however only used when user defined fit function is used.
+    asteval_interpreter = asteval.Interpreter(use_numpy=True)
+
     # run the global fit over all the data sets, i.e. all VT_i
     # per default uses method='levenberg-marquardt-leastsq'
-    result = lmfit.minimize(objective, fit_params, args=(time_delays, vectors_to_fit, retained_components, index_of_first_increased_time_interval, gaussian_for_convolution, parsed_user_defined_summands))
-    # print()
-    # lmfit.report_fit(result)
-    # print()
-
+    result = lmfit.minimize(objective, fit_params, args=(time_delays, vectors_to_fit, retained_components, index_of_first_increased_time_interval, gaussian_for_convolution, parsed_user_defined_summands, asteval_interpreter))
 
     return result
 
@@ -211,8 +203,5 @@ def run(retained_rSVs, retained_singular_values, retained_components, time_delay
 
     except (ValueError,TypeError) as error:
         raise  # raises the caught exception again
-
-
-
 
     return result, resulting_fit_params

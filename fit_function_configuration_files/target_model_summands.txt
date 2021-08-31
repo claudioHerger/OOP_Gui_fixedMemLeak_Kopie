@@ -1,1 +1,1 @@
-{'summand 0': 'exp(-t/k0)', 'summand 1': 'exp(-t/k1)', 'summand 2': 'exp(-t/k2)', 'summand 3': 'exp(-t/k3)'}
+{'summand 0': 'exp(-t/k0)', 'summand 1': 'exp(-t/k1)', 'summand 2': 'exp(-t/k2)-exp(-t/inf)', 'summand 3': 'exp(-t/k3)-exp(-t/inf)', 'summand 4': 'exp(-t/k3)'}

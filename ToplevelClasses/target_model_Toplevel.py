@@ -173,7 +173,7 @@ class target_model_Window(tk.Toplevel):
         return parsed_with_brackets
 
     def display_save_or_rewrite_summands_buttons(self):
-        self.btn_use_parsed_summands = tk.Button(self, text="use this fit function", command=self.write_new_summands_to_file)
+        self.btn_use_parsed_summands = tk.Button(self, text="use these summands", command=self.write_parsed_summands_to_file)
         ttp_btn_use_parsed_summands = ToolTip.CreateToolTip(self.btn_use_parsed_summands, \
         'If you are happy with the parsing of your summands, this will save them to a file.\n'
         'If additionally the checkbox on the right of the \"Define fit function\" Button is checked, '
@@ -190,16 +190,14 @@ class target_model_Window(tk.Toplevel):
 
         return None
 
-    def write_new_summands_to_file(self):
+    def write_parsed_summands_to_file(self):
         self.parent.checkbox_use_target_model["state"] = tk.ACTIVE
-        self.parent.checkbox_use_target_model.flash()
-        self.parent.checkbox_var_use_target_model.set(1) # set the checkbox so that the user defined fit function will be used
+        self.parent.checkbox_var_use_target_model.set(1)  # set the checkbox so that the user defined fit function will be used
 
-        self.new_summands_dict = {}
         for i, entry in enumerate(self.summand_entries):
-            self.new_summands_dict[f"summand {i}"] = str(entry.get())
+            self.old_summands_dict_from_file[f"summand {i}"] = str(entry.get())
         with open(self.file_name, mode="w") as file:
-            file.write(str(self.new_summands_dict))
+            file.write(str(self.old_summands_dict_from_file))
 
         return None
 
