@@ -88,13 +88,13 @@ class target_model_Window(tk.Toplevel):
         self.summand_labels = []
         self.parsed_old_summand_labels = []
         self.summand_entries = []
-        for i in range(len(self.components)):
-            self.summand_labels.append(tk.Label(self, text=f"summand {i}:", justify=tk.RIGHT))
+        for component, i in zip(self.components, range(len(self.components))):
+            self.summand_labels.append(tk.Label(self, text=f"summand_comp{component}:", justify=tk.RIGHT))
             self.parsed_old_summand_labels.append(tk.Label(self, justify=tk.RIGHT))
             self.summand_entries.append(tk.Entry(self, width=50, justify=tk.RIGHT))
-            if f"summand {i}" in self.old_summands_dict_from_file.keys():
-                self.parsed_old_summand_labels[i]["text"] = self.old_summands_dict_from_file[f"summand {i}"]
-                self.summand_entries[i].insert(0, self.old_summands_dict_from_file[f"summand {i}"])
+            if f"summand_component{component}" in self.old_summands_dict_from_file.keys():
+                self.parsed_old_summand_labels[i]["text"] = self.old_summands_dict_from_file[f"summand_component{component}"]
+                self.summand_entries[i].insert(0, self.old_summands_dict_from_file[f"summand_component{component}"])
             else:
                 self.summand_entries[i].insert(0, "0")
             self.summand_labels[i].grid(padx=10, sticky="e", row=i+2, column=0)
@@ -126,7 +126,7 @@ class target_model_Window(tk.Toplevel):
         self.parsed_new_summands_from_entries = {}
         for i in range(len(self.summand_entries)):
             parsed_summand = self.parse_entry(self.summand_entries[i].get())
-            self.parsed_new_summands_from_entries[f"summand {i}"] = parsed_summand
+            self.parsed_new_summands_from_entries[f"summand_component{self.components[i]}"] = parsed_summand
 
         self.display_parsed_new_summands_on_window(self.parsed_new_summands_from_entries)
 
@@ -165,7 +165,7 @@ class target_model_Window(tk.Toplevel):
         parsed_decay_constants = parsed_time_delays
         k_list = re.findall(r'k\d+', parsed_time_delays)
         for k_str in k_list:
-            parsed_decay_constants = re.sub(r'k\d+', f"taus[component{k_str[1:]}]", parsed_decay_constants, count=1)
+            parsed_decay_constants = re.sub(r'k\d+', f"taus[\"component{k_str[1:]}\"]", parsed_decay_constants, count=1)
 
         parsed_np_exp = parsed_decay_constants.replace("exp", "np.exp")
         parsed_with_brackets = "(" +parsed_np_exp+ ")"
@@ -173,11 +173,11 @@ class target_model_Window(tk.Toplevel):
         return parsed_with_brackets
 
     def display_save_or_rewrite_summands_buttons(self):
-        self.btn_use_parsed_summands = tk.Button(self, text="use these summands", command=self.write_parsed_summands_to_file)
+        self.btn_use_parsed_summands = tk.Button(self, text="save these summands", command=self.write_parsed_summands_to_file)
         ttp_btn_use_parsed_summands = ToolTip.CreateToolTip(self.btn_use_parsed_summands, \
         'If you are happy with the parsing of your summands, this will save them to a file.\n'
         'If additionally the checkbox on the right of the \"Define fit function\" Button is checked, '
-        'then this fit function will be used for each fit until you uncheck the checkbox. '
+        'then the summands in the file will be used for each fit until you uncheck the checkbox. '
         'If the checkbox is unchecked, the general fit function will be used again.')
         self.btn_rewrite_summands = tk.Button(self, text="rewrite summands", command=self.rewrite_summands)
         ttp_btn_rewrite_summands = ToolTip.CreateToolTip(self.btn_rewrite_summands, \
@@ -195,9 +195,11 @@ class target_model_Window(tk.Toplevel):
         self.parent.checkbox_var_use_target_model.set(1)  # set the checkbox so that the user defined fit function will be used
 
         for i, entry in enumerate(self.summand_entries):
-            self.old_summands_dict_from_file[f"summand {i}"] = str(entry.get())
+            self.old_summands_dict_from_file[f"summand_component{self.components[i]}"] = str(entry.get())
         with open(self.file_name, mode="w") as file:
             file.write(str(self.old_summands_dict_from_file))
+
+        self.destroy()
 
         return None
 

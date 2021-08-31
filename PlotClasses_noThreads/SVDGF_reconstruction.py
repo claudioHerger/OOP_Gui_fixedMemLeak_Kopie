@@ -317,15 +317,19 @@ class SVDGF_Heatmap():
 
         return summands_of_user_defined_fit_function
 
-    def parse_summands_of_user_defined_fit_function_to_actual_code(self, summands_dict: dict):
+    def parse_summands_of_user_defined_fit_function_to_actual_code(self, all_summands_dict: dict):
         parsed_summands_list = []
-        for summand_str in summands_dict.values():
+
+        selected_components_summands_dict = {}
+        for component in self.components_list:
+            selected_components_summands_dict[f"summand_component{component}"] = all_summands_dict[f"summand_component{component}"]
+
+        for summand_str in selected_components_summands_dict.values():
             parsed_summands_list.append(self.parse_summand(summand_str))
 
         return parsed_summands_list
 
     def parse_summand(self, summand_str: str):
-
         if summand_str == "":
             return "0"
         parsed_time_delays = summand_str.replace("t", "time_delays")
@@ -431,6 +435,8 @@ class SVDGF_Heatmap():
         self.parent.nbCon_difference.figs[self.tab_idx_difference].savefig(self.full_path_to_final_dir+"/difference_heatmap_DAS"+str(self.indeces_for_DAS_matrix)+".png")
         saveData.make_log_file(self.full_path_to_final_dir, filename=self.filename, start_time=self.start_time, components=self.components_list)
         self.result_data_to_save = {"retained_sing_values": self.retained_singular_values, "DAS": self.DAS, "fit_report_complete": lmfit.fit_report(self.fit_result), "time_delays": self.time_delays, "wavelengths": self.wavelengths}
+        if self.parsed_summands_of_user_defined_fit_function: # if dictionary with parsed user defined fit function exists, add it to data to be saved.
+            self.result_data_to_save["parsed_summands_of_user_defined_fit_function"] = self.parsed_summands_of_user_defined_fit_function
         saveData.save_result_data(self.full_path_to_final_dir, self.result_data_to_save)
 
         # save data matrices
