@@ -21,7 +21,7 @@ from PlotClasses_noThreads import ORIGData, SVDGF_reconstruction, SVD_reconstruc
 
 # SupportClasses - used to e.g. explain functionality of widget in gui
 from SupportClasses import ToolTip, NotebookContainer
-from ToplevelClasses import FitResult_Toplevel, DAS_Toplevel, initial_fit_parameter_values_Toplevel
+from ToplevelClasses import FitResult_Toplevel, DAS_Toplevel, initial_fit_parameter_values_Toplevel, target_model_Toplevel
 
 # the directory from where program is started
 base_directory = os.getcwd()        # SHOULD BE ADJUSTED! Leads to Error if program is not started from directory where it is in
@@ -32,25 +32,7 @@ class GuiAppTAAnalysis(tk.Frame):
         tk.Frame.__init__(self, master)
         self.parent = master
 
-        # get initial fit parameter values from file:
-        self.initial_fit_parameter_values_file = base_directory+"/Initial_fit_parameter_values.txt"
-        if not os.path.exists(self.initial_fit_parameter_values_file):
-            # if user has for some reason deleted the file that stores initial fit parameter dictionary, set default fit parameter values:
-            self.initial_fit_parameter_values = {"time_constants": 50, "amplitudes": 0.7}
-            with open(self.initial_fit_parameter_values_file, mode='w') as dict_file:
-                dict_file.write(str(self.initial_fit_parameter_values))
-
-        else:
-            try:
-                with open(self.initial_fit_parameter_values_file, mode='r') as dict_file:
-                    self.initial_fit_parameter_values = ast.literal_eval(dict_file.read().strip())
-            except SyntaxError as error:
-                tk.messagebox.showwarning(title="Warning, problem with fit parameters file!",
-                                        message="initial fit parameter values file can not be evaluated correctly!\n\n"
-                                        +f"error: {error}"
-                                        +"\n\nIt should contain only one python dictionary and nothing else!"
-                                        +"\n\nProgram will use default values: {\"time_constants\": 50, \"amplitudes\": 0.7}")
-                self.initial_fit_parameter_values = {"time_constants": 50, "amplitudes": 0.7}
+        self.get_initial_fit_parameter_values_from_file()
 
         # set initial data file variable etc.
         self.curr_reconstruct_data_file_strVar = tk.StringVar()
@@ -70,9 +52,11 @@ class GuiAppTAAnalysis(tk.Frame):
         # some styling variables
         self.blue = "cornflowerblue"
         self.gold = "#ffd700"
+        self.orange = "orange"
         self.complementary_blue = "#0028FF"
         self.violet = "darkmagenta"
         self.grey = "lavender"
+        self.flashwidgetcolor = "navyblue"
 
         # self.light_magenta ="#bca9e1"
         # self.violet = self.light_magenta
@@ -102,6 +86,28 @@ class GuiAppTAAnalysis(tk.Frame):
         self.parent.bind("<Button-1>", lambda event: self.parent.lift())
 
         self.parent.bind("<Configure>", lambda _: self.update_heatmaps_frame_size_if_root_window_resized())
+
+        return None
+
+    def get_initial_fit_parameter_values_from_file(self):
+        self.initial_fit_parameter_values_file = base_directory+"/global_fit_configuration_files"+"/Initial_fit_parameter_values.txt"
+        if not os.path.exists(self.initial_fit_parameter_values_file):
+            # if user has for some reason deleted the file that stores initial fit parameter dictionary, set default fit parameter values:
+            self.initial_fit_parameter_values = {"time_constants": 50, "amplitudes": 0.7}
+            with open(self.initial_fit_parameter_values_file, mode='w') as dict_file:
+                dict_file.write(str(self.initial_fit_parameter_values))
+
+        else:
+            try:
+                with open(self.initial_fit_parameter_values_file, mode='r') as dict_file:
+                    self.initial_fit_parameter_values = ast.literal_eval(dict_file.read().strip())
+            except SyntaxError as error:
+                tk.messagebox.showwarning(title="Warning, problem with fit parameters file!",
+                                        message="initial fit parameter values file can not be evaluated correctly!\n\n"
+                                        +f"error: {error}"
+                                        +"\n\nIt should contain only one python dictionary and nothing else!"
+                                        +"\n\nProgram will use default values: {\"time_constants\": 50, \"amplitudes\": 0.7}")
+                self.initial_fit_parameter_values = {"time_constants": 50, "amplitudes": 0.7}
 
         return None
 
@@ -212,10 +218,10 @@ class GuiAppTAAnalysis(tk.Frame):
 
         return None
 
-    def monitor_thread(self, thread_object, data_object, button, label, the_first_execution=True):
+    def monitor_thread(self, thread_object, data_object, button, label):
         if thread_object.is_alive():
             # check the thread every 100ms
-            self.after(100, lambda: self.monitor_thread(thread_object, data_object, button, label, the_first_execution=False))
+            self.after(100, lambda: self.monitor_thread(thread_object, data_object, button, label))
         else:
             # data has been computed, now make plot and put it on canvas
             try:
@@ -231,6 +237,12 @@ class GuiAppTAAnalysis(tk.Frame):
 
             return None
 
+    def flash_target_model_btn_callback(self):
+        if self.checkbox_use_target_model["state"] == tk.DISABLED:
+            self.btn_set_target_model_fit_function.flash()
+
+        return None
+
     """ methods to update and check Gui variables """
     def update_components(self, lis_of_IntVars):
         """ loops through a list of input IntVars (from checkButtons) and returns a binary list that specifies which IntVars are 1 and which zero"""
@@ -239,9 +251,22 @@ class GuiAppTAAnalysis(tk.Frame):
             components_to_plot.append(lis_of_IntVars[checkbox].get())
 
         if 1 not in components_to_plot:
-            raise ValueError('You did not select any components for the plot you want to see!')
+            raise ValueError('You did not select any components!\nThat needs to be done for the SVD and SVDGF plots, and also to define a fit function.')
 
         return components_to_plot
+
+    def get_components_to_use(self):
+        try:
+            components = self.update_components(self.checkbutton_vars_reconstruct_data)
+        except ValueError as error:
+            tk.messagebox.showerror("Warning!", error)
+            print("\nencountered error with message: " + str(error))
+            # do nothing
+            return None
+
+        components_to_use = [i for i in range(len(components)) if(components[i]==1)]
+
+        return components_to_use
 
     def set_curr_fileVar(self, file_var):
         # here you can update which files the user can select in the dialog.
@@ -283,6 +308,18 @@ class GuiAppTAAnalysis(tk.Frame):
         self.wait_window(self.initial_fit_parameter_values_window)
 
         self.update_title_callback("","","")
+
+        return None
+
+    def define_target_model_fit_function(self):
+        self.components_to_use = self.get_components_to_use()
+        if (self.components_to_use is None):
+            # getting components failed, do nothing
+            return None
+
+        self.target_model_fit_function_file = base_directory+"/global_fit_configuration_files"+"/target_model_summands.txt"
+        self.define_target_model_window = target_model_Toplevel.target_model_Window(self, self.components_to_use, self.target_model_fit_function_file)
+        self.wait_window(self.define_target_model_window)
 
         return None
 
@@ -475,15 +512,10 @@ class GuiAppTAAnalysis(tk.Frame):
         # check whether a file and start time has been selected at all to create a heatmap from
         self.check_curr_fileVar_and_start_timeVar_value_exist(self.curr_reconstruct_data_file_strVar, self.curr_reconstruct_data_start_time_value)
 
-        try:
-            components = self.update_components(self.checkbutton_vars_reconstruct_data)
-        except ValueError as error:
-            tk.messagebox.showerror("Warning!", "You did not select any components for the plot you want to see!")
-            print("\nencountered error with message: " + str(error))
-            # do nothing
+        self.components_to_use = self.get_components_to_use()
+        if (self.components_to_use is None):
+            # getting components failed, do nothing
             return None
-
-        self.components_to_use = [i for i in range(len(components)) if(components[i]==1)]
 
         # disable the used button during computation
         self.btn_show_SVD_reconstructed_data_heatmap['state'] = tk.DISABLED
@@ -515,16 +547,10 @@ class GuiAppTAAnalysis(tk.Frame):
         # check whether a file and start time has been selected at all to create a heatmap from
         self.check_curr_fileVar_and_start_timeVar_value_exist(self.curr_reconstruct_data_file_strVar, self.curr_reconstruct_data_start_time_value)
 
-        # get components to be used for SVDGF reconstruction:
-        try:
-            self.components = self.update_components(self.checkbutton_vars_reconstruct_data)
-        except ValueError as error:
-            tk.messagebox.showerror("Warning!", "You did not select any components for the plot you want to see!")
-            print("\nencountered error with message: " + str(error))
-            # do nothing
+        self.components_to_use = self.get_components_to_use()
+        if (self.components_to_use is None):
+            # getting components failed, do nothing
             return None
-
-        self.components_to_use = [i for i in range(len(self.components)) if(self.components[i]==1)]
 
         # convolution in fit is not yet implemented!
         self.temporal_resolution_in_ps = int(self.ent_temporal_resolution_in_fs.get())/1000
@@ -547,7 +573,7 @@ class GuiAppTAAnalysis(tk.Frame):
             self.nbCon_difference.tab_control.grid(row=1, column=2, sticky="ne")
         self.nbCon_difference.add_indexed_tab(self.next_tab_idx_difference, title="SVDGF "+str(self.next_tab_idx_SVDGF+1))
 
-        self.nbCon_SVDGF.data_objs[self.next_tab_idx_SVDGF] = SVDGF_reconstruction.SVDGF_Heatmap(self, self.curr_reconstruct_data_file_strVar.get(), self.curr_reconstruct_data_start_time_value.get(), self.components_to_use, self.temporal_resolution_in_ps, self.time_zero_in_ps, self.next_tab_idx_SVDGF, self.next_tab_idx_difference)
+        self.nbCon_SVDGF.data_objs[self.next_tab_idx_SVDGF] = SVDGF_reconstruction.SVDGF_Heatmap(self, self.curr_reconstruct_data_file_strVar.get(), self.curr_reconstruct_data_start_time_value.get(), self.components_to_use, self.temporal_resolution_in_ps, self.time_zero_in_ps, self.next_tab_idx_SVDGF, self.next_tab_idx_difference, self.initial_fit_parameter_values, bool(self.checkbox_var_use_target_model.get()))
         thread_instance_SVDGF = threading.Thread(target=self.nbCon_SVDGF.data_objs[self.next_tab_idx_SVDGF].make_data)
         thread_instance_SVDGF.start()
         self.monitor_thread(thread_instance_SVDGF, self.nbCon_SVDGF.data_objs[self.next_tab_idx_SVDGF], self.btn_show_SVDGF_reconstructed_data_heatmap, self.lbl_reassuring_SVDGF)
@@ -572,19 +598,10 @@ class GuiAppTAAnalysis(tk.Frame):
         self.frm_main_tab1 = tk.Frame(self.tab_control_main_window, bg=self.grey)
         self.tab_control_main_window.add(self.frm_main_tab1, text = "Tab 1")                         # adds a tab to self.tab_control_main_window
 
-        # self.frm_main_tab2 = tk.Frame(self.tab_control_main_window, bg=self.grey)
-        # self.tab_control_main_window.add(self.frm_main_tab2, text = "not needed - Basic SVD plotting")
-
-        # self.frm_main_tab3 = tk.Frame(self.tab_control_main_window, bg=self.grey)
-        # self.tab_control_main_window.add(self.frm_main_tab3, text = "empty - Tab 3")
-
         # configuring the main frames in tabs and placing tabs
         self.frm_main_tab1.rowconfigure(0, weight=1)                                  # weight determines how much space the row/col takes proportionally to other rows/cols
         self.frm_main_tab1.columnconfigure((0,4), weight=0)
         self.frm_main_tab1.columnconfigure((1,2), weight=1)
-
-        # self.frm_main_tab2.rowconfigure((0,1), weight=1)
-        # self.frm_main_tab2.columnconfigure((0,1,2), weight=1)
 
         self.parent.rowconfigure(0, weight=1)
         self.parent.columnconfigure(0, weight=1)
@@ -710,6 +727,28 @@ class GuiAppTAAnalysis(tk.Frame):
         """ notebook for difference matrices """
         self.nbCon_difference = NotebookContainer.NotebookContainer(self, self.frm_main_tab1, self.NR_OF_DIFFERENCE_TABS, figsize=(10,5))
 
+        """ widgets for user defined target model fit function """
+        self.btn_set_target_model_fit_function = tk.Button(self.frm_update_reconstruct_data_tab1, text="Define fit function", command=self.define_target_model_fit_function, activebackground=self.flashwidgetcolor)
+        ttp_btn_set_target_model_fit_function = ToolTip.CreateToolTip(self.btn_set_target_model_fit_function, \
+        'Open a window to define a target model fit function '
+        'which, if it is  successfully parsed, can be used in fit procedure.',
+        optional_y_direction_bump=90, optional_x_direction_bump=10)
+        self.btn_set_target_model_fit_function.grid(sticky="sw", padx=10, pady=5, ipady=2, ipadx=5, column=0)
+        self.frm_update_reconstruct_data_tab1.rowconfigure(self.btn_set_target_model_fit_function.grid_info()["row"], weight=1)   # so that the new button is at the bottom of frame
+
+        self.checkbox_var_use_target_model = tk.IntVar(0)
+        self.checkbox_use_target_model = tk.Checkbutton(self.frm_update_reconstruct_data_tab1, text="", bg=self.gold, activebackground=self.gold, variable=self.checkbox_var_use_target_model, onvalue=1, offvalue=0, state=tk.DISABLED)
+        ttp_checkbox_use_target_model = ToolTip.CreateToolTip(self.checkbox_use_target_model, \
+        'If checked, and the user entered fit function has been successfully parsed,'
+        ' the fit procedure will use the entered fit function. \n\n'
+        'Is only enabled when a target model has been entered in window (button on the left).',
+        optional_y_direction_bump=90, optional_x_direction_bump=10)
+        self.checkbox_use_target_model.grid(row=self.btn_set_target_model_fit_function.grid_info()["row"], sticky="se", pady=8, padx=3)
+        self.checkbox_use_target_model.bind("<ButtonPress>", lambda x: self.flash_target_model_btn_callback())
+
+
+        return None
+
     # Widget layout of GUI
     def initialize_GUI(self):
         # Tabs and frames setup
@@ -720,7 +759,7 @@ class GuiAppTAAnalysis(tk.Frame):
 
         # button to change initial fit parameter values
         self.btn_set_initial_fit_parameter_values = tk.Button(self.parent, text="Set initial fit parameter values", command=self.set_initial_fit_parameter_values)
-        ttp_btn_set_intitial_fit_parameter_values = ToolTip.CreateToolTip(self.btn_set_initial_fit_parameter_values, \
+        ttp_btn_set_initial_fit_parameter_values = ToolTip.CreateToolTip(self.btn_set_initial_fit_parameter_values, \
         'Open a window to display and possibly change the values that are used '
         'as initial parameter values in SVDGF procedure.'
         '\n\nWhenever these values are changed, the new ones will be used for each fit until the user selects to change them again.'

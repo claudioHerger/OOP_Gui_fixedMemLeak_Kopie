@@ -2,13 +2,14 @@
 # -*- coding: utf-8 -*-
 """ A module to produce a plot of via SVD-assisted-GlobalFit-reconstructed data on the GUI.
 """
-
 import gc
 import numpy as np
 import seaborn as sns
 import tkinter as tk
 import os
 import lmfit
+import re
+import ast
 
 # my own modules
 from FunctionsUsedByPlotClasses import get_DAS_from_lSVs_res_amplitudes, get_TA_data_after_start_time, get_retained_rightSVs_leftSVs_singularvs, get_SVDGFit_parameters
@@ -17,26 +18,34 @@ from SupportClasses import ToolTip, saveData
 from ToplevelClasses import Kinetics_Spectrum_Toplevel, new_decay_times_Toplevel
 
 class SVDGF_Heatmap():
-    def __init__(self, parent, filename, start_time, components_list, temp_resolution, time_zero, tab_idx, tab_idx_difference):
-        """ A class to make a heatmap of via SVD_GlobalFit reconstructed TA data.\n\n
-            * parent is the Gui App that creates the instance of this class\n
-            * filename is the full path of the datafile to be reconstructed\n
-            * start_time is the value of the start time. Starting from this time delay value, the data will be used for the reconstruction and plotting\n
-            * compononets_list is a list of integers that represent the SVD components to be used for the reconstruction\n
-            * temp_resolution is a number that represents the temporal resolution of the used detector setup in data collection (FWHM) (used for convolution)\n
-            * time_zero is a number used in the convolution of the fitting function\n
-            * tab_idx is used to put the plot on the correct that of the ttk notebook of the GUI\n
-            * tab_idx_difference is the the same as tab_idx but used with the difference notebook\n\n
+    def __init__(self, parent, filename, start_time, components_list, temp_resolution, time_zero, tab_idx, tab_idx_difference, initial_fit_parameter_values, user_defined_fit_function):
+        """A class to make a heatmap of via SVD_GlobalFit reconstructed TA data.
+        * the (default, i.e. non user defined) global fit should:\n
+            # fit the selection (the selected components)\n
+            # of right_singular_vector * singular_value to a fit function\n
+            # composed of a sum of exponential decays * the convolution factor\n
+            # the number of exponential decays is determined by the number of selected components\n
+            # the decay constants are shared fit parameters for all the right singular vectors\n
+            # the amplitudes of the exp decays are individual fit parameters\n
+        * the fit results are:\n
+            # the decay constants and the amplitudes of the exp decays.\n
+            # using the resulting amplitudes, the DAS (decay associated spectra) will be computed,\n
+            # from those the original data will be reconstructed as the sum: DAS_i(lambda)*exp(-t/decay_constant_i)
 
-            * the global fit should:    # fit the selection (the selected components)\n
-                                        # of right_singular_vector * singular_value to a fit function\n
-                                        # composed of a sum of exponential decays * the convolution factor\n
-                                        # the number of exponential decays is determined by the number of selected components\n
-                                        # the decay constants are shared fit parameters for all the right singular vectors\n
-                                        # the amplitudes of the exp decays are individual fit parameters\n
-            * the fit results are:      # the decay constants and the amplitudes of the exp decays.\n
-                                        # using the resulting amplitudes, the DAS (decay associated spectra) will be computed,\n
-                                        # from those the original data will be reconstructed as the sum: DAS_i(lambda)*exp(-t/decay_constant_i)
+        Args:
+            parent (GuiApp): the Gui App that creates the instance of this class.
+            filename (str): full path of the datafile to be reconstructed
+            start_time (float): the value of the start time. Starting from this time delay value, the data will be used for the reconstruction and plotting
+            components_list (list of ints): list of integers that represent the SVD components to be used for the reconstruction
+            temp_resolution (float): number that represents the temporal resolution of the used detector setup in data collection (FWHM) (might be used for convolution in fit function)
+            time_zero (float): number used in the convolution of the fitting function (convolution might not be implemented)
+            tab_idx (int): the index of the tab of the ttk notebook of the GUI, (on which the SVDGF heatmap will be put)
+            tab_idx_difference (int):the index of the tab of the ttk notebook of the GUI, (on which the difference heatmap will be put)
+            initial_fit_parameter_values (dict): the dictionary that defines the initial values for the fit parameters
+            user_defined_fit_function (bool): True if you want to use the user defined fit function
+
+        Returns:
+            NoneType: None
         """
 
         self.parent = parent
@@ -47,15 +56,23 @@ class SVDGF_Heatmap():
         self.components_list = components_list
         self.temp_resolution = temp_resolution
         self.time_zero = time_zero
+        self.use_user_defined_fit_function = user_defined_fit_function
 
         self.DAS_to_update_with = [i for i in range(len(self.components_list))]
         self.indeces_for_DAS_matrix = self.DAS_to_update_with
 
+        # needed if the user wants to update the resulting heatmaps with a user defined selection of DAS and decay times
         self.SVDGF_reconstructed_data_selected_DAS = None
-
         self.user_selected_decay_times = None
 
-        self.initial_fit_parameter_values = parent.initial_fit_parameter_values
+        self.initial_fit_parameter_values = initial_fit_parameter_values
+
+        return None
+
+    def return_gui_to_initial_state(self):
+        self.parent.return_some_gui_widgets_to_initial_state(button=self.parent.btn_show_SVDGF_reconstructed_data_heatmap, label=self.parent.lbl_reassuring_SVDGF, tab_control=self.parent.nbCon_SVDGF.tab_control)
+        self.parent.return_some_gui_widgets_to_initial_state(tab_control=self.parent.nbCon_difference.tab_control)
+        self.delete_attributes()
 
         return None
 
@@ -103,6 +120,8 @@ class SVDGF_Heatmap():
         self.axes.set_xlabel("time since overlap [ps]", fontsize=16)
 
         title_string = self.base_filename+" SVDGF data, fit comps: " + str(self.components_list) + " DAS: " + str(self.indeces_for_DAS_matrix)
+        if self.use_user_defined_fit_function:
+            title_string = "user defined fit function was used\n"  + title_string
         if update_with_selected_DAS:
             title_string = r"updated! $\tau_i$ ="+str(['{:.4f}'.format(float(self.user_selected_decay_times[x])) for x in self.indeces_for_DAS_matrix])+"\n"  + title_string
         self.axes.set_title(title_string)
@@ -149,6 +168,8 @@ class SVDGF_Heatmap():
         self.axes_difference.set_xlabel("time since overlap [ps]", fontsize=16)
 
         title_string = self.base_filename+" diff: orig - SVDGF "+str(self.components_list)+ " DAS: " + str(self.indeces_for_DAS_matrix)
+        if self.use_user_defined_fit_function:
+            title_string = "user defined fit function was used\n"  + title_string
         if update_with_selected_DAS:
             title_string = r"updated! $\tau_i$ ="+str(['{:.4f}'.format(float(self.user_selected_decay_times[x])) for x in self.indeces_for_DAS_matrix])+"\n" + title_string
         self.axes_difference.set_title(title_string)
@@ -289,6 +310,42 @@ class SVDGF_Heatmap():
         print(f"\nuser has put in useable new decay times! {self.user_selected_decay_times=}")
         return "compute with new decay times"
 
+    def get_summands_of_user_defined_fit_function_from_file(self):
+        try:
+            with open(self.parent.target_model_fit_function_file, mode='r') as dict_file:
+                summands_of_user_defined_fit_function = ast.literal_eval(dict_file.read().strip())
+        except (SyntaxError, FileNotFoundError):
+            raise ValueError("getting the user defined summands for fit function from file failed, or the dict was empty.\n"
+                            +"Check the file!\n"
+                            +"computation is discontinued!")
+
+        return summands_of_user_defined_fit_function
+
+    def parse_summands_of_user_defined_fit_function_to_actual_code(self, all_summands_dict: dict):
+        parsed_summands_list = []
+
+        selected_components_summands_dict = {}
+        for component in self.components_list:
+            selected_components_summands_dict[f"summand_component{component}"] = all_summands_dict[f"summand_component{component}"]
+
+        for summand_str in selected_components_summands_dict.values():
+            parsed_summands_list.append(self.parse_summand(summand_str))
+
+        return parsed_summands_list
+
+    def parse_summand(self, summand_str: str):
+        if summand_str == "":
+            return "0"
+        parsed_time_delays = summand_str.replace("t", "time_delays")
+        parsed_decay_constants = parsed_time_delays
+        k_list = re.findall(r'k\d+', parsed_time_delays)
+        for k_str in k_list:
+            parsed_decay_constants = re.sub(r'k\d+', f"taus[\"component{k_str[1:]}\"]", parsed_decay_constants, count=1)
+
+        parsed_with_brackets = "(" +parsed_decay_constants+ ")"
+
+        return parsed_with_brackets
+
     # this is done in thread separate from gui main thread.
     def make_data(self):
         # compute the SVDGF data for plot. the needed data (SVDGF_reconstructed_data, time_delays and wavelengths) are assigned to self
@@ -311,29 +368,38 @@ class SVDGF_Heatmap():
             tk.messagebox.showerror("Warning,", "an exception occurred!""\nProbably due to a problem with the entered start time!\n"+
                                     f"Exception {type(error)} message: \n"+ str(error)+"\n")
 
-            # return gui to initial state if above data preparation failed
-            self.parent.return_some_gui_widgets_to_initial_state(button=self.parent.btn_show_SVDGF_reconstructed_data_heatmap, label=self.parent.lbl_reassuring_SVDGF, tab_control=self.parent.nbCon_SVDGF.tab_control)
-            self.parent.return_some_gui_widgets_to_initial_state(tab_control=self.parent.nbCon_difference.tab_control)
-            self.delete_attributes()
-
+            self.return_gui_to_initial_state()
             return None
 
         # get the selected rSVs, singular values and lSVs - input is TA data after time and self.components_list
         self.retained_rSVs, self.retained_lSVs, self.retained_singular_values = get_retained_rightSVs_leftSVs_singularvs.run(self.TA_data_after_time, self.components_list)
 
+        # get the parsed summands of user defined fit function, if the corresponding checkbox in main gui is checked:
+        self.parsed_summands_of_user_defined_fit_function = []
+        if self.use_user_defined_fit_function:
+            try:
+                self.summands_of_user_defined_fit_function = self.get_summands_of_user_defined_fit_function_from_file()
+                self.parsed_summands_of_user_defined_fit_function = self.parse_summands_of_user_defined_fit_function_to_actual_code(self.summands_of_user_defined_fit_function)
+            except ValueError as error:
+                tk.messagebox.showerror("Warning,", "an exception occurred!""\nProbably due to a problem with the user defined fit function file!\n"+
+                                    f"Exception {type(error)} message: \n"+ str(error)+"\n")
+
+                self.return_gui_to_initial_state()
+                return None
+
         # do the fit: input: selected rSVs and singular values, self.temp_resolution, self.components_list - output: decay constants, amplitudes
         try:
-            self.fit_result, self.resulting_SVDGF_fit_parameters = get_SVDGFit_parameters.run(self.retained_rSVs, self.retained_singular_values, self.components_list, self.time_delays, self.start_time, self.initial_fit_parameter_values, self.time_zero, self.temp_resolution)
-        except ValueError as error:
-            tk.messagebox.showerror("Warning, an exception occurred!", f"Exception {type(error)} message: \n"+ str(error)+ "\n"+
-                                    "\nProbably due to a ValueError occurring in fit down the line, \ni.e.: the fit might not have converged. "
-                                    +"\n\nMaybe try it with changed initial fit parameter values (button in bottom left corner),"
-                                    +" or another set of components or another start time-value...")
+            self.fit_result, self.resulting_SVDGF_fit_parameters = get_SVDGFit_parameters.run(self.retained_rSVs, self.retained_singular_values, self.components_list, self.time_delays, self.start_time, self.initial_fit_parameter_values, self.time_zero, self.temp_resolution, parsed_user_defined_summands=self.parsed_summands_of_user_defined_fit_function)
+        except (ValueError,TypeError) as error:
+            if str(error) == "":
+                tk.messagebox.showerror("Warning, an exception occurred!", f"Exception {type(error)} message: \n"+ str(error)+ "\n"+
+                                        "\nProbably due to a ValueError occurring in fit down the line, \ni.e.: the fit might not have converged. "
+                                        +"\n\nMaybe try it with changed initial fit parameter values (button in bottom left corner),"
+                                        +" or another start time-value or another set of components ...")
+            else: tk.messagebox.showerror("Warning, an exception occurred!", f"Exception {type(error)} message: \n"+ str(error))
 
-            # return gui to initial state if above data preparation failed
-            self.parent.return_some_gui_widgets_to_initial_state(button=self.parent.btn_show_SVDGF_reconstructed_data_heatmap, label=self.parent.lbl_reassuring_SVDGF, tab_control=self.parent.nbCon_SVDGF.tab_control)
-            self.parent.return_some_gui_widgets_to_initial_state(tab_control=self.parent.nbCon_difference.tab_control)
-            self.delete_attributes()
+            self.return_gui_to_initial_state()
+            return None
 
         # get the DAS: input: selected lSVs and resulting amplitudes
         self.DAS = get_DAS_from_lSVs_res_amplitudes.run(self.retained_lSVs, self.resulting_SVDGF_fit_parameters, self.components_list, self.wavelengths, self.filename, self.start_time)
@@ -350,11 +416,7 @@ class SVDGF_Heatmap():
                                     +f"\n{self.fit_result_decay_times=}"
                                     +"\n\nMaybe try it with changed initial fit parameter values (button in bottom left corner),"
                                     +" or another set of components or another start time-value...")
-            # return gui to initial state if above data preparation failed
-            self.parent.return_some_gui_widgets_to_initial_state(button=self.parent.btn_show_SVDGF_reconstructed_data_heatmap, label=self.parent.lbl_reassuring_SVDGF, tab_control=self.parent.nbCon_SVDGF.tab_control)
-            self.parent.return_some_gui_widgets_to_initial_state(tab_control=self.parent.nbCon_difference.tab_control)
-            self.delete_attributes()
-
+            self.return_gui_to_initial_state()
             return None
 
         # the difference matrix between full reconstruction data and original data
@@ -377,6 +439,8 @@ class SVDGF_Heatmap():
         self.parent.nbCon_difference.figs[self.tab_idx_difference].savefig(self.full_path_to_final_dir+"/difference_heatmap_DAS"+str(self.indeces_for_DAS_matrix)+".png")
         saveData.make_log_file(self.full_path_to_final_dir, filename=self.filename, start_time=self.start_time, components=self.components_list)
         self.result_data_to_save = {"retained_sing_values": self.retained_singular_values, "DAS": self.DAS, "fit_report_complete": lmfit.fit_report(self.fit_result), "time_delays": self.time_delays, "wavelengths": self.wavelengths}
+        if self.parsed_summands_of_user_defined_fit_function: # if dictionary with parsed user defined fit function exists, add it to data to be saved.
+            self.result_data_to_save["parsed_summands_of_user_defined_fit_function"] = self.parsed_summands_of_user_defined_fit_function
         saveData.save_result_data(self.full_path_to_final_dir, self.result_data_to_save)
 
         # save data matrices
