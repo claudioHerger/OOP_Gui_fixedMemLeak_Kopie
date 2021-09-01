@@ -173,9 +173,9 @@ class target_model_Window(tk.Toplevel):
         return parsed_with_brackets
 
     def display_save_or_rewrite_summands_buttons(self):
-        self.btn_use_parsed_summands = tk.Button(self, text="save these summands", command=self.write_parsed_summands_to_file)
+        self.btn_use_parsed_summands = tk.Button(self, text="ok, save these summands", command=self.write_parsed_summands_to_file)
         ttp_btn_use_parsed_summands = ToolTip.CreateToolTip(self.btn_use_parsed_summands, \
-        'If you are happy with the parsing of your summands, this will save them to a file.\n'
+        'If you are happy with the parsing of your summands, this will save them to a file and close this window.\n'
         'If additionally the checkbox on the right of the \"Define fit function\" Button is checked, '
         'then the summands in the file will be used for each fit until you uncheck the checkbox. '
         'If the checkbox is unchecked, the general fit function will be used again.')
