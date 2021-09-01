@@ -165,7 +165,7 @@ class target_model_Window(tk.Toplevel):
         parsed_decay_constants = parsed_time_delays
         k_list = re.findall(r'k\d+', parsed_time_delays)
         for k_str in k_list:
-            parsed_decay_constants = re.sub(r'k\d+', f"taus[\"component{k_str[1:]}\"]", parsed_decay_constants, count=1)
+            parsed_decay_constants = re.sub(r'k\d+', f"decay_consts[\"component{k_str[1:]}\"]", parsed_decay_constants, count=1)
 
         parsed_np_exp = parsed_decay_constants.replace("exp", "np.exp")
         parsed_with_brackets = "(" +parsed_np_exp+ ")"

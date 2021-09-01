@@ -90,7 +90,7 @@ class GuiAppTAAnalysis(tk.Frame):
         return None
 
     def get_initial_fit_parameter_values_from_file(self):
-        self.initial_fit_parameter_values_file = base_directory+"/fit_function_configuration_files"+"/Initial_fit_parameter_values.txt"
+        self.initial_fit_parameter_values_file = base_directory+"/global_fit_configuration_files"+"/Initial_fit_parameter_values.txt"
         if not os.path.exists(self.initial_fit_parameter_values_file):
             # if user has for some reason deleted the file that stores initial fit parameter dictionary, set default fit parameter values:
             self.initial_fit_parameter_values = {"time_constants": 50, "amplitudes": 0.7}
@@ -317,7 +317,7 @@ class GuiAppTAAnalysis(tk.Frame):
             # getting components failed, do nothing
             return None
 
-        self.target_model_fit_function_file = base_directory+"/fit_function_configuration_files"+"/target_model_summands.txt"
+        self.target_model_fit_function_file = base_directory+"/global_fit_configuration_files"+"/target_model_summands.txt"
         self.define_target_model_window = target_model_Toplevel.target_model_Window(self, self.components_to_use, self.target_model_fit_function_file)
         self.wait_window(self.define_target_model_window)
 
