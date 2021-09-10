@@ -1,1 +1,1 @@
-{'time_constants': 50, 'amplitudes': 0.7}
+{'time_constants': 50.0, 'amplitudes': 0.7}
