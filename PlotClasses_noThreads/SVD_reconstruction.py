@@ -156,7 +156,8 @@ class SVD_Heatmap():
         return None
 
     def inspect_difference_matrix_via_toplevel(self):
-        Kinetics_Spectrum_Toplevel.Kinetics_Spectrum_Window(self.parent, self.tab_idx_difference, self)
+        data_dict_for_toplevel = {"type": "SVD data", "time_delays": self.time_delays, "wavelengths": self.wavelengths, "data_matrix": self.difference_matrix, "save_dir": self.full_path_to_final_dir, "data_file": self.filename}
+        Kinetics_Spectrum_Toplevel.Kinetics_Spectrum_Window(self.parent, self.tab_idx_difference, data_dict_for_toplevel)
 
         return None
 

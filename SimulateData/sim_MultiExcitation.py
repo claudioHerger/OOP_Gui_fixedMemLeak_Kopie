@@ -54,7 +54,7 @@ class MultiExcitation():
                 decay_constant = self.components_dict["decay_constants"][component]
                 for wavelength_index in range(len(self.wavelength_steps)):
                     data_point = noisy_excitations[component][wavelength_index] * np.exp(-time_step/decay_constant)
-                    self.data_matrix[time_step_index, wavelength_index] += data_point + self.probe_noise_scale * self.get_rand_nrs_from_normal_distribution()
+                    self.data_matrix[time_step_index, wavelength_index] += data_point + self.probe_noise_scale * self.get_rand_nrs_from_somewhat_normal_distribution()
 
         if self.make_plots:
             # some code to make and store plots of simulated data
@@ -67,15 +67,15 @@ class MultiExcitation():
         nr_of_steps = (interval[1] - interval[0]) / step_size
         return np.linspace(interval[0], interval[1], int(nr_of_steps))
 
-    def get_rand_nrs_from_normal_distribution(self, how_many_numbers=1):
-        return self.random_number_generator.standard_normal(how_many_numbers)
+    def get_rand_nrs_from_somewhat_normal_distribution(self, how_many_numbers=1):
+        return self.random_number_generator.normal(loc=0.0, scale=2.0, size=how_many_numbers)
 
     def compute_gaussian(self, amplitude, steps, exp_value, std_deviation):
         gaussian = np.array(amplitude * np.exp(-((steps - exp_value)**2)/(2*(std_deviation**2))), dtype=float)
         return gaussian
 
     def add_normal_noise_to_array(self, array, noise_scale=1):
-        noisy_array = array + noise_scale*self.get_rand_nrs_from_normal_distribution(how_many_numbers=len(array))
+        noisy_array = array + noise_scale*self.get_rand_nrs_from_somewhat_normal_distribution(how_many_numbers=len(array))
         return noisy_array
 
     def read_config_file(self) -> dict:
@@ -145,9 +145,8 @@ if __name__ == "__main__":
     # print(f'MultiExcitation excecution time: {time.time()-start}')
 
     for file in os.listdir(os.getcwd()+"/configFiles/"):
-        if file == "overlap_wavelength0.ini":
-            print()
-            print(f'file: {file}')
-            start = time.time()
-            multi_excitation_obj = MultiExcitation(os.getcwd()+"/configFiles/"+file, make_plots=True)
-            print(f'MultiExcitation excecution time: {time.time()-start}')
+        print()
+        print(f'file: {file}')
+        start = time.time()
+        multi_excitation_obj = MultiExcitation(os.getcwd()+"/configFiles/"+file, make_plots=True)
+        print(f'MultiExcitation excecution time: {time.time()-start}')

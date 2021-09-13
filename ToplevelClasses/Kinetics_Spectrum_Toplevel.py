@@ -16,14 +16,14 @@ from SupportClasses import ToolTip
 
 
 class Kinetics_Spectrum_Window(tk.Toplevel):
-    def __init__(self, parent, tab_index, data_obj, type="not_fitted_data"):
+    def __init__(self, parent, tab_index, data_dict):
         """a class to make a toplevel with two plots on it. \n
         The plots can be used to inspect the kinetics of a certain wavelength / the spectrum at a certain time delay of a TA data matrix.\n
 
         Args:
             parent (GUIApp): parent is the Gui App that creates the instance of this class.
             tab_index (int): used in title of Toplevel, so that one knows to which tab this toplevel belongs.
-            data_obj (SVDGF/SVD PlotClass): the data object to which the to be inspected data matrix belongs.
+            data_dict (dict): contains identifier string \"type\" to differentiate between fitted data and non-fitted data, and all necessary data from data_obj to which to be inspected data matrix belongs.
 
         Returns:
             None
@@ -31,9 +31,8 @@ class Kinetics_Spectrum_Window(tk.Toplevel):
         super().__init__(parent)
 
         self.parent = parent
-        self.data_obj = data_obj
-        self.type = type
-        self.full_path_to_final_dir = self.data_obj.full_path_to_final_dir
+        self.data_dict = data_dict
+        self.full_path_to_final_dir = self.data_dict["save_dir"]
 
         self.geometry(f'{1200}x{470}+{100}+{100}')
 
@@ -42,8 +41,12 @@ class Kinetics_Spectrum_Window(tk.Toplevel):
         self.frm_inspection_figure.rowconfigure(0, weight=1)
         self.frm_inspection_figure.grid(row=0, columnspan=2)
 
-        self.filename = os.path.basename(self.data_obj.filename)
-        self.title('Wavelength kinetics and spectra at times for difference tab: ' + str(tab_index + 1) + " - file: "+self.filename)
+        self.filename = os.path.basename(self.data_dict["data_file"])
+        if self.data_dict["type"] == "original data":
+            self.title_start = 'Wavelength kinetics and spectra at times for original data tab: '
+        else:
+            self.title_start = 'Wavelength kinetics and spectra at times for difference matrix tab: '
+        self.title(self.title_start + str(tab_index + 1) + " - data file: "+ self.filename)
 
         self.btn_close = tk.Button(self, text='Close', fg=self.parent.violet, command=self.destroy_self)
         self.ttp_btn_close = ToolTip.CreateToolTip(self.btn_close, \
@@ -69,15 +72,12 @@ class Kinetics_Spectrum_Window(tk.Toplevel):
         return None
 
     def get_data(self):
-        self.time_delays = self.data_obj.time_delays
-        self.wavelengths = self.data_obj.wavelengths
+        self.time_delays = self.data_dict["time_delays"]
+        self.wavelengths = self.data_dict["wavelengths"]
+        self.data = self.data_dict["data_matrix"]
 
-        if self.type == "fitted_data":
-            self.data = self.data_obj.difference_matrix_selected_DAS
-            self.selected_DAS = self.data_obj.indeces_for_DAS_matrix
-
-        if self.type == "not_fitted_data":
-            self.data = self.data_obj.difference_matrix
+        if self.data_dict["type"] == "fit_data":
+            self.selected_DAS = self.data_dict["DAS_indeces"]
 
         # unnecessary things to have "correct" linecolors in wavelength_kinetics plot
         self.wavelengths_are_ascending = self.is_ascending(self.wavelengths)
@@ -257,21 +257,20 @@ class Kinetics_Spectrum_Window(tk.Toplevel):
         return None
 
     def save_current_figures_to_file(self):
-        print("saving current wavelength kinetics and spectrum at time delay figures to file!")
+        print("\nsaving current wavelength kinetics and spectrum at time delay figures to file!")
 
         # check if directory exists:
         if not os.path.exists(self.full_path_to_final_dir):
             os.makedirs(self.full_path_to_final_dir)
 
         # save current figures:
-        if self.type == "fitted_data":
-            self.wavelength_kinetics_fig.savefig(self.full_path_to_final_dir+"/wavelength_"+'{:,.3f}'.format(float(self.wavelengths[self.nr_of_wavelength]))+"[nm]_kinetics_selected_DAS"+str(self.selected_DAS)+".png")
-            self.spectrum_at_time_delay_fig.savefig(self.full_path_to_final_dir+"/time_delay_"+'{:,.3f}'.format(float(self.time_delays[self.nr_of_time_delay]))+"[ps]_spectra_selected_DAS"+str(self.selected_DAS)+".png")
+        if self.data_dict["type"] == "fit_data":
+            self.wavelength_kinetics_fig.savefig(self.full_path_to_final_dir+"/wavelength_"+'{:,.3f}'.format(float(self.wavelengths[self.nr_of_wavelength]))+"[nm]_kinetics_with_selected_DAS"+str(self.selected_DAS)+".png")
+            self.spectrum_at_time_delay_fig.savefig(self.full_path_to_final_dir+"/time_delay_"+'{:,.3f}'.format(float(self.time_delays[self.nr_of_time_delay]))+"[ps]_spectra_with_selected_DAS"+str(self.selected_DAS)+".png")
 
-        if self.type == "not_fitted_data":
+        else:
             self.wavelength_kinetics_fig.savefig(self.full_path_to_final_dir+"/wavelength_"+'{:,.3f}'.format(float(self.wavelengths[self.nr_of_wavelength]))+"[nm]_kinetics.png")
             self.spectrum_at_time_delay_fig.savefig(self.full_path_to_final_dir+"/time_delay_"+'{:,.3f}'.format(float(self.time_delays[self.nr_of_time_delay]))+"[ps]_spectra.png")
-
 
         return None
 
@@ -293,7 +292,6 @@ class Kinetics_Spectrum_Window(tk.Toplevel):
     def delete_attributes(self):
         attr_lst = list(vars(self))
         attr_lst.remove('parent')
-        attr_lst.remove('data_obj')
         for attr in attr_lst:
             delattr(self, attr)
 

@@ -227,7 +227,8 @@ class SVDGF_Heatmap():
         return None
 
     def inspect_difference_matrix_via_toplevel(self):
-        Kinetics_Spectrum_Toplevel.Kinetics_Spectrum_Window(self.parent, self.tab_idx_difference, self, type="fitted_data")
+        data_dict_for_toplevel = {"type": "fit_data", "time_delays": self.time_delays, "wavelengths": self.wavelengths, "data_matrix": self.difference_matrix_selected_DAS, "DAS_indeces": self.indeces_for_DAS_matrix, "save_dir": self.full_path_to_final_dir, "data_file": self.filename}
+        Kinetics_Spectrum_Toplevel.Kinetics_Spectrum_Window(self.parent, self.tab_idx_difference, data_dict_for_toplevel)
 
         return None
 

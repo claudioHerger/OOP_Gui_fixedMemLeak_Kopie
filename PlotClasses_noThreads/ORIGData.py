@@ -12,8 +12,8 @@ import os
 
 # my own modules
 from FunctionsUsedByPlotClasses import get_TA_data_after_start_time, get_closest_nr_from_array_like
-from SupportClasses import saveData
-from ToplevelClasses import SVD_inspection_Toplevel
+from SupportClasses import saveData, ToolTip
+from ToplevelClasses import SVD_inspection_Toplevel, Kinetics_Spectrum_Toplevel
 
 class ORIGData_Heatmap():
     def __init__(self, parent, tab_idx, filename, start_time, tab_title_filename):
@@ -87,18 +87,25 @@ class ORIGData_Heatmap():
         self.parent.nbCon_orig.tab_control.tab(self.parent.nbCon_orig.tab_control.index("current"), text=f'{self.tab_idx+1}: ' + self.tab_title)
 
         self.btn_delete_attrs = tk.Button(self.parent.nbCon_orig.figure_frames[self.tab_idx], text="remove tab", fg=self.parent.violet, command=lambda: self.remove_tab(self.parent.nbCon_orig))
-        self.btn_delete_attrs.grid(row=1, column=2, sticky="se")
+        self.btn_delete_attrs.grid(row=1, column=3, sticky="se")
 
         self.btn_inspect_SVD_components = tk.Button(self.parent.nbCon_orig.figure_frames[self.tab_idx], text="inspect SVD comps", fg=self.parent.violet, command=self.make_SV_inspection_toplevel)
+        self.ttp_btn_inspect_SVD_components = ToolTip.CreateToolTip(self.btn_inspect_SVD_components, \
+        'This opens a window to inspect the SVD components of this data matrix.')
         self.btn_inspect_SVD_components.grid(row=1, column=1, padx=10)
 
         self.btn_save_data = tk.Button(self.parent.nbCon_orig.figure_frames[self.tab_idx], text="save data", fg=self.parent.violet, command=self.save_data_to_file)
         self.btn_save_data.grid(row=1, column=0, sticky="sw")
 
+        self.btn_inspect_data_matrix = tk.Button(self.parent.nbCon_orig.figure_frames[self.tab_idx], text="inspect matrix", fg=self.parent.violet, command=self.inspect_data_matrix_via_toplevel)
+        self.ttp_btn_inspect_data_matrix = ToolTip.CreateToolTip(self.btn_inspect_data_matrix, \
+        'This opens a window to inspect the rows and columns of this data matrix.')
+        self.btn_inspect_data_matrix.grid(row=1, column=2, sticky="se", padx=10)
+
         # set dimensions of figure frame as computed correspondingly to gui size
         self.configure_figure_frame_size(self.parent.nbCon_orig, self.tab_idx)
 
-        self.parent.nbCon_orig.canvases[self.tab_idx].get_tk_widget().grid(row=0, column=0, sticky="nsew", columnspan=3)
+        self.parent.nbCon_orig.canvases[self.tab_idx].get_tk_widget().grid(row=0, column=0, sticky="nsew", columnspan=4)
 
         return None
 
@@ -161,6 +168,12 @@ class ORIGData_Heatmap():
 
     def make_SV_inspection_toplevel(self):
         SVD_inspection_Toplevel.SVD_inspection_Window(self.parent, self.tab_idx, self)
+
+        return None
+
+    def inspect_data_matrix_via_toplevel(self):
+        data_dict_for_toplevel = {"type": "original data", "time_delays": self.time_delays, "wavelengths": self.wavelengths, "data_matrix": self.TA_data_after_time, "save_dir": self.full_path_to_final_dir, "data_file": self.filename}
+        Kinetics_Spectrum_Toplevel.Kinetics_Spectrum_Window(self.parent, self.tab_idx, data_dict_for_toplevel)
 
         return None
 

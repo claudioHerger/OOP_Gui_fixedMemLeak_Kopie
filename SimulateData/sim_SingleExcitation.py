@@ -63,7 +63,7 @@ class SingleExcitation():
             for time_step_index, time_step in enumerate(self.time_steps):
                 for wavelength_index in range(len(self.wavelength_steps)):
                     data_point = self.noisy_initial_gaussians[component][wavelength_index] * np.exp(-time_step/decay_constant)
-                    self.data_matrix[time_step_index, wavelength_index] += data_point + self.noise_dict["probe_noise_scale"] * self.get_rand_nrs_from_normal_distribution()
+                    self.data_matrix[time_step_index, wavelength_index] += data_point + self.noise_dict["probe_noise_scale"] * self.get_rand_nrs_from_somewhat_normal_distribution()
 
         if self.make_plots:
             self.make_and_save_plots(self.wavelength_steps, self.time_steps)
@@ -74,15 +74,15 @@ class SingleExcitation():
         nr_of_steps = (interval[1] - interval[0]) / step_size
         return np.linspace(interval[0], interval[1], int(nr_of_steps))
 
-    def get_rand_nrs_from_normal_distribution(self, how_many_numbers=1):
-        return self.random_number_generator.standard_normal(how_many_numbers)
+    def get_rand_nrs_from_somewhat_normal_distribution(self, how_many_numbers=1):
+        return self.random_number_generator.normal(loc=0.0, scale=2.0, size=how_many_numbers)
 
     def compute_gaussian(self, amplitude, steps, exp_value, std_deviation):
         gaussian = np.array(amplitude * np.exp(-((steps - exp_value)**2)/(2*(std_deviation**2))), dtype=float)
         return gaussian
 
     def add_normal_noise_to_array(self, array, noise_scale=1):
-        noisy_array = array + noise_scale*self.get_rand_nrs_from_normal_distribution(how_many_numbers=len(array))
+        noisy_array = array + noise_scale*self.get_rand_nrs_from_somewhat_normal_distribution(how_many_numbers=len(array))
         return noisy_array
 
     def compute_exp_decay_amplitude(self, time_step, decay_constant):
