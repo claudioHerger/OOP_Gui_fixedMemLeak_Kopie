@@ -150,13 +150,16 @@ class SingleExcitation():
 
 if __name__ == "__main__":
     # start = time.time()
-    # test_ta_sim_obj = SingleExcitation(os.getcwd()+"/configFiles/test_config_file.ini", make_plots=True)
+    # test_ta_sim_obj = SingleExcitation(os.getcwd()+"/configFiles/test/test_config_file.ini", make_plots=True)
     # print(f'SingleExcitation excecution time: {time.time()-start}')
 
-    for file in os.listdir(os.getcwd()+"/configFiles/"):
-        if file == "overlap_wavelength0.ini":
-            print()
-            print(f'file: {file}')
-            start = time.time()
-            multi_excitation_obj = SingleExcitation(os.getcwd()+"/configFiles/"+file, make_plots=True)
-            print(f'MultiExcitation excecution time: {time.time()-start}')
+    # dir_path = os.getcwd()+"/configFiles/wavelength_overlap/"
+    dir_path = os.getcwd()+"/configFiles/"
+
+    files_in_dir = [f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))]
+    for file in files_in_dir:
+        print()
+        print(f'file: {file}')
+        start = time.time()
+        multi_excitation_obj = SingleExcitation(dir_path+file, make_plots=True)
+        print(f'SingleExcitation excecution time: {time.time()-start}')
