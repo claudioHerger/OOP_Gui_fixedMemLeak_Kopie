@@ -66,6 +66,14 @@ class GuiAppTAAnalysis(tk.Frame):
         # self.grey = "lavender"
         # self.flashwidgetcolor = "navyblue"
 
+        self.ttk_Notebook_style = ttk.Style()
+        self.ttk_Notebook_style.theme_settings("default", settings={
+            "TNotebook":    {"configure": {"background": self.grey, }},
+            "TNotebook.Tab":    {
+                "configure":    {"background": self.blue, },
+                "map":          {"background": [("selected", self.gold)]}}})
+        self.ttk_Notebook_style.theme_use("default")
+
         # geometry, title etc of window
         self.parent.config(bg=self.violet)
         self.truncated_filename = (os.path.basename(self.curr_reconstruct_data_file_strVar.get())[:20] + '...') if len(os.path.basename(self.curr_reconstruct_data_file_strVar.get())) > 23 else os.path.basename(self.curr_reconstruct_data_file_strVar.get())
@@ -579,35 +587,25 @@ class GuiAppTAAnalysis(tk.Frame):
         return None
 
     """ set up Gui """
-    def initialize_tabs_and_frames(self):
+    def initialize_main_frame(self):
         """
-        sets up the initial tabs with ttk.Notebook and the initial frames on tabs
-        then configures rows and columns of the initial frames on tabs
+        sets up the main frame on self.parent
         """
-        style = ttk.Style()
-        style.theme_settings("default", settings={
-            "TNotebook":    {"configure": {"background": self.grey, }},
-            "TNotebook.Tab":    {
-                "configure":    {"background": self.blue, },
-                "map":          {"background": [("selected", self.gold)]}}})
-        style.theme_use("default")
-
-        self.tab_control_main_window = ttk.Notebook(self.parent)
-        self.frm_main_tab1 = tk.Frame(self.tab_control_main_window, bg=self.grey)
-        self.tab_control_main_window.add(self.frm_main_tab1, text = "Tab 1")                         # adds a tab to self.tab_control_main_window
+        self.frm_main = tk.Frame(self.parent, bg=self.grey)
 
         # configuring the main frames in tabs and placing tabs
-        self.frm_main_tab1.rowconfigure(0, weight=1)                                  # weight determines how much space the row/col takes proportionally to other rows/cols
-        self.frm_main_tab1.columnconfigure((0,4), weight=0)
-        self.frm_main_tab1.columnconfigure((1,2), weight=1)
+        self.frm_main.rowconfigure(0, weight=1)                                  # weight determines how much space the row/col takes proportionally to other rows/cols
+        self.frm_main.columnconfigure((0,4), weight=0)
+        self.frm_main.columnconfigure((1,2), weight=1)
 
         self.parent.rowconfigure(0, weight=1)
         self.parent.columnconfigure(0, weight=1)
-        self.tab_control_main_window.grid(row=0, column=0, sticky="nsew")
+
+        self.frm_main.grid(row=0, column=0, sticky="nsew")
 
     def initialize_tab1(self):
         """ widgets for original data heatmap generation """
-        self.frm_orig_data_tab1 = tk.Frame(self.frm_main_tab1, bg=self.gold,)
+        self.frm_orig_data_tab1 = tk.Frame(self.frm_main, bg=self.gold,)
         self.frm_orig_data_tab1.grid(row=0, column=4, sticky="nse", rowspan=2)
 
         self.btn_show_orig_data_heatmap = tk.Button(self.frm_orig_data_tab1, text="show original data", command=self.show_orig_data_heatmap)
@@ -617,7 +615,7 @@ class GuiAppTAAnalysis(tk.Frame):
         self.lbl_reassuring_orig = tk.Label(self.parent, text="patience, padawan - still computing")
 
         # Notebook, Frame, Figure, Axes and Canvas Container
-        self.nbCon_orig = NotebookContainer.NotebookContainer(self, self.frm_main_tab1, self.NR_OF_TABS, figsize=(10,5))
+        self.nbCon_orig = NotebookContainer.NotebookContainer(self, self.frm_main, self.NR_OF_TABS, figsize=(10,5))
 
         """ buttons to change data file and start time value """
         self.btn_update_curr_reconstruct_data_file_strVar = tk.Button(self.frm_orig_data_tab1, text="change data file", command=lambda x=self.curr_reconstruct_data_file_strVar: self.set_curr_fileVar(x))
@@ -627,7 +625,7 @@ class GuiAppTAAnalysis(tk.Frame):
         self.btn_change_reconstruct_start_time_value.grid(row=2, column=0, padx=3, pady=5, sticky="ew")
 
         """ widgets for SVD_reconstruction data heatmap generation """
-        self.frm_update_reconstruct_data_tab1 = tk.Frame(self.frm_main_tab1, bg=self.gold,)
+        self.frm_update_reconstruct_data_tab1 = tk.Frame(self.frm_main, bg=self.gold,)
         self.frm_update_reconstruct_data_tab1.grid_propagate(1)                                   # 0 fixes the frame size, no matter what widgets it contains
         self.frm_update_reconstruct_data_tab1.grid(row=0, column=0, sticky="nsw", rowspan=2)
 
@@ -662,7 +660,7 @@ class GuiAppTAAnalysis(tk.Frame):
         self.lbl_reassuring_SVD = tk.Label(self.parent, text="patience, padawan - still computing")
 
         # notebook container for SVD reconstruction heatmap
-        self.nbCon_SVD = NotebookContainer.NotebookContainer(self, self.frm_main_tab1, self.NR_OF_TABS, figsize=(10,5))
+        self.nbCon_SVD = NotebookContainer.NotebookContainer(self, self.frm_main, self.NR_OF_TABS, figsize=(10,5))
 
         """ widgets for SVD_GlobalFit_reconstruction heatmap generation, this reconstruction also uses widgets and variables for SVD_reconstruction! """
         self.lbl_temporal_resolution = tk.Label(self.frm_update_reconstruct_data_tab1, text="set temporal res [fs]: ", fg=self.violet)
@@ -698,7 +696,7 @@ class GuiAppTAAnalysis(tk.Frame):
         self.lbl_reassuring_SVDGF = tk.Label(self.parent, text="patience, padawan - still computing")
 
         # notebook container for SVDGF reconstruction heatmap
-        self.nbCon_SVDGF = NotebookContainer.NotebookContainer(self, self.frm_main_tab1, self.NR_OF_TABS, figsize=(10,5))
+        self.nbCon_SVDGF = NotebookContainer.NotebookContainer(self, self.frm_main, self.NR_OF_TABS, figsize=(10,5))
 
         # to show SVDGF fit results in tk.Toplevel
         self.fit_report_toplevels = []
@@ -723,7 +721,7 @@ class GuiAppTAAnalysis(tk.Frame):
         self.ent_show_DAS_toplevel.bind("<Return>", self.show_DAS_toplevel)
 
         """ notebook for difference matrices """
-        self.nbCon_difference = NotebookContainer.NotebookContainer(self, self.frm_main_tab1, self.NR_OF_DIFFERENCE_TABS, figsize=(10,5))
+        self.nbCon_difference = NotebookContainer.NotebookContainer(self, self.frm_main, self.NR_OF_DIFFERENCE_TABS, figsize=(10,5))
 
         """ widgets for user defined target model fit function """
         self.btn_set_target_model_fit_function = tk.Button(self.frm_update_reconstruct_data_tab1, text="Define fit function", command=self.define_target_model_fit_function, activebackground=self.flashwidgetcolor)
@@ -750,7 +748,7 @@ class GuiAppTAAnalysis(tk.Frame):
     # Widget layout of GUI
     def initialize_GUI(self):
         # Tabs and frames setup
-        self.initialize_tabs_and_frames()
+        self.initialize_main_frame()
 
         # placing widgets on tab 1
         self.initialize_tab1()
