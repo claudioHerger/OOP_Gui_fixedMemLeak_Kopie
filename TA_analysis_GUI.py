@@ -269,7 +269,7 @@ class GuiAppTAAnalysis(tk.Frame):
     def set_curr_fileVar(self, file_var):
         # here you can update which files the user can select in the dialog.
         # in "All files" i do not just write a complete wildcard "*", as i want to keep some control over which files the user can choose.
-        ftypes = [('txt files', '*.txt'), ('All files', '*.txt; *.rar'), ('Rar archive files', '*.rar')]
+        ftypes = [('txt files', '*.txt'), ('All files', '*.txt; *.csv'), ('CSV files', '*.csv')]
         filename = tk.filedialog.askopenfilename(initialdir=base_directory+"/DataFiles", title="Select a file to work with", filetypes=ftypes)
 
         if filename != "":

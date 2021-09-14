@@ -17,6 +17,9 @@ def load_complete_data(data_file):
     if data_file.endswith(".txt"):
         with open(data_file, 'r') as file:
             data = [x.replace('\n', '').split() for x in file]
+    elif data_file.endswith(".csv"):
+        with open(data_file, 'r') as file:
+            data = [x.replace('\n', '').split(",") for x in file]
     elif data_file.endswith(".rar"):
         # import rarfile, csv
         # rar_path = rarfile.RarFile(data_file)
