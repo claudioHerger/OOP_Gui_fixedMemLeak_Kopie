@@ -58,15 +58,13 @@ class GuiAppTAAnalysis(tk.Frame):
         self.grey = "lavender"
         self.flashwidgetcolor = "navyblue"
 
-        # self.light_magenta ="#bca9e1"
-        # self.violet = self.light_magenta
-        # self.light_blue = "#a4c5ea"
-        # self.grey = self.light_blue
-        # self.light_green = "#9de19a"
-        # self.light_yellow = "#e7eca3"
-        # self.gold = self.light_yellow
-        # self.darker_blue = "#98a7f2"
-        # self.blue = self.darker_blue
+        # self.blue = "#01949a" # teal
+        # self.gold = "#e5ddc8" # sanddollar
+        # self.orange = "orange"
+        # self.complementary_blue = "#0028FF"
+        # self.violet = "#004369" # navyblue
+        # self.grey = "lavender"
+        # self.flashwidgetcolor = "navyblue"
 
         # geometry, title etc of window
         self.parent.config(bg=self.violet)
