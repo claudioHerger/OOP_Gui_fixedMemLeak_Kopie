@@ -23,6 +23,7 @@ import lmfit
 import math
 import scipy.signal
 import asteval
+import tkinter as tk
 
 def convolute_first_part_of_fit_function(sum_of_exponentials, time_delays, index_of_first_increased_time_interval, gaussian_for_convolution):
     """ convolutes the part of the fit function (sum of exponentials) that corresponds to the small initial time intervals
@@ -74,7 +75,7 @@ def model_func(time_delays, amplitudes, decay_constants, index_of_first_increase
 
 def model_func_dataset(time_delays, idx_of_vector, fit_params, retained_components, index_of_first_increased_time_interval, gaussian_for_convolution, parsed_user_defined_summands, asteval_interpreter):
     """ calc model func from fit params for vectors_to_fit[idx_of_vector] """
-    decay_constants = [fit_params['tau_component%i' % (j)] for j in retained_components]
+    decay_constants = [fit_params[f'tau_component{comp}'] for comp in retained_components]
 
     # This way amplitudes have same indexes as in cannizzo paper
     amplitudes = [fit_params[f'amp_rSV{idx_of_vector}_component{component}'] for component in retained_components]
@@ -157,12 +158,17 @@ def start_the_fit(retained_components, time_delays, retained_rSVs, retained_sing
         sing_value = retained_singular_values[component]
         vectors_to_fit[component, :] = sing_value*retained_rSVs[component, :]
 
-    # initialize fit parameters ---
-    fit_params = lmfit.Parameters()
-    for component in retained_components:
-        fit_params.add( f'tau_component{component}', value=initial_fit_parameter_values["time_constants"])
-        for rSV_index in range(0, len(retained_components)):
-            fit_params.add( f'amp_rSV{rSV_index}_component{component}', value=initial_fit_parameter_values["amplitudes"])
+    # initialize fit parameters
+    try:
+        fit_params = lmfit.Parameters()
+        for comp_index,component in enumerate(retained_components):
+            fit_params.add(f'tau_component{component}', value=float(initial_fit_parameter_values["time_constants"][comp_index]))
+            for rSV_index in range(0, len(retained_components)):
+                fit_params.add(f'amp_rSV{rSV_index}_component{component}', value=float(initial_fit_parameter_values["amplitudes"][comp_index][rSV_index]))
+    except IndexError as error:
+        tk.messagebox.showerror("Warning,", "an exception occurred!"+"\nThe number of initial fit parameters in fit parameter configuration file must at least be equal to the number of SVD components selected for fit."+
+                                    f"\nException {type(error)} message: \n"+ str(error)+"\n")
+        raise ValueError("number of initial fit parameters is less than nr of SVD components for fit")
 
     # need this index for the convolution in fit procedure:
     index_of_first_increased_time_interval = get_index_at_which_time_intervals_increase_the_first_time(time_delays)

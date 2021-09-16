@@ -1,4 +1,6 @@
 import tkinter as tk
+import ast
+import os
 
 from SupportClasses import ToolTip
 
@@ -20,7 +22,6 @@ class initial_fit_parameters_Window(tk.Toplevel):
         self.file_name = file_name
 
         self.title('Set the initial fit parameter values - used for each fit.')
-
 
         self.btn_ignore_and_quit = tk.Button(self, text="Hit Enter: Ignore and quit", command=lambda: self.ignore_and_quit())
         ttp_btn_ignore_and_quit = ToolTip.CreateToolTip(self.btn_ignore_and_quit, \
@@ -51,18 +52,36 @@ class initial_fit_parameters_Window(tk.Toplevel):
 
         self.new_values_entries = []
         for i in range(len(self.old_initial_fit_parameter_values)):
-            self.new_values_entries.append(tk.Entry(self, width=10))
+            self.new_values_entries.append(tk.Entry(self, width=100, justify=tk.RIGHT))
             self.new_values_entries[i].insert(0, self.old_values_labels[i]["text"])
             self.new_values_entries[i].grid(sticky="nsew", row=i+1, column=2)
 
         return None
 
-    def read_and_parse_to_float_new_values_from_entries(self):
+    def traverse_list(self, data_item):
+        if isinstance(data_item, list):
+            for value in data_item:
+                for subvalue in self.traverse_list(value):
+                    yield subvalue
+        else:
+            yield data_item
+
+    def entries_contain_number_strings_only(self):
         self.new_initial_fit_parameter_values = {}
-        # dictionaries keep insertion order since python 3.6 so iterating over them is ok.
+
         for (i, key) in enumerate(self.old_initial_fit_parameter_values.keys()):
-            if self.string_is_number(self.new_values_entries[i].get()):
-                self.new_initial_fit_parameter_values[key] = float(self.new_values_entries[i].get())
+            try:
+                curr_list = ast.literal_eval(self.new_values_entries[i].get())
+            except (ValueError, SyntaxError):
+                self.new_initial_fit_parameter_values = "invalid"
+                break
+
+            curr_list_contains_non_numeric_string = False
+            for nr_string in self.traverse_list(curr_list):
+                if not self.string_is_number(str(nr_string)):
+                    curr_list_contains_non_numeric_string = True
+            if not curr_list_contains_non_numeric_string:
+                self.new_initial_fit_parameter_values[key] = curr_list
             else:
                 # if the parsing of one user entered values fails, i do not want to use any of them!
                 self.new_initial_fit_parameter_values = "invalid"
@@ -74,17 +93,16 @@ class initial_fit_parameters_Window(tk.Toplevel):
         try:
             if some_string.lower() in ("nan", "-nan", "-inf", "inf"):
                 return False
-            float(some_string.lstrip("0"))      # lstrip("0") removes leading "0"s. i think at some point python did use if i did not remove leading "0"s octal numeral system (base 8)
+            float(some_string.lstrip("0"))      # lstrip("0") removes leading "0"s. i think at some point python uses octal numeral system (base 8) (if i did not remove leading "0"s)
             return True
         except ValueError:
             return False
 
     def assign_new_values_if_correct_format(self):
-        self.read_and_parse_to_float_new_values_from_entries()
+        self.entries_contain_number_strings_only()
 
         if self.new_initial_fit_parameter_values == "invalid":
-            tk.messagebox.showwarning(title="Warning: parsing error.", message="Entered values could not be successfully parsed to floats!")
-            self.destroy()
+            tk.messagebox.showwarning(title="Warning: parsing error.", message=f"Your entered values could not be successfully parsed to floats!")
 
             return None
 
