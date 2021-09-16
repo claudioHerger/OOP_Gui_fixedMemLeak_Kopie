@@ -157,7 +157,7 @@ def start_the_fit(retained_components, time_delays, retained_rSVs, retained_sing
         sing_value = retained_singular_values[component]
         vectors_to_fit[component, :] = sing_value*retained_rSVs[component, :]
 
-    # initialize fit parameters
+    # initialize fit parameters ---
     fit_params = lmfit.Parameters()
     for component in retained_components:
         fit_params.add( f'tau_component{component}', value=initial_fit_parameter_values["time_constants"])
