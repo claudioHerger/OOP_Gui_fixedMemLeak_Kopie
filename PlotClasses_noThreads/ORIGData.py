@@ -89,10 +89,10 @@ class ORIGData_Heatmap():
         self.btn_delete_attrs = tk.Button(self.parent.nbCon_orig.figure_frames[self.tab_idx], text="remove tab", fg=self.parent.violet, command=lambda: self.remove_tab(self.parent.nbCon_orig))
         self.btn_delete_attrs.grid(row=1, column=3, sticky="se")
 
-        self.btn_inspect_SVD_components = tk.Button(self.parent.nbCon_orig.figure_frames[self.tab_idx], text="inspect SVD comps", fg=self.parent.violet, command=self.make_SV_inspection_toplevel)
+        self.btn_inspect_SVD_components = tk.Button(self.parent.nbCon_orig.figure_frames[self.tab_idx], text="inspect SVD", fg=self.parent.violet, command=self.make_SV_inspection_toplevel)
         self.ttp_btn_inspect_SVD_components = ToolTip.CreateToolTip(self.btn_inspect_SVD_components, \
         'This opens a window to inspect the SVD components of this data matrix.')
-        self.btn_inspect_SVD_components.grid(row=1, column=1, padx=10)
+        self.btn_inspect_SVD_components.grid(row=1, column=1, padx=0)
 
         self.btn_save_data = tk.Button(self.parent.nbCon_orig.figure_frames[self.tab_idx], text="save data", fg=self.parent.violet, command=self.save_data_to_file)
         self.btn_save_data.grid(row=1, column=0, sticky="sw")
@@ -100,7 +100,7 @@ class ORIGData_Heatmap():
         self.btn_inspect_data_matrix = tk.Button(self.parent.nbCon_orig.figure_frames[self.tab_idx], text="inspect matrix", fg=self.parent.violet, command=self.inspect_data_matrix_via_toplevel)
         self.ttp_btn_inspect_data_matrix = ToolTip.CreateToolTip(self.btn_inspect_data_matrix, \
         'This opens a window to inspect the rows and columns of this data matrix.')
-        self.btn_inspect_data_matrix.grid(row=1, column=2, sticky="se", padx=10)
+        self.btn_inspect_data_matrix.grid(row=1, column=2, sticky="se", padx=5)
 
         # set dimensions of figure frame as computed correspondingly to gui size
         self.configure_figure_frame_size(self.parent.nbCon_orig, self.tab_idx)
@@ -200,6 +200,7 @@ class ORIGData_Heatmap():
         # remove figure and button from canvas when tab is removed. This is merely for aesthetic reasons.
         self.btn_delete_attrs.grid_remove()
         self.btn_save_data.grid_remove()
+        self.btn_inspect_data_matrix.grid_remove()
         self.btn_inspect_SVD_components.grid_remove()
 
         # clear figure when tab is removed

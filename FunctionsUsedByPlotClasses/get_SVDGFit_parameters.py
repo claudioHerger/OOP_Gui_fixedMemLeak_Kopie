@@ -114,9 +114,6 @@ def get_index_at_which_time_intervals_increase_the_first_time(time_delays):
 
     initial_time_interval = time_delays[1] - time_delays[0]
 
-    # print(f'\nneeded for convolution:')
-    # print(f'first time interval in: {initial_time_interval}')
-
     time_intervals = np.zeros(len(time_delays))
     for i in range(len(time_delays)):
         # add last element specially, as the standard computation used for other elements does not work for this element.
@@ -137,10 +134,6 @@ def get_index_at_which_time_intervals_increase_the_first_time(time_delays):
     if index_of_first_increased_time_interval == len(time_delays) - 1:
         print(f'\ntime intervals are all approximately the same! reassigning the index of first increased time intervals! \n ')
         index_of_first_increased_time_interval = len(time_delays) // 4
-
-    # print(f'index of first increased time interval: {index_of_first_increased_time_interval}')
-    # print(f'time interval at that index: {time_intervals[index_of_first_increased_time_interval]}')
-    # print(f'time interval at that index + 1: {time_intervals[index_of_first_increased_time_interval+1]}')
 
     return index_of_first_increased_time_interval
 
@@ -164,7 +157,6 @@ def start_the_fit(retained_components, time_delays, retained_rSVs, retained_sing
         sing_value = retained_singular_values[component]
         vectors_to_fit[component, :] = sing_value*retained_rSVs[component, :]
 
-
     # initialize fit parameters
     fit_params = lmfit.Parameters()
     for component in retained_components:
@@ -177,7 +169,8 @@ def start_the_fit(retained_components, time_delays, retained_rSVs, retained_sing
 
     # this is the gaussian (array length = index_of_first_increased_time_interval )
     # with which the first part of the fit function is convoluted in fit function
-    gaussian_for_convolution = get_gaussian_for_convolution(time_delays, time_zero, temp_resolution, index_of_first_increased_time_interval)
+    # gaussian_for_convolution = get_gaussian_for_convolution(time_delays, time_zero, temp_resolution, index_of_first_increased_time_interval)
+    gaussian_for_convolution = None
 
     # instantiate the asteval Interpreter, is however only used when user defined fit function is used.
     asteval_interpreter = asteval.Interpreter(use_numpy=True)

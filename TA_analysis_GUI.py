@@ -38,7 +38,7 @@ class GuiAppTAAnalysis(tk.Frame):
         self.curr_reconstruct_data_file_strVar = tk.StringVar()
         self.curr_reconstruct_data_file_strVar.set("no file selected")
         # self.curr_reconstruct_data_file_strVar.set(base_directory+"/DataFiles/simulatedTAData_formatted.txt")
-        self.curr_reconstruct_data_file_strVar.set(base_directory+"/DataFiles/data_full_0.txt")
+        # self.curr_reconstruct_data_file_strVar.set(base_directory+"/DataFiles/data_full_0.txt")
         self.curr_reconstruct_data_file_strVar.trace_add("write", self.update_title_callback)
         self.curr_reconstruct_data_start_time_value = tk.DoubleVar()
         self.curr_reconstruct_data_start_time_value.trace_add("write", self.update_title_callback)
@@ -645,6 +645,7 @@ class GuiAppTAAnalysis(tk.Frame):
         nr_checkboxes_reconstruct_data = 10
         self.checkbutton_vars_reconstruct_data = [tk.IntVar(0) for _ in range(nr_checkboxes_reconstruct_data)]
 
+        # set some checkbuttons as checked -- for convenience when testing
         for i in range(nr_checkboxes_reconstruct_data-8):
             self.checkbutton_vars_reconstruct_data[i].set(1)
 
@@ -664,8 +665,8 @@ class GuiAppTAAnalysis(tk.Frame):
 
         """ widgets for SVD_GlobalFit_reconstruction heatmap generation, this reconstruction also uses widgets and variables for SVD_reconstruction! """
         self.lbl_temporal_resolution = tk.Label(self.frm_update_reconstruct_data_tab1, text="set temporal res [fs]: ", fg=self.violet)
-        self.ent_temporal_resolution_in_fs = tk.Entry(self.frm_update_reconstruct_data_tab1, width=6, fg=self.violet, validate="key", validatecommand=(self.register(self.test_value_digits_only),'%P','%d'))
-        self.ent_temporal_resolution_in_fs.insert(0, 100)
+        self.ent_temporal_resolution_in_fs = tk.Entry(self.frm_update_reconstruct_data_tab1, width=6, fg=self.violet, validate="key", justify=tk.RIGHT, validatecommand=(self.register(self.test_value_digits_only),'%P','%d'))
+        self.ent_temporal_resolution_in_fs.insert(0, 0)
         ttp_lbl_temporal_resolution = ToolTip.CreateToolTip(self.lbl_temporal_resolution, \
         'NOT USED AT THE MOMENT!\n'
         'Might be Used for SVDGF reconstruction: '
@@ -678,8 +679,8 @@ class GuiAppTAAnalysis(tk.Frame):
         self.ent_temporal_resolution_in_fs.grid(row=grid_info_lbl_temporal_resolution["row"], padx=3, pady=5, sticky="e")
 
         self.lbl_time_zero = tk.Label(self.frm_update_reconstruct_data_tab1, text="time zero [fs]: ", fg=self.violet)
-        self.ent_time_zero = tk.Entry(self.frm_update_reconstruct_data_tab1, width=6, fg=self.violet, validate="key", validatecommand=(self.register(self.test_value_digits_only),'%P','%d'))
-        self.ent_time_zero.insert(0, 600)
+        self.ent_time_zero = tk.Entry(self.frm_update_reconstruct_data_tab1, width=6, fg=self.violet, validate="key", justify=tk.RIGHT, validatecommand=(self.register(self.test_value_digits_only),'%P','%d'))
+        self.ent_time_zero.insert(0, 0)
         ttp_lbl_time_zero = ToolTip.CreateToolTip(self.lbl_time_zero, \
         'NOT USED AT THE MOMENT!\n'
         'Might be Used for SVDGF reconstruction: '
