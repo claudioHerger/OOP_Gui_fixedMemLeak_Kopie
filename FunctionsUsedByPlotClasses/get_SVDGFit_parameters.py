@@ -160,9 +160,9 @@ def start_the_fit(retained_components, time_delays, retained_rSVs, retained_sing
     # initialize fit parameters
     fit_params = lmfit.Parameters()
     for component in retained_components:
-        fit_params.add( 'tau_component%i' % (component), value=initial_fit_parameter_values["time_constants"])
+        fit_params.add( f'tau_component{component}', value=initial_fit_parameter_values["time_constants"])
         for rSV_index in range(0, len(retained_components)):
-            fit_params.add( 'amp_rSV%i_component%i' % (rSV_index, component), value=initial_fit_parameter_values["amplitudes"])
+            fit_params.add( f'amp_rSV{rSV_index}_component{component}', value=initial_fit_parameter_values["amplitudes"])
 
     # need this index for the convolution in fit procedure:
     index_of_first_increased_time_interval = get_index_at_which_time_intervals_increase_the_first_time(time_delays)
