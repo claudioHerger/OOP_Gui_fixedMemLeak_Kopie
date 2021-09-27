@@ -58,7 +58,7 @@ class SVD_Heatmap():
         self.yticklabels = [self.label_format.format(x) for x in self.yticklabels]
         self.xticklabels = [self.label_format.format(x) for x in self.xticklabels]
 
-        self.cm = sns.diverging_palette(220, 20, as_cmap=True)
+        self.cm = sns.diverging_palette(220, 20, s=100, as_cmap=True)
         sns.heatmap(self.data, ax = self.axes, cbar_kws={'label': 'rel transmission'}, cmap=self.cm)
 
         self.axes.set_yticks(self.yticks)
@@ -98,7 +98,7 @@ class SVD_Heatmap():
         self.yticklabels = [self.label_format.format(x) for x in self.yticklabels]
         self.xticklabels = [self.label_format.format(x) for x in self.xticklabels]
 
-        self.cm = sns.diverging_palette(220, 20, as_cmap=True)
+        self.cm = sns.diverging_palette(220, 20, s=100, as_cmap=True)
         sns.heatmap(self.difference_data, ax = self.axes_difference, cbar_kws={'label': 'rel transmission'}, cmap=self.cm)
 
         self.axes_difference.set_yticks(self.yticks)

@@ -184,7 +184,7 @@ def start_the_fit(retained_components, time_delays, retained_rSVs, retained_sing
     # run the global fit over all the data sets, i.e. all VT_i
     # per default uses method='levenberg-marquardt-leastsq' = 'leastsq'
     # could change the fit method via "method" argument. see web for possible fit methods
-    result = lmfit.minimize(objective, fit_params, method='leastsq', args=(time_delays, vectors_to_fit, retained_components, index_of_first_increased_time_interval, gaussian_for_convolution, parsed_user_defined_summands, asteval_interpreter))
+    result = lmfit.minimize(objective, fit_params, method='least_squares', args=(time_delays, vectors_to_fit, retained_components, index_of_first_increased_time_interval, gaussian_for_convolution, parsed_user_defined_summands, asteval_interpreter))
 
     return result
 
