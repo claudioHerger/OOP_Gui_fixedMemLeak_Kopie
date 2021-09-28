@@ -40,7 +40,7 @@ def convolute_first_part_of_fit_function(sum_of_exponentials, time_delays, index
 
     return convolution
 
-def model_func_user_defined(time_delays, amplitudes, decay_constants, retained_components, parsed_user_defined_summands, asteval_interpreter: asteval.Interpreter):
+def model_func_user_defined(time_delays, amplitudes, decay_constants, retained_components, parsed_user_defined_summands, asteval_interpreter: asteval.Interpreter = asteval.Interpreter(use_numpy=True)):
     taus = {}
     for (i,comp) in enumerate(retained_components):
         taus[f"component{comp}"] = decay_constants[i]
@@ -54,7 +54,7 @@ def model_func_user_defined(time_delays, amplitudes, decay_constants, retained_c
 
     return exp_sum
 
-def model_func(time_delays, amplitudes, decay_constants, index_of_first_increased_time_interval, gaussian_for_convolution):
+def model_func(time_delays, amplitudes, decay_constants, index_of_first_increased_time_interval=0, gaussian_for_convolution=0):
     """ model function for fit: a sum of exponentials (as many as SVD components are used for SVDGF reconstruction).\n
     the amplitudes of the expontials are individual fit parameters, the decay constants are shared fit parameters.\n
     the first part (up to index_of_first_increased_time_interval) is convoluted with a gaussian IRF of the same length.
@@ -89,7 +89,7 @@ def model_func_dataset(time_delays, idx_of_vector, fit_params, retained_componen
                             +"check your entered target model summands file for any errors like missing brackets or so...")
 
     else:
-        return model_func(time_delays, amplitudes, decay_constants, index_of_first_increased_time_interval, gaussian_for_convolution)
+        return model_func(time_delays, amplitudes, decay_constants, index_of_first_increased_time_interval=index_of_first_increased_time_interval, gaussian_for_convolution=gaussian_for_convolution)
 
 def objective(fit_params, time_delays, vectors_to_fit, retained_components, index_of_first_increased_time_interval, gaussian_for_convolution, parsed_user_defined_summands, asteval_interpreter):
     """ calculate total residual for fits to several \"vectors\" held

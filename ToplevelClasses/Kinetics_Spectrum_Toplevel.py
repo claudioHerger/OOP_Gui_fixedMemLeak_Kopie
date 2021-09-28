@@ -23,7 +23,7 @@ class Kinetics_Spectrum_Window(tk.Toplevel):
         Args:
             parent (GUIApp): parent is the Gui App that creates the instance of this class.
             tab_index (int): used in title of Toplevel, so that one knows to which tab this toplevel belongs.
-            data_dict (dict): contains identifier string \"type\" to differentiate between fitted data and non-fitted data, and all necessary data from data_obj to which to be inspected data matrix belongs.
+            data_dict (dict): contains identifier string 'type' to differentiate between fitted data and non-fitted data, and all necessary data from data_obj to which to be inspected data matrix belongs.
 
         Returns:
             None

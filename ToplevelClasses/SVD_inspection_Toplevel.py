@@ -23,7 +23,7 @@ class SVD_inspection_Window(tk.Toplevel):
         Args:
             parent (GUIApp): parent is the Gui App that creates the instance of this class.
             tab_index (int): used in title of Toplevel, so that one knows to which tab this toplevel belongs.
-            data_obj (ORIG data PlotClass): the data object to which the to be inspected data matrix belongs.
+            data_obj (ORIG data Plot instance): the instance of the data object to which the to be inspected data matrix belongs.
 
         Returns:
             None
@@ -47,7 +47,7 @@ class SVD_inspection_Window(tk.Toplevel):
         self.frm_leftSVs_figure.grid(row=1, column=1, columnspan=21)
 
         self.filename = os.path.basename(self.data_obj.filename)
-        self.title('Singular values and vectors for ORIG data tab: ' + str(tab_index + 1) + " - file: "+self.filename)
+        self.title('Singular values and vectors for ORIG data tab: ' + str(tab_index + 1) + " - data file: "+self.filename)
 
         self.lbl_nr_of_sing_values = tk.Label(self, text="nr of singular values?", fg=self.parent.violet)
         self.ent_nr_of_sing_values = tk.Entry(self, width=6, fg=self.parent.violet, validate="key", justify=tk.RIGHT, validatecommand=(self.register(self.test_value_digits_only),'%P','%d'))
