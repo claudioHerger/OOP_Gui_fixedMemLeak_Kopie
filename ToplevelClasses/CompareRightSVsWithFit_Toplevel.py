@@ -141,7 +141,7 @@ class CompareWindow(tk.Toplevel):
         for i in range(len(self.components)):
             if (self.check_button_variables[i].get() == 1):
                 self.axes.plot(self.xaxis, self.weighted_rSVs[i,:], label=f'component: {self.components[i]}', color=sns.color_palette("Set2")[i])
-                varied_color = (sns.color_palette("Set2")[i][0]*(0.9), 1-sns.color_palette("Set2")[i][1], 1-sns.color_palette("Set2")[i][2])
+                varied_color = (sns.color_palette("Set2")[i][0], sns.color_palette("Set2")[i][1]*0.1, sns.color_palette("Set2")[i][2]*(1.1))
                 self.axes.plot(self.xaxis, self.reconstructed_rSVs_from_fit_results[i,:], label=f'fit comp: {self.components[i]}', linestyle="--", color=varied_color)
 
         self.axes.set_xticks(self.rightSVs_xticks)
