@@ -329,19 +329,12 @@ class GuiAppTAAnalysis(tk.Frame):
 
         return None
 
-    def check_curr_fileVar_and_start_timeVar_value_exist(self, file_var, start_time_var):
-        # check whether a file and start time has been selected at all to create a heatmap from
+    def check_curr_fileVar_exists(self, file_var):
         if file_var.get()=="no file selected":
             self.set_curr_fileVar(file_var)
             if file_var.get()=="no file selected":
                 # do nothing if user cancelled
-                return None
-
-        if start_time_var.get()=="None":
-            self.set_curr_start_time_value(start_time_var)
-            if start_time_var.get()=="None":
-                # do nothing if user cancelled
-                return None
+                return "Cancelled"
 
     def get_index_of_next_tab_for_nb(self, notebook, maximum_allowed_nr_of_tabs_on_nb):
         """
@@ -490,7 +483,9 @@ class GuiAppTAAnalysis(tk.Frame):
             return None
 
         # check whether a file and start time has been selected at all to create a heatmap from
-        self.check_curr_fileVar_and_start_timeVar_value_exist(self.curr_reconstruct_data_file_strVar, self.curr_reconstruct_data_start_time_value)
+        file_state = self.check_curr_fileVar_exists(self.curr_reconstruct_data_file_strVar)
+        if file_state == "Cancelled":
+            return None
 
         # disable the used button during computation
         self.btn_show_orig_data_heatmap['state'] = tk.DISABLED
@@ -516,7 +511,9 @@ class GuiAppTAAnalysis(tk.Frame):
             return None
 
         # check whether a file and start time has been selected at all to create a heatmap from
-        self.check_curr_fileVar_and_start_timeVar_value_exist(self.curr_reconstruct_data_file_strVar, self.curr_reconstruct_data_start_time_value)
+        file_state = self.check_curr_fileVar_exists(self.curr_reconstruct_data_file_strVar)
+        if file_state == "Cancelled":
+            return None
 
         self.components_to_use = self.get_components_to_use()
         if (self.components_to_use is None):
@@ -551,7 +548,9 @@ class GuiAppTAAnalysis(tk.Frame):
             return None
 
         # check whether a file and start time has been selected at all to create a heatmap from
-        self.check_curr_fileVar_and_start_timeVar_value_exist(self.curr_reconstruct_data_file_strVar, self.curr_reconstruct_data_start_time_value)
+        file_state = self.check_curr_fileVar_exists(self.curr_reconstruct_data_file_strVar)
+        if file_state == "Cancelled":
+            return None
 
         self.components_to_use = self.get_components_to_use()
         if (self.components_to_use is None):
