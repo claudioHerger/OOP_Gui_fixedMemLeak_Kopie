@@ -137,7 +137,7 @@ class SVD_Heatmap():
 
         self.btn_inspect_diff_matrix = tk.Button(self.parent.nbCon_difference.figure_frames[self.tab_idx_difference], text="inspect matrix", fg=self.parent.violet, command=self.inspect_difference_matrix_via_toplevel)
         self.ttp_btn_inspect_diff_matrix = ToolTip.CreateToolTip(self.btn_inspect_diff_matrix, \
-        'Open a window to inspect this difference matrix row-by-row and column-by-column.')
+        'Open a window to inspect this difference matrix row-by-row and column-by-column.', optional_y_direction_bump=100)
         self.btn_inspect_diff_matrix.grid(row=1, column=0, sticky="se")
 
         # set dimensions of figure frame as computed correspondingly to gui size

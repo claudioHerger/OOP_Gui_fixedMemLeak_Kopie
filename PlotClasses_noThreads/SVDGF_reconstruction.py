@@ -191,7 +191,7 @@ class SVDGF_Heatmap():
         self.btn_update_with_DAS = tk.Button(self.parent.nbCon_SVDGF.figure_frames[self.tab_idx], text="update with:", fg=self.parent.violet, command=lambda: self.update_canvases_with_selected_DAS(self.checkbutton_vars))
         self.ttp_btn_update_with_DAS = ToolTip.CreateToolTip(self.btn_update_with_DAS, \
         'This updates this plot and the difference plot with data computed using only the selected DAS. '
-        'It also opens up a quick dialog field, where the decay times for the DAS decays could be changed', optional_y_direction_bump=60, optional_x_direction_bump=50)
+        'It also opens up a dialog field, where the decay times for the DAS decays could be changed', optional_y_direction_bump=60, optional_x_direction_bump=50)
         self.btn_update_with_DAS.grid(row=1, column=1, sticky="s")
 
         self.make_DAS_checkbuttons()
@@ -208,12 +208,12 @@ class SVDGF_Heatmap():
 
         self.btn_compare_rightSVs_with_fit = tk.Button(self.parent.nbCon_difference.figure_frames[self.tab_idx_difference], text="rightSVs vs fit", fg=self.parent.violet, command=self.compare_rightSVs_with_fit)
         self.ttp_btn_compare_rightSVs_with_fit = ToolTip.CreateToolTip(self.btn_compare_rightSVs_with_fit, \
-        'Open a window to compare the right singular vectors of original data matrix with their reconstruction via fit.')
+        'Open a window to compare the right singular vectors of original data matrix with their reconstruction via fit.', optional_y_direction_bump=100)
         self.btn_compare_rightSVs_with_fit.grid(row=1, column=0, sticky="sw")
 
         self.btn_inspect_diff_matrix = tk.Button(self.parent.nbCon_difference.figure_frames[self.tab_idx_difference], text="inspect matrix", fg=self.parent.violet, command=self.inspect_difference_matrix_via_toplevel)
         self.ttp_btn_inspect_diff_matrix = ToolTip.CreateToolTip(self.btn_inspect_diff_matrix, \
-        'Open a window to inspect this difference matrix row-by-row and column-by-column.')
+        'Open a window to inspect this difference matrix row-by-row and column-by-column.', optional_y_direction_bump=100)
         self.btn_inspect_diff_matrix.grid(row=1, column=1, sticky="se")
 
         # set dimensions of figure frame as computed correspondingly to gui size

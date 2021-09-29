@@ -37,7 +37,11 @@ def plot_arrays(x_axis, y_values, x_name, y_name, title="", file_name="", save_d
 def plot_arrays_OOP(x_axis, y_values, x_name, y_name, x_ticks="", x_ticklabels="", title="", file_name="", save_dir="", legend_labels=["legend"]):
 
     # do not know how to set grid in oop approach other than via rcParams
-    matplotlib.rcParams.update({"axes.grid" : True, "grid.color": "grey", "grid.alpha": 0.5, "grid.linewidth":1, "grid.linestyle": "--"})
+    # some styling for plots
+    matplotlib.style.use("seaborn")
+    matplotlib.rcParams.update({"axes.grid" : True, "grid.color": "grey", "grid.alpha": 0.5, "grid.linewidth":1, "grid.linestyle": "--", "axes.edgecolor":"black", "axes.linewidth": 1})
+    matplotlib.rcParams.update({'axes.labelsize': 16.0, 'axes.titlesize': 17.0, 'xtick.labelsize':10, 'ytick.labelsize':16.0})
+
 
     colors = ["tab:blue", "tab:orange", "tab:cyan", "tab:olive"]
 
@@ -57,33 +61,50 @@ def plot_arrays_OOP(x_axis, y_values, x_name, y_name, x_ticks="", x_ticklabels="
         ax.set_xticks(x_ticks)
         ax.set_xticklabels(x_ticklabels)
     ax.set_title(title)
-    ax.legend()
+    ax.legend(fontsize=14)
 
     fig.savefig(save_dir+file_name+".png")
 
     return None
 
-def plot_initial_gaussian_from_MultiExcitation_object(simulation_config_file_path="", save_dir=""):
+def plot_initial_gaussians_from_MultiExcitation_object(simulation_config_file_path="", save_dir=""):
 
     # initialize simulation object, i.e. read configuration file etc
     sim_obj = sim_MultiExcitation.MultiExcitation(simulation_config_file_path, make_plots=False)
 
     # get the data for plot
     x_values = sim_obj.wavelength_steps
-    initial_gaussian_with_noise = np.zeros((1, len(x_values)))
-    initial_gaussian = np.zeros((1, len(x_values)))
+    initial_gaussians_with_noise = np.zeros((sim_obj.nr_of_components, len(x_values)))
+    initial_gaussians = np.zeros((sim_obj.nr_of_components, len(x_values)))
     for i in range(sim_obj.nr_of_components):
-        initial_gaussian_with_noise += sim_obj.add_normal_noise_to_array(sim_obj.compute_gaussian(sim_obj.components_dict["amplitudes"][i], sim_obj.wavelength_steps, sim_obj.components_dict["wavelength_expectation_values"][i], sim_obj.components_dict["wavelength_std_deviations"][i]), noise_scale=sim_obj.pump_noise_scale)
-        initial_gaussian += sim_obj.compute_gaussian(sim_obj.components_dict["amplitudes"][i], sim_obj.wavelength_steps, sim_obj.components_dict["wavelength_expectation_values"][i], sim_obj.components_dict["wavelength_std_deviations"][i])
+        initial_gaussians_with_noise[i,:] += sim_obj.add_normal_noise_to_array(sim_obj.compute_gaussian(sim_obj.components_dict["amplitudes"][i], sim_obj.wavelength_steps, sim_obj.components_dict["wavelength_expectation_values"][i], sim_obj.components_dict["wavelength_std_deviations"][i]), noise_scale=sim_obj.pump_noise_scale)
+        initial_gaussians[i,:] += sim_obj.compute_gaussian(sim_obj.components_dict["amplitudes"][i], sim_obj.wavelength_steps, sim_obj.components_dict["wavelength_expectation_values"][i], sim_obj.components_dict["wavelength_std_deviations"][i])
+
+
+    plot_arrays_OOP(x_values, initial_gaussians_with_noise.T, "wavelengths", "intensity a.u.", title="initial gaussians", file_name=os.path.splitext(os.path.basename(simulation_config_file_path))[0]+"_initial_gaussians", save_dir=save_dir, legend_labels=["component 0", "component 1"])
+
+
+def plot_initial_excitation_from_MultiExcitation_object(simulation_config_file_path="", save_dir=""):
+
+    # initialize simulation object, i.e. read configuration file etc
+    sim_obj = sim_MultiExcitation.MultiExcitation(simulation_config_file_path, make_plots=False)
+
+    # get the data for plot
+    x_values = sim_obj.wavelength_steps
+    initial_excitation_with_noise = np.zeros((1, len(x_values)))
+    initial_excitation = np.zeros((1, len(x_values)))
+    for i in range(sim_obj.nr_of_components):
+        initial_excitation_with_noise += sim_obj.add_normal_noise_to_array(sim_obj.compute_gaussian(sim_obj.components_dict["amplitudes"][i], sim_obj.wavelength_steps, sim_obj.components_dict["wavelength_expectation_values"][i], sim_obj.components_dict["wavelength_std_deviations"][i]), noise_scale=sim_obj.pump_noise_scale)
+        initial_excitation += sim_obj.compute_gaussian(sim_obj.components_dict["amplitudes"][i], sim_obj.wavelength_steps, sim_obj.components_dict["wavelength_expectation_values"][i], sim_obj.components_dict["wavelength_std_deviations"][i])
 
     # single array
-    plot_arrays_OOP(x_values, initial_gaussian_with_noise.flatten(), "wavelengths", "intensity", title="initial \"excitation\"", file_name=os.path.splitext(os.path.basename(simulation_config_file_path))[0], save_dir=save_dir, legend_labels=["with noise"])
+    # plot_arrays_OOP(x_values, initial_excitation_with_noise.flatten(), "wavelengths", "intensity", title="initial \"excitation\"", file_name=os.path.splitext(os.path.basename(simulation_config_file_path))[0]+"_initial_excitation", save_dir=save_dir, legend_labels=["with noise"])
 
     # two arrays plot
     y_values_both_arrays = np.zeros((len(x_values),2))
-    y_values_both_arrays[:, 0] = initial_gaussian_with_noise
-    y_values_both_arrays[:, 1] = initial_gaussian
-    plot_arrays_OOP(x_values, y_values_both_arrays, "wavelengths", "intensity", title="initial \"excitation\"", file_name=os.path.splitext(os.path.basename(simulation_config_file_path))[0]+"_v2", save_dir=save_dir, legend_labels=["with noise", "without noise"])
+    y_values_both_arrays[:, 0] = initial_excitation_with_noise
+    y_values_both_arrays[:, 1] = initial_excitation
+    plot_arrays_OOP(x_values, y_values_both_arrays, "wavelengths", "intensity", title="initial \"excitation\"", file_name=os.path.splitext(os.path.basename(simulation_config_file_path))[0]+"initial_excitation_with_and_without_noise", save_dir=save_dir, legend_labels=["with noise", "without noise"])
 
 def plot_left_singular_vectors(data_file="", start_time="0.0", which_vectors=[0,], title="left singular vector", save_dir=""):
     # data preparation
@@ -114,16 +135,19 @@ if __name__ == "__main__":
     simulations_dir = cur_working_dir + "/SimulateData/"
     config_files_dir = simulations_dir + "/configFiles/"
     wavelength_overlap_dir = config_files_dir + "/wavelength_overlap/"
-    simulation_number = 1
-    config_file = wavelength_overlap_dir + "overlap_wavelength"+str(simulation_number)+".ini"
+    simulation_number = 0
+    config_file = wavelength_overlap_dir + "wavelength_overlap_"+str(simulation_number)+".ini"
     save_dir = cur_working_dir + "/SimulateData/moreSimulationPlots/"
-    plot_initial_gaussian_from_MultiExcitation_object(simulation_config_file_path=config_file,  save_dir=save_dir)
+    plot_initial_excitation_from_MultiExcitation_object(simulation_config_file_path=config_file,  save_dir=save_dir)
+    plot_initial_gaussians_from_MultiExcitation_object(simulation_config_file_path=config_file,  save_dir=save_dir)
+
 
     """ left Singular vectors plot """
     " might have to rerun simulation to get currently valid .txt data file "
     cur_working_dir = os.getcwd()
     simulations_data_dir = cur_working_dir + "/SimulateData/simulatedData/MultiExcitation/"
-    simulation_number = 1
-    data_file = simulations_data_dir + "overlap_wavelength"+str(simulation_number)+".txt"
+    simulation_wavelength_overlap_dir = simulations_data_dir + "/wavelength_overlap/"
+    simulation_number = 0
+    data_file = simulation_wavelength_overlap_dir + "wavelength_overlap_"+str(simulation_number)+".txt"
     save_dir = cur_working_dir + "/SimulateData/moreSimulationPlots/"
     plot_left_singular_vectors(data_file, start_time="0.0", which_vectors=[0,1, ], save_dir=save_dir)
