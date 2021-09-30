@@ -89,7 +89,7 @@ class SingularValues_Plot():
         self.axes.set_title("singular values of " + str(os.path.basename(self.filename))+"\n")
 
         if len(self.retained_singular_values) <= 12:
-            label_format = '{:,.2f}'
+            label_format = '{:.2f}'
             value_labels = [label_format.format(x) for x in self.retained_singular_values]
             text_str = "values: "+ str(value_labels[0])
             for label in value_labels[1:]:

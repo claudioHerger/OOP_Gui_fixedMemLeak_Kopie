@@ -96,7 +96,7 @@ class SVDGF_Heatmap():
         self.time_delays = self.time_delays[self.time_index:]
 
         self.num_ticks = 10
-        self.label_format = '{:,.2f}'
+        self.label_format = '{:.2f}'
 
         # the index of the position of self.yticks
         self.yticks = np.linspace(0, len(self.wavelengths) - 1, self.num_ticks, dtype=np.int)
@@ -144,7 +144,7 @@ class SVDGF_Heatmap():
         self.difference_data = self.difference_matrix_selected_DAS.astype(float)
 
         self.num_ticks = 10
-        self.label_format = '{:,.2f}'
+        self.label_format = '{:.2f}'
 
         # the index of the position of self.yticks
         self.yticks = np.linspace(0, len(self.wavelengths) - 1, self.num_ticks, dtype=np.int)

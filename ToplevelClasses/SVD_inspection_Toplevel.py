@@ -178,7 +178,7 @@ class SVD_inspection_Window(tk.Toplevel):
         self.leftSVs_xaxis = self.wavelengths
 
         self.leftSVs_num_ticks = 5
-        self.leftSVs_label_format = '{:,.1f}'
+        self.leftSVs_label_format = '{:.1f}'
         self.leftSVs_xticks = np.linspace(0, len(self.leftSVs_xaxis) - 1, self.leftSVs_num_ticks, dtype=np.int)
         self.leftSVs_xticklabels = [float(self.leftSVs_xaxis[idx]) for idx in self.leftSVs_xticks]
         self.leftSVs_xticklabels = [self.leftSVs_label_format.format(x) for x in self.leftSVs_xticklabels]
@@ -204,7 +204,7 @@ class SVD_inspection_Window(tk.Toplevel):
         self.rightSVs_xaxis = self.time_delays
 
         self.rightSVs_num_ticks = 5
-        self.rightSVs_label_format = '{:,.1f}'
+        self.rightSVs_label_format = '{:.1f}'
         self.rightSVs_xticks = np.linspace(0, len(self.rightSVs_xaxis) - 1, self.rightSVs_num_ticks, dtype=np.int)
         self.rightSVs_xticklabels = [float(self.rightSVs_xaxis[idx]) for idx in self.rightSVs_xticks]
         self.rightSVs_xticklabels = [self.rightSVs_label_format.format(x) for x in self.rightSVs_xticklabels]
