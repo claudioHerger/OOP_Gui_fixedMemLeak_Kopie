@@ -1,7 +1,7 @@
 import tkinter as tk
 import ast
-import os
 import re
+import numpy as np
 
 from SupportClasses import ToolTip
 
@@ -28,7 +28,7 @@ class initial_fit_parameters_Window(tk.Toplevel):
 
         self.btn_ignore_and_quit = tk.Button(self, text="Hit Enter: Ignore and quit", command=lambda: self.ignore_and_quit())
         ttp_btn_ignore_and_quit = ToolTip.CreateToolTip(self.btn_ignore_and_quit, \
-        'Quit this window and use the last saved fit parameters. ')
+        'Quit this window and use the last saved fit parameters.')
         self.btn_ignore_and_quit.grid(padx=10, pady=10, sticky="se", row=99, column=3)
 
         self.display_fit_parameters_labels_and_entries()
@@ -58,17 +58,25 @@ class initial_fit_parameters_Window(tk.Toplevel):
         self.bind("<Return>", lambda x: self.ignore_and_quit())
 
     def remove_last_parameters(self):
-        self.row_labels[-1].grid_forget()
-        self.row_labels = self.row_labels[0:-1]
+        try:
+            self.row_labels[-1].grid_forget()
+            self.row_labels = self.row_labels[0:-1]
 
-        self.new_values_entries[-1].grid_forget()
-        self.new_values_entries = self.new_values_entries[0:-1]
+            self.new_values_entries[-1].grid_forget()
+            self.new_values_entries = self.new_values_entries[0:-1]
+        except IndexError:
+            tk.messagebox.showwarning(title="Warning", message=f"No more parameters to remove!")
+            return None
 
-        for entry_index, entry in enumerate(self.new_values_entries):
-            curr_list = ast.literal_eval(self.new_values_entries[entry_index].get())
-            entry.delete(0, len(str(curr_list)))
-            curr_list = curr_list[0:-1]
-            entry.insert(0, str(curr_list))
+        try:
+            for entry_index, entry in enumerate(self.new_values_entries):
+                curr_list = ast.literal_eval(self.new_values_entries[entry_index].get())
+                entry.delete(0, len(str(curr_list)))
+                curr_list = curr_list[0:-1]
+                entry.insert(0, str(curr_list))
+        except SyntaxError:
+            tk.messagebox.showwarning(title="Warning.", message=f"One of your remaining entered lists could not be evaluated to a list.")
+            return None
 
         self.add_up_and_down_key_bindings_to_entries()
 
@@ -176,6 +184,11 @@ class initial_fit_parameters_Window(tk.Toplevel):
                 break
 
             curr_list_contains_non_numeric_string = False
+
+            # if there are nested lists in entries, break
+            if (len(np.array(curr_list).shape) != 1):
+                self.new_initial_fit_parameter_values = "invalid"
+                break
             for nr_string in self.traverse_list(curr_list):
                 if not self.string_is_number(str(nr_string)):
                     curr_list_contains_non_numeric_string = True
@@ -201,7 +214,8 @@ class initial_fit_parameters_Window(tk.Toplevel):
         self.new_initial_fit_parameter_values = self.entries_contain_number_strings_only()
 
         if self.new_initial_fit_parameter_values == "invalid":
-            tk.messagebox.showwarning(title="Warning: parsing error.", message=f"Your entered values could not be successfully parsed to floats!")
+            tk.messagebox.showwarning(title="Warning: parsing error.", message=f"Either your entered values could not be successfully parsed to floats,\n"+
+                                                                                "or there is some other ploblem with your entered lists! Check them again.")
 
             return None
 
