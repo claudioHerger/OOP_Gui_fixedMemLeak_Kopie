@@ -83,21 +83,38 @@ class initial_fit_parameters_Window(tk.Toplevel):
         return None
 
     def add_more_parameters_and_widgets(self):
-        self.row_labels.append(tk.Label(self))
-        self.row_labels[-1]["text"] = f"amps_rSV{len(self.row_labels)-2}"
-        self.old_values_labels.append(tk.Label(self, text="did not exist yet"))
-        self.new_values_entries.append(tk.Entry(self, width=50, justify=tk.RIGHT))
-        self.new_values_entries[-1].insert(0, self.new_values_entries[1].get())
+        if self.new_values_entries != []:
+            self.row_labels.append(tk.Label(self))
+            self.row_labels[-1]["text"] = f"amps_rSV{len(self.row_labels)-2}"
+            self.old_values_labels.append(tk.Label(self, text="did not exist yet"))
+            self.new_values_entries.append(tk.Entry(self, width=50, justify=tk.RIGHT))
+            self.new_values_entries[-1].insert(0, self.new_values_entries[1].get())
 
-        self.row_labels[-1].grid(padx=10, sticky="nsew", row=self.row_labels[-2].grid_info()["row"]+1, column=0)
-        self.old_values_labels[-1].grid(padx=10, sticky="nsew", row=self.old_values_labels[-2].grid_info()["row"]+1, column=1)
-        self.new_values_entries[-1].grid(sticky="nsew", row=self.new_values_entries[-2].grid_info()["row"]+1, column=2)
+            self.row_labels[-1].grid(padx=10, sticky="nsew", row=self.row_labels[-2].grid_info()["row"]+1, column=0)
+            self.old_values_labels[-1].grid(padx=10, sticky="nsew", row=self.old_values_labels[-2].grid_info()["row"]+1, column=1)
+            self.new_values_entries[-1].grid(sticky="nsew", row=self.new_values_entries[-2].grid_info()["row"]+1, column=2)
+
+        else:
+            self.old_initial_fit_parameter_values = {"time_constants": [50], "amps_rSV0": [0.7]}
+            self.display_fit_parameters_labels_and_entries()
+            return None
 
         for entry_index, entry in enumerate(self.new_values_entries):
-            if entry_index == 0:
-                entry.insert(len(entry.get())-1, ", 50")
+            if self.new_values_entries[entry_index].get() == "":
+                if entry_index == 0:
+                    entry.insert(len(entry.get())-1, "[50]")
+                else:
+                    entry.insert(len(entry.get())-1, "[0.7]")
             else:
-                entry.insert(len(entry.get())-1, ", 0.7")
+                try:
+                    curr_list = ast.literal_eval(self.new_values_entries[entry_index].get())
+                    if entry_index == 0:
+                        entry.insert(len(entry.get())-1, ", 50")
+                    else:
+                        entry.insert(len(entry.get())-1, ", 0.7")
+                except SyntaxError:
+                    tk.messagebox.showwarning(title="Warning.", message=f"One of your remaining entered lists could not be evaluated to a list.")
+                    return None
 
         self.add_up_and_down_key_bindings_to_entries()
 
