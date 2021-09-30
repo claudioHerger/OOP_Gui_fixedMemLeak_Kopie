@@ -97,9 +97,10 @@ class GuiAppTAAnalysis(tk.Frame):
 
     def get_initial_fit_parameter_values_from_file(self):
         self.initial_fit_parameter_values_file = base_directory+"/global_fit_configuration_files"+"/Initial_fit_parameter_values.txt"
+
+        # if user has for some reason deleted the file that stores initial fit parameter dictionary, set default fit parameter values:
         if not os.path.exists(self.initial_fit_parameter_values_file):
-            # if user has for some reason deleted the file that stores initial fit parameter dictionary, set default fit parameter values:
-            self.initial_fit_parameter_values = {"time_constants": [50], "amplitudes": [[0.7]]}
+            self.initial_fit_parameter_values = {"time_constants": [50], "amps_rSV0": [0.7]}
             with open(self.initial_fit_parameter_values_file, mode='w') as dict_file:
                 dict_file.write(str(self.initial_fit_parameter_values))
 
@@ -112,8 +113,9 @@ class GuiAppTAAnalysis(tk.Frame):
                                         message="initial fit parameter values file can not be evaluated correctly!\n\n"
                                         +f"error: {error}"
                                         +"\n\nIt should contain only one python dictionary and nothing else!"
-                                        +"\n\nProgram will use default values: {\"time_constants\": [50], \"amplitudes\": [[0.7]]}")
-                self.initial_fit_parameter_values = {"time_constants": [50], "amplitudes": [[0.7]]}
+                                        +"\n\nProgram will use default values: {'time_constants': [50], 'amps_rSV0': [0.7]}")
+                self.initial_fit_parameter_values = {"time_constants": [50], "amps_rSV0": [0.7]}
+
 
         return None
 
@@ -309,11 +311,14 @@ class GuiAppTAAnalysis(tk.Frame):
 
         return None
 
-    def set_initial_fit_parameter_values(self):
-        self.initial_fit_parameter_values_window = initial_fit_parameter_values_Toplevel.initial_fit_parameters_Window(self, self.initial_fit_parameter_values_file, self.initial_fit_parameter_values)
-        self.wait_window(self.initial_fit_parameter_values_window)
+    def handler_assign_initial_fit_parameter_values(self, new_initial_values_dict_from_toplevel):
+        self.initial_fit_parameter_values = new_initial_values_dict_from_toplevel
 
-        self.update_title_callback("","","")
+        return None
+
+    def set_initial_fit_parameter_values(self):
+        self.initial_fit_parameter_values_window = initial_fit_parameter_values_Toplevel.initial_fit_parameters_Window(self, self.initial_fit_parameter_values_file, self.initial_fit_parameter_values, self.handler_assign_initial_fit_parameter_values)
+        self.wait_window(self.initial_fit_parameter_values_window)
 
         return None
 

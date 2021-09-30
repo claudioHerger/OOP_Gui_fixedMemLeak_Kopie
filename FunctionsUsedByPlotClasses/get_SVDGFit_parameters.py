@@ -150,6 +150,42 @@ def get_gaussian_for_convolution(time_delays, time_zero, temp_resolution, index_
 
     return gaussian_for_convolution
 
+def initialize_fit_parameters(retained_components, initial_fit_parameter_values):
+    minimumNrOfValues = 100
+    user_file_has_too_few_values = False
+    for key in initial_fit_parameter_values.keys():
+        if (len(initial_fit_parameter_values[key]) <= minimumNrOfValues):
+            minimumNrOfValues = len(initial_fit_parameter_values[key])
+
+    if (minimumNrOfValues < len(retained_components)):
+        user_file_has_too_few_values = True
+        tk.messagebox.showerror("Warning,", "There are insufficient parameter values in your initial fit parameter values file.\n"+
+                                            "See the help button in the window where you can set the initial fit parameter values.\n"+
+                                            "(Button 'Set initial fit parameter values'.)\n\n"+
+                                            "In the mean while, the program will use default initial values for the fit parameters, which have been found to work somewhat well.\n"+
+                                            "all decay constants = 50.0, all amplitudes = 0.7")
+
+    fit_params = lmfit.Parameters()
+    if user_file_has_too_few_values:
+        for component in retained_components:
+            fit_params.add(f'tau_component{component}', value=50.0)
+            for rSV_index in range(0, len(retained_components)):
+                fit_params.add(f'amp_rSV{rSV_index}_component{component}', value=0.7)
+    else:
+        try:
+            for component in retained_components:
+                fit_params.add(f'tau_component{component}', value=float(initial_fit_parameter_values["time_constants"][component]))
+                for rSV_index in range(0, len(retained_components)):
+                    fit_params.add(f'amp_rSV{rSV_index}_component{component}', value=float(initial_fit_parameter_values[f"amps_rSV{rSV_index}"][component]))
+        except KeyError as error:
+            raise ValueError("a key error occured when reading your initial fit parameter values dict.\n"+
+                            f"first missing key {error}.\n"+
+                            "The Initial_fit_parameter_values.txt should contain a dictinary with the keys: 'time_constants', 'amps_rSV0', 'amps_rSV1', ... "+
+                            "depending on how many components are selected for the fit.")
+
+    return fit_params
+
+
 def start_the_fit(retained_components, time_delays, retained_rSVs, retained_singular_values, initial_fit_parameter_values, time_zero, temp_resolution, parsed_user_defined_summands):
     """ initialize vectors to fit and fit parameters, then calls lmfit function """
     # multiplication of each retained right SV with its respective singular value:
@@ -159,16 +195,7 @@ def start_the_fit(retained_components, time_delays, retained_rSVs, retained_sing
         vectors_to_fit[component, :] = sing_value*retained_rSVs[component, :]
 
     # initialize fit parameters
-    try:
-        fit_params = lmfit.Parameters()
-        for comp_index,component in enumerate(retained_components):
-            fit_params.add(f'tau_component{component}', value=float(initial_fit_parameter_values["time_constants"][comp_index]))
-            for rSV_index in range(0, len(retained_components)):
-                fit_params.add(f'amp_rSV{rSV_index}_component{component}', value=float(initial_fit_parameter_values["amplitudes"][comp_index][rSV_index]))
-    except IndexError as error:
-        tk.messagebox.showerror("Warning,", "an exception occurred!"+"\nThe number of initial fit parameters in fit parameter configuration file must at least be equal to the number of SVD components selected for fit."+
-                                    f"\nException {type(error)} message: \n"+ str(error)+"\n")
-        raise ValueError("number of initial fit parameters is less than nr of SVD components for fit")
+    fit_params = initialize_fit_parameters(retained_components, initial_fit_parameter_values)
 
     # need this index for the convolution in fit procedure:
     index_of_first_increased_time_interval = get_index_at_which_time_intervals_increase_the_first_time(time_delays)

@@ -53,12 +53,12 @@ class target_model_Window(tk.Toplevel):
         return None
 
     def display_help_window(self):
-        helpful_information = """given a set of selected components, there will be a set of right singular vectors (rSV) V_i to fit.
-        so for each V_i there will be a fit function f_i.\n
+        helpful_information = """given a set of selected components, there will be a corresponding set of right singular vectors (rSV) V_i to fit.
+        so for each V_i there will be an individual fit function f_i.\n
         the default fit function f_i has a set of amplitudes and decay constants as parameters:
-        there are #components decay constants, which are global fit parameters, i.e. the same in all fit functions f_i.
+        there are #components decay constants, which are shared fit parameters, i.e. the same in all fit functions f_i.
         the decay constant of component 3 is denoted in the fit parameters object as \"tau_component3\".
-        there are (#rSVs * #components) amplitudes, they are not global fit parameters, so in each f_i different amplitude parameters are used.
+        there are (#rSVs * #components) amplitudes, they are not shared fit parameters, so in each f_i different amplitude parameters are used.
         the amplitudes are denoted in the fit parameters object as \"amp_rSV#rSV_component#component\"
         i.e. for the 1st rSV V_1 (=> fit function f_1) and component 2 the amplitude is called amp_1_2.
 
