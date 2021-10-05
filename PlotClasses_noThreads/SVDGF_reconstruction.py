@@ -15,7 +15,7 @@ import ast
 from FunctionsUsedByPlotClasses import get_DAS_from_lSVs_res_amplitudes, get_TA_data_after_start_time, get_retained_rightSVs_leftSVs_singularvs, get_SVDGFit_parameters
 from FunctionsUsedByPlotClasses import get_closest_nr_from_array_like, get_SVDGF_reconstructed_data
 from SupportClasses import ToolTip, saveData
-from ToplevelClasses import Kinetics_Spectrum_Toplevel, new_decay_times_Toplevel
+from ToplevelClasses import Kinetics_Spectrum_Toplevel, new_decay_times_Toplevel, CompareRightSVsWithFit_Toplevel
 
 class SVDGF_Heatmap():
     def __init__(self, parent, filename, start_time, components_list, temp_resolution, time_zero, tab_idx, tab_idx_difference, initial_fit_parameter_values, user_defined_fit_function):
@@ -96,7 +96,7 @@ class SVDGF_Heatmap():
         self.time_delays = self.time_delays[self.time_index:]
 
         self.num_ticks = 10
-        self.label_format = '{:,.2f}'
+        self.label_format = '{:.2f}'
 
         # the index of the position of self.yticks
         self.yticks = np.linspace(0, len(self.wavelengths) - 1, self.num_ticks, dtype=np.int)
@@ -108,7 +108,7 @@ class SVDGF_Heatmap():
         self.yticklabels = [self.label_format.format(x) for x in self.yticklabels]
         self.xticklabels = [self.label_format.format(x) for x in self.xticklabels]
 
-        self.cm = sns.diverging_palette(220, 20, as_cmap=True)
+        self.cm = sns.diverging_palette(220, 20, s=100, as_cmap=True)
         sns.heatmap(self.data, ax = self.axes, cbar_kws={'label': 'rel transmission'}, cmap=self.cm)
 
         self.axes.set_yticks(self.yticks)
@@ -144,7 +144,7 @@ class SVDGF_Heatmap():
         self.difference_data = self.difference_matrix_selected_DAS.astype(float)
 
         self.num_ticks = 10
-        self.label_format = '{:,.2f}'
+        self.label_format = '{:.2f}'
 
         # the index of the position of self.yticks
         self.yticks = np.linspace(0, len(self.wavelengths) - 1, self.num_ticks, dtype=np.int)
@@ -156,7 +156,7 @@ class SVDGF_Heatmap():
         self.yticklabels = [self.label_format.format(x) for x in self.yticklabels]
         self.xticklabels = [self.label_format.format(x) for x in self.xticklabels]
 
-        self.cm = sns.diverging_palette(220, 20, as_cmap=True)
+        self.cm = sns.diverging_palette(220, 20, s=100, as_cmap=True)
         sns.heatmap(self.difference_data, ax = self.axes_difference, cbar_kws={'label': 'rel transmission'}, cmap=self.cm)
 
         self.axes_difference.set_yticks(self.yticks)
@@ -191,7 +191,7 @@ class SVDGF_Heatmap():
         self.btn_update_with_DAS = tk.Button(self.parent.nbCon_SVDGF.figure_frames[self.tab_idx], text="update with:", fg=self.parent.violet, command=lambda: self.update_canvases_with_selected_DAS(self.checkbutton_vars))
         self.ttp_btn_update_with_DAS = ToolTip.CreateToolTip(self.btn_update_with_DAS, \
         'This updates this plot and the difference plot with data computed using only the selected DAS. '
-        'It also opens up a quick dialog field, where the decay times for the DAS decays could be changed', optional_y_direction_bump=60, optional_x_direction_bump=50)
+        'It also opens up a dialog field, where the decay times for the DAS decays could be changed', optional_y_direction_bump=60, optional_x_direction_bump=50)
         self.btn_update_with_DAS.grid(row=1, column=1, sticky="s")
 
         self.make_DAS_checkbuttons()
@@ -206,15 +206,20 @@ class SVDGF_Heatmap():
 
         self.parent.nbCon_SVDGF.canvases[self.tab_idx].get_tk_widget().grid(row=0, column=0, sticky="nsew", columnspan=3+len(self.components_list))
 
+        self.btn_compare_rightSVs_with_fit = tk.Button(self.parent.nbCon_difference.figure_frames[self.tab_idx_difference], text="rightSVs vs fit", fg=self.parent.violet, command=self.compare_rightSVs_with_fit)
+        self.ttp_btn_compare_rightSVs_with_fit = ToolTip.CreateToolTip(self.btn_compare_rightSVs_with_fit, \
+        'Open a window to compare the right singular vectors of original data matrix with their reconstruction via fit.', optional_y_direction_bump=100)
+        self.btn_compare_rightSVs_with_fit.grid(row=1, column=0, sticky="sw")
+
         self.btn_inspect_diff_matrix = tk.Button(self.parent.nbCon_difference.figure_frames[self.tab_idx_difference], text="inspect matrix", fg=self.parent.violet, command=self.inspect_difference_matrix_via_toplevel)
         self.ttp_btn_inspect_diff_matrix = ToolTip.CreateToolTip(self.btn_inspect_diff_matrix, \
-        'This opens a window to inspect this difference matrix. ')
-        self.btn_inspect_diff_matrix.grid(row=1, column=0, sticky="se")
+        'Open a window to inspect this difference matrix row-by-row and column-by-column.', optional_y_direction_bump=100)
+        self.btn_inspect_diff_matrix.grid(row=1, column=1, sticky="se")
 
         # set dimensions of figure frame as computed correspondingly to gui size
         self.configure_figure_frame_size(self.parent.nbCon_difference, self.tab_idx_difference)
 
-        self.parent.nbCon_difference.canvases[self.tab_idx_difference].get_tk_widget().grid(row=0, column=0, sticky="nsew")
+        self.parent.nbCon_difference.canvases[self.tab_idx_difference].get_tk_widget().grid(row=0, column=0, sticky="nsew", columnspan=2)
 
         return None
 
@@ -223,6 +228,16 @@ class SVDGF_Heatmap():
         nbContainer.figure_frames[tab_idx].configure(width=self.parent.heatmaps_geometry_list[0])
         nbContainer.figure_frames[tab_idx].configure(height=self.parent.heatmaps_geometry_list[1])
         nbContainer.figure_frames[tab_idx].grid_propagate(False)
+
+        return None
+
+    def compare_rightSVs_with_fit(self):
+        if not self.use_user_defined_fit_function:
+            compareWindow = CompareRightSVsWithFit_Toplevel.CompareWindow(self.parent, self.use_user_defined_fit_function, self.tab_idx_difference, self.components_list, self.time_delays, self.retained_rSVs, self.retained_singular_values, self.fit_result_decay_times_as_dict, self.fit_result_amplitudes, self.filename, self.full_path_to_final_dir)
+        else:
+            compareWindow = CompareRightSVsWithFit_Toplevel.CompareWindow(self.parent, self.use_user_defined_fit_function, self.tab_idx_difference, self.components_list, self.time_delays, self.retained_rSVs, self.retained_singular_values, self.fit_result_decay_times_as_dict, self.fit_result_amplitudes, self.filename, self.full_path_to_final_dir, self.parsed_summands_of_user_defined_fit_function)
+
+        compareWindow.run()
 
         return None
 
@@ -408,6 +423,13 @@ class SVDGF_Heatmap():
         # get the SVD-GFit reconstructed data: inputs: DAS, resulting decay consts
         try:
             self.fit_result_decay_times = ['{:.9f}'.format(self.resulting_SVDGF_fit_parameters['tau_component%i' % (j)].value) for j in self.components_list]
+            self.fit_result_amplitudes = {}
+            self.fit_result_decay_times_as_dict = {}
+            for component in self.components_list:
+                self.fit_result_decay_times_as_dict[f"tau_component{component}"] = self.resulting_SVDGF_fit_parameters[f"tau_component{component}"].value
+                for component_index in range(len(self.components_list)):
+                    self.fit_result_amplitudes[f"amp_rSV{component_index}_component{component}"] = self.resulting_SVDGF_fit_parameters[f"amp_rSV{component_index}_component{component}"].value
+
             self.SVDGF_reconstructed_data = get_SVDGF_reconstructed_data.run(self.DAS[:,self.indeces_for_DAS_matrix], [self.fit_result_decay_times[x] for x in self.indeces_for_DAS_matrix], self.time_delays, self.wavelengths, self.indeces_for_DAS_matrix, self.start_time)
         except (ValueError,FloatingPointError) as error:
             tk.messagebox.showerror("Warning, an exception occurred!", f"Exception {type(error)} message: \n"+ str(error)
@@ -480,6 +502,7 @@ class SVDGF_Heatmap():
         self.btn_delete_attrs.grid_remove()
         self.btn_save_data.grid_remove()
         self.btn_inspect_diff_matrix.grid_remove()
+        self.btn_compare_rightSVs_with_fit.grid_remove()
 
         self.axes.get_figure().clear()
         self.axes_difference.get_figure().clear()

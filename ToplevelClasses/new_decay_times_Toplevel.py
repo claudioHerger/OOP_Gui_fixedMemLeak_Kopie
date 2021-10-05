@@ -53,7 +53,7 @@ class new_decay_times_Window(tk.Toplevel):
 
 
     def extract_resulting_fit_decay_constants(self):
-        self.decay_constants_from_fit = ['{:.9f}'.format(self.fit_results['tau_component%i' % (j)].value) for j in self.components_list]
+        self.decay_constants_from_fit = ['{:.2f}'.format(self.fit_results['tau_component%i' % (j)].value) for j in self.components_list]
 
         return None
 
@@ -74,7 +74,7 @@ class new_decay_times_Window(tk.Toplevel):
         self.new_decay_times_entries = []
         for i in range(self.nr_of_components):
             new_decay_times_labels.append(tk.Label(self, text=f"DAS {self.components_list[i]}: new decay time:"))
-            self.new_decay_times_entries.append(tk.Entry(self, width=20))
+            self.new_decay_times_entries.append(tk.Entry(self, width=20, justify=tk.RIGHT))
 
         for i in range(self.nr_of_components):
             if self.decay_times_used is not None:

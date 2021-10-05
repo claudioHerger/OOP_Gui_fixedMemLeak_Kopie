@@ -23,7 +23,7 @@ class Kinetics_Spectrum_Window(tk.Toplevel):
         Args:
             parent (GUIApp): parent is the Gui App that creates the instance of this class.
             tab_index (int): used in title of Toplevel, so that one knows to which tab this toplevel belongs.
-            data_dict (dict): contains identifier string \"type\" to differentiate between fitted data and non-fitted data, and all necessary data from data_obj to which to be inspected data matrix belongs.
+            data_dict (dict): contains identifier string 'type' to differentiate between fitted data and non-fitted data, and all necessary data from data_obj to which to be inspected data matrix belongs.
 
         Returns:
             None
@@ -100,7 +100,7 @@ class Kinetics_Spectrum_Window(tk.Toplevel):
         self.wavelength_kinetics_axes = self.wavelength_kinetics_fig.add_subplot(1,1,1)
 
         self.num_ticks = 10
-        self.label_format = '{:,.3f}'
+        self.label_format = '{:.3f}'
 
         # the index of the position of self.yticks
         self.xticks = np.linspace(0, len(self.time_delays) - 1, self.num_ticks, dtype=np.int)

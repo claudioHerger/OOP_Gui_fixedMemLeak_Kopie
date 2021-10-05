@@ -1,6 +1,7 @@
 import tkinter as tk
+import matplotlib
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import matplotlib.pyplot as plt
+import seaborn as sns
 from matplotlib.figure import Figure
 import os
 import numpy as np
@@ -13,10 +14,10 @@ class DAS_Window(tk.Toplevel):
         super().__init__(parent)
         self.parent = parent
         self.mapped = True
-        self.dx = 30
-        self.dy = 20
+        self.dx = 40
+        self.dy = 40
         self.list_position = len(self.parent.DAS_toplevels)
-        self.geometry(f'{650}x{600}+{400-self.list_position*self.dx}+{100-self.list_position*self.dy}')
+        self.geometry(f'+{400+self.list_position*self.dx}+{100+self.list_position*self.dy}')
         self.data_obj = data_obj
         self.full_path_to_final_dir = self.data_obj.full_path_to_final_dir
 
@@ -30,15 +31,15 @@ class DAS_Window(tk.Toplevel):
         self.update_DAS_plot()
         self.make_checkbuttons()
 
-        self.btn_close = tk.Button(self, text='Close', fg=self.parent.violet, command=self.destroy_and_give_focus_to_other_toplevel)
+        self.btn_close = tk.Button(self, text='Close', command=self.destroy_and_give_focus_to_other_toplevel)
         self.btn_close.grid(padx=3, pady=5, sticky="se", column=99)
 
-        self.btn_save_current_figures = tk.Button(self, text='save current figure', fg=self.parent.violet, command=self.save_current_figures_to_file)
+        self.btn_save_current_figures = tk.Button(self, text='save current figure', command=self.save_current_figures_to_file)
         self.ttp_btn_save_current_figures = ToolTip.CreateToolTip(self.btn_save_current_figures, \
         'This saves the current figure to the same file as saving the data of the SVDGF data tab buttons does. ')
         self.btn_save_current_figures.grid(padx=3, pady=5, sticky="sw", column=98, row=self.btn_close.grid_info()["row"])
 
-        self.btn_close_all = tk.Button(self, text='Close all', fg=self.parent.violet, command=self.destroy_all)
+        self.btn_close_all = tk.Button(self, text='Close all', command=self.destroy_all)
         self.btn_close_all.grid(padx=3, pady=5, sticky="sw", row=self.btn_close.grid_info()["row"])
 
         return None
@@ -48,13 +49,13 @@ class DAS_Window(tk.Toplevel):
         self.frm_DAS_figure.columnconfigure(0, weight=1)
         self.frm_DAS_figure.rowconfigure(0, weight=1)
 
-        self.num_ticks = 10
-        self.label_format = '{:,.2f}'
+        self.num_ticks = 5
+        self.label_format = '{:.2f}'
 
-        plt.style.use("seaborn")
-        plt.rcParams.update({'axes.labelsize': 20.0, 'axes.titlesize': 22.0, 'legend.fontsize':20, 'xtick.labelsize':18, 'ytick.labelsize':18, "axes.edgecolor":"black", "axes.linewidth":1})
+        matplotlib.style.use("seaborn")
+        matplotlib.rcParams.update({'axes.labelsize': 12.0, 'axes.titlesize': 14.0, 'xtick.labelsize':10, 'ytick.labelsize':12.0, "axes.edgecolor":"black", "axes.linewidth":1})
 
-        self.fig = Figure(figsize=(12,10), dpi=50)
+        self.fig = Figure(figsize=(7,5))
         self.ax = self.fig.add_subplot(1,1,1)
 
         self.canvas = FigureCanvasTkAgg(self.fig, self.frm_DAS_figure)  # A tk.DrawingArea.
@@ -72,7 +73,6 @@ class DAS_Window(tk.Toplevel):
         self.filename = self.data_obj.filename
         self.start_time = self.data_obj.start_time
 
-
         return None
 
     def update_DAS_plot(self):
@@ -85,11 +85,12 @@ class DAS_Window(tk.Toplevel):
         self.xticklabels = [self.label_format.format(x) for x in self.xticklabels]
 
         for i in self.which_DAS_list:
-            self.ax.plot(self.wavelengths, self.DAS[:, i], label=f'DAS_comp{i}, tau= {self.decay_constants[i]} ps')
+            self.ax.plot(self.wavelengths, self.DAS[:, i], label=f'DAS_comp{i}, tau= {self.decay_constants[i]} ps', color=sns.color_palette("Set2")[i])
 
-        self.ax.legend(fontsize=15)
+        self.ax.legend()
         self.ax.set_xticks(self.xticks)
-        self.ax.set_xticklabels(self.xticklabels, rotation=30)
+        self.ax.set_xticklabels(self.xticklabels)
+        self.ax.set_ylabel("amplitude a.u.")
         self.ax.set_xlabel("wavelengths [nm]")
         self.basefilename = os.path.splitext(os.path.basename(self.filename))[0]
         self.ax.set_title("DAS via global fit for " + self.basefilename + " " + str(self.start_time)+"ps")
@@ -121,7 +122,7 @@ class DAS_Window(tk.Toplevel):
         for checkbox in range(self.nr_of_DAS):
             self.DAS_checkbuttons[checkbox].grid(row=2, column=checkbox+1)
 
-        self.btn_update_DAS_plot = tk.Button(self, text='update DAS plot', fg=self.parent.violet, command=self.update_which_DAS_list)
+        self.btn_update_DAS_plot = tk.Button(self, text='update DAS plot', command=self.update_which_DAS_list)
         self.btn_update_DAS_plot.grid(padx=3, pady=5, sticky="se", column=self.DAS_checkbuttons[-1].grid_info()["column"]+1, row=2)
 
         return None

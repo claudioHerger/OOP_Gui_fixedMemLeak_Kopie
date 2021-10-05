@@ -50,7 +50,7 @@ class ORIGData_Heatmap():
         self.time_delays = self.time_delays[self.time_index:]
 
         self.num_ticks = 10
-        self.label_format = '{:,.2f}'
+        self.label_format = '{:.2f}'
 
         # the index of the position of self.yticks
         self.yticks = np.linspace(0, len(self.wavelengths) - 1, self.num_ticks, dtype=np.int)
@@ -62,7 +62,7 @@ class ORIGData_Heatmap():
         self.yticklabels = [self.label_format.format(x) for x in self.yticklabels]
         self.xticklabels = [self.label_format.format(x) for x in self.xticklabels]
 
-        self.cm = sns.diverging_palette(220, 20, as_cmap=True)
+        self.cm = sns.diverging_palette(220, 20, s=100, as_cmap=True)
         sns.heatmap(self.data, ax = self.axes, cbar_kws={'label': 'rel transmission'}, cmap=self.cm)
 
         self.axes.set_yticks(self.yticks)
@@ -89,7 +89,7 @@ class ORIGData_Heatmap():
         self.btn_delete_attrs = tk.Button(self.parent.nbCon_orig.figure_frames[self.tab_idx], text="remove tab", fg=self.parent.violet, command=lambda: self.remove_tab(self.parent.nbCon_orig))
         self.btn_delete_attrs.grid(row=1, column=3, sticky="se")
 
-        self.btn_inspect_SVD_components = tk.Button(self.parent.nbCon_orig.figure_frames[self.tab_idx], text="inspect SVD", fg=self.parent.violet, command=self.make_SV_inspection_toplevel)
+        self.btn_inspect_SVD_components = tk.Button(self.parent.nbCon_orig.figure_frames[self.tab_idx], text="inspect SVD", fg=self.parent.violet, command=self.make_SVD_inspection_toplevel)
         self.ttp_btn_inspect_SVD_components = ToolTip.CreateToolTip(self.btn_inspect_SVD_components, \
         'This opens a window to inspect the SVD components of this data matrix.')
         self.btn_inspect_SVD_components.grid(row=1, column=1, padx=0)
@@ -99,7 +99,7 @@ class ORIGData_Heatmap():
 
         self.btn_inspect_data_matrix = tk.Button(self.parent.nbCon_orig.figure_frames[self.tab_idx], text="inspect matrix", fg=self.parent.violet, command=self.inspect_data_matrix_via_toplevel)
         self.ttp_btn_inspect_data_matrix = ToolTip.CreateToolTip(self.btn_inspect_data_matrix, \
-        'This opens a window to inspect the rows and columns of this data matrix.')
+        'Open a window to inspect this data matrix row-by-row and column-by-column.')
         self.btn_inspect_data_matrix.grid(row=1, column=2, sticky="se", padx=5)
 
         # set dimensions of figure frame as computed correspondingly to gui size
@@ -166,7 +166,7 @@ class ORIGData_Heatmap():
 
         return None
 
-    def make_SV_inspection_toplevel(self):
+    def make_SVD_inspection_toplevel(self):
         SVD_inspection_Toplevel.SVD_inspection_Window(self.parent, self.tab_idx, self)
 
         return None

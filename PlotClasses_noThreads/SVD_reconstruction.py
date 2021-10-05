@@ -46,7 +46,7 @@ class SVD_Heatmap():
         self.time_delays = self.time_delays[self.time_index:]
 
         self.num_ticks = 10
-        self.label_format = '{:,.2f}'
+        self.label_format = '{:.2f}'
 
         # the index of the position of self.yticks
         self.yticks = np.linspace(0, len(self.wavelengths) - 1, self.num_ticks, dtype=np.int)
@@ -58,7 +58,7 @@ class SVD_Heatmap():
         self.yticklabels = [self.label_format.format(x) for x in self.yticklabels]
         self.xticklabels = [self.label_format.format(x) for x in self.xticklabels]
 
-        self.cm = sns.diverging_palette(220, 20, as_cmap=True)
+        self.cm = sns.diverging_palette(220, 20, s=100, as_cmap=True)
         sns.heatmap(self.data, ax = self.axes, cbar_kws={'label': 'rel transmission'}, cmap=self.cm)
 
         self.axes.set_yticks(self.yticks)
@@ -86,7 +86,7 @@ class SVD_Heatmap():
         self.difference_data = self.difference_matrix.astype(float)
 
         self.num_ticks = 10
-        self.label_format = '{:,.2f}'
+        self.label_format = '{:.2f}'
 
         # the index of the position of self.yticks
         self.yticks = np.linspace(0, len(self.wavelengths) - 1, self.num_ticks, dtype=np.int)
@@ -98,7 +98,7 @@ class SVD_Heatmap():
         self.yticklabels = [self.label_format.format(x) for x in self.yticklabels]
         self.xticklabels = [self.label_format.format(x) for x in self.xticklabels]
 
-        self.cm = sns.diverging_palette(220, 20, as_cmap=True)
+        self.cm = sns.diverging_palette(220, 20, s=100, as_cmap=True)
         sns.heatmap(self.difference_data, ax = self.axes_difference, cbar_kws={'label': 'rel transmission'}, cmap=self.cm)
 
         self.axes_difference.set_yticks(self.yticks)
@@ -137,7 +137,7 @@ class SVD_Heatmap():
 
         self.btn_inspect_diff_matrix = tk.Button(self.parent.nbCon_difference.figure_frames[self.tab_idx_difference], text="inspect matrix", fg=self.parent.violet, command=self.inspect_difference_matrix_via_toplevel)
         self.ttp_btn_inspect_diff_matrix = ToolTip.CreateToolTip(self.btn_inspect_diff_matrix, \
-        'This opens a window to inspect this difference matrix. ')
+        'Open a window to inspect this difference matrix row-by-row and column-by-column.', optional_y_direction_bump=100)
         self.btn_inspect_diff_matrix.grid(row=1, column=0, sticky="se")
 
         # set dimensions of figure frame as computed correspondingly to gui size
@@ -242,6 +242,7 @@ class SVD_Heatmap():
 
         self.btn_delete_attrs.grid_remove()
         self.btn_save_data.grid_remove()
+        self.btn_inspect_diff_matrix.grid_remove()
 
         self.axes.get_figure().clear()
         self.axes_difference.get_figure().clear()

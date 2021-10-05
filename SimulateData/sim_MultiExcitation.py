@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 class MultiExcitation():
-    def __init__(self, config_file, make_plots = False) -> None:
+    def __init__(self, config_file, results_dir="", make_plots = False) -> None:
         """
         computes Ta data matrix from using MULTIPLE gaussians as the initial excitations of material.\n
         simulation of components as defined in config_file.\n
@@ -18,13 +18,16 @@ class MultiExcitation():
 
         Args:
             config_file (String): path to configuration (.ini) file.
+            results_dir (String): used to create dir to save simulation data to if not empty string. Default is empty String.
             make_plots (Boolean): whether or not to make plots. Default is False.
         """
         self.config_file_name = config_file
+        self.results_dir = results_dir
+        self.final_dir = os.getcwd()+"/simulatedData/"+self.results_dir
         self.make_plots = make_plots
         self.config_file_base_name = os.path.splitext(os.path.basename(self.config_file_name))[0]
-        self.save_matrix_file_name = os.getcwd()+"/simulatedData/MultiExcitation/"+self.config_file_base_name+".txt"
-        self.save_heatmap_file_name = os.getcwd()+"/simulatedData/MultiExcitation/"+self.config_file_base_name+"_heatmap.png"
+        self.save_matrix_file_name = self.config_file_base_name+".txt"
+        self.save_heatmap_file_name = self.config_file_base_name+"_heatmap.png"
 
         self.configuration_dict = self.read_config_file()
         self.matrix_dimensions_dict = self.configuration_dict["matrix_dimensions"]
@@ -38,16 +41,22 @@ class MultiExcitation():
         self.wavelength_steps = self.compute_steps(self.matrix_dimensions_dict["wavelength_range"], self.matrix_dimensions_dict["wavelength_stepsize"])
         self.time_steps = self.compute_steps(self.matrix_dimensions_dict["time_range"], self.matrix_dimensions_dict["time_stepsize"])
 
+        self.data_matrix = np.zeros((len(self.time_steps), len(self.wavelength_steps)))
+        self.pump_noise_scale = self.noise_dict["pump_noise_scale"]
+        self.probe_noise_scale = self.noise_dict["probe_noise_scale"]
+
+        return None
+
+    def run_simulation(self):
+
         self.compute_data_matrix()
         self.save_and_format_data_matrix()
 
         return None
 
+
     # new "excitation" generated for each measurement at certain time delay
     def compute_data_matrix(self):
-        self.data_matrix = np.zeros((len(self.time_steps), len(self.wavelength_steps)))
-        self.pump_noise_scale = self.noise_dict["pump_noise_scale"]
-        self.probe_noise_scale = self.noise_dict["probe_noise_scale"]
         for time_step_index, time_step in enumerate(self.time_steps):
             noisy_excitations = [self.add_normal_noise_to_array(self.compute_gaussian(self.components_dict["amplitudes"][i], self.wavelength_steps, self.components_dict["wavelength_expectation_values"][i], self.components_dict["wavelength_std_deviations"][i]), noise_scale=self.pump_noise_scale) for i in range(self.nr_of_components) ]
             for component in range(self.nr_of_components):
@@ -96,7 +105,10 @@ class MultiExcitation():
         self.formatted_data_matrix[1:, 0] = self.time_steps
         self.formatted_data_matrix[1:, 1:] = self.data_matrix
 
-        np.savetxt(self.save_matrix_file_name, self.formatted_data_matrix, delimiter = '\t', fmt='%.7e')
+        if self.results_dir != "" and not os.path.exists(self.final_dir):
+            os.makedirs(os.getcwd()+"/simulatedData/"+self.results_dir)
+
+        np.savetxt(os.getcwd()+"/simulatedData/"+self.results_dir+"/"+self.save_matrix_file_name, self.formatted_data_matrix, delimiter = '\t', fmt='%.7e')
 
         return None
 
@@ -133,7 +145,11 @@ class MultiExcitation():
         ax.set_title("coarsly simulated time-resolved spectroscopy data", fontsize = 15)
 
         plt.tight_layout()
-        plt.savefig(self.save_heatmap_file_name)
+
+        if self.results_dir != "" and not os.path.exists(self.final_dir):
+            os.makedirs(os.getcwd()+"/simulatedData/"+self.results_dir)
+
+        plt.savefig(os.getcwd()+"/simulatedData/"+self.results_dir+"/"+self.save_heatmap_file_name)
         plt.close()
 
         return None
@@ -144,13 +160,18 @@ if __name__ == "__main__":
     # test_ta_sim_obj = MultiExcitation(os.getcwd()+"/configFiles/test/test_config_file.ini", make_plots=True)
     # print(f'MultiExcitation excecution time: {time.time()-start}')
 
-    # dir_path = os.getcwd()+"/configFiles/wavelength_overlap/"
-    dir_path = os.getcwd()+"/configFiles/"
+    dir_path = os.getcwd()+"/configFiles/wavelength_overlap/"
+    # dir_path = os.getcwd()+"/configFiles/temporal_overlap/"
+    # dir_path = os.getcwd()+"/configFiles/"
 
-    files_in_dir = [f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))]
-    for file in files_in_dir:
-        print()
-        print(f'file: {file}')
-        start = time.time()
-        multi_excitation_obj = MultiExcitation(dir_path+file, make_plots=True)
-        print(f'MultiExcitation excecution time: {time.time()-start}')
+    # files_in_dir = [f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))]
+    # for file in files_in_dir:
+    #     print()
+    #     print(f'file: {file}')
+    #     start = time.time()
+    #     multi_excitation_obj = MultiExcitation(dir_path+file, results_dir="MultiExcitation/wavelength_overlap/", make_plots=True)
+    #     multi_excitation_obj.run_simulation()
+    #     print(f'MultiExcitation excecution time: {time.time()-start}')
+
+    multi_excitation_obj = MultiExcitation(os.getcwd()+"/configFiles/wavelength_overlap/overlap_0.ini", results_dir="", make_plots=True)
+    multi_excitation_obj.run_simulation()

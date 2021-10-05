@@ -28,9 +28,9 @@ base_directory = os.getcwd()        # SHOULD BE ADJUSTED! Leads to Error if prog
 
 class GuiAppTAAnalysis(tk.Frame):
 
-    def __init__(self, master):
-        tk.Frame.__init__(self, master)
-        self.parent = master
+    def __init__(self, parent):
+        tk.Frame.__init__(self, parent)
+        self.parent = parent
 
         self.get_initial_fit_parameter_values_from_file()
 
@@ -77,7 +77,7 @@ class GuiAppTAAnalysis(tk.Frame):
         # geometry, title etc of window
         self.parent.config(bg=self.violet)
         self.truncated_filename = (os.path.basename(self.curr_reconstruct_data_file_strVar.get())[:20] + '...') if len(os.path.basename(self.curr_reconstruct_data_file_strVar.get())) > 23 else os.path.basename(self.curr_reconstruct_data_file_strVar.get())
-        self.parent.title("time-resolved data analysis gui - current data file: " + os.path.basename(self.curr_reconstruct_data_file_strVar.get()) + ";  approximate start time value: " + str(self.curr_reconstruct_data_start_time_value.get()) + ";  initial fit parameter values: " + str(self.initial_fit_parameter_values))
+        self.parent.title("time-resolved data analysis gui - current data file: " + os.path.basename(self.curr_reconstruct_data_file_strVar.get()) + ";  approximate start time value: " + str(self.curr_reconstruct_data_start_time_value.get()))
         self.make_window_fullscreen()
         root.update_idletasks()         # has to be done before checking the widget dimensions with winfo_.. as it else returns 1!
         root.minsize(1000, 550)
@@ -97,9 +97,10 @@ class GuiAppTAAnalysis(tk.Frame):
 
     def get_initial_fit_parameter_values_from_file(self):
         self.initial_fit_parameter_values_file = base_directory+"/global_fit_configuration_files"+"/Initial_fit_parameter_values.txt"
+
+        # if user has for some reason deleted the file that stores initial fit parameter dictionary, set default fit parameter values:
         if not os.path.exists(self.initial_fit_parameter_values_file):
-            # if user has for some reason deleted the file that stores initial fit parameter dictionary, set default fit parameter values:
-            self.initial_fit_parameter_values = {"time_constants": 50, "amplitudes": 0.7}
+            self.initial_fit_parameter_values = {"time_constants": [50], "amps_rSV0": [0.7]}
             with open(self.initial_fit_parameter_values_file, mode='w') as dict_file:
                 dict_file.write(str(self.initial_fit_parameter_values))
 
@@ -112,8 +113,9 @@ class GuiAppTAAnalysis(tk.Frame):
                                         message="initial fit parameter values file can not be evaluated correctly!\n\n"
                                         +f"error: {error}"
                                         +"\n\nIt should contain only one python dictionary and nothing else!"
-                                        +"\n\nProgram will use default values: {\"time_constants\": 50, \"amplitudes\": 0.7}")
-                self.initial_fit_parameter_values = {"time_constants": 50, "amplitudes": 0.7}
+                                        +"\n\nProgram will use default values: {'time_constants': [50], 'amps_rSV0': [0.7]}")
+                self.initial_fit_parameter_values = {"time_constants": [50], "amps_rSV0": [0.7]}
+
 
         return None
 
@@ -146,7 +148,7 @@ class GuiAppTAAnalysis(tk.Frame):
         they are apparently necessary to have a correct syntax with trace_add method
         """
         self.truncated_filename = (os.path.basename(self.curr_reconstruct_data_file_strVar.get())[:20] + '...') if len(os.path.basename(self.curr_reconstruct_data_file_strVar.get())) > 23 else os.path.basename(self.curr_reconstruct_data_file_strVar.get())
-        self.parent.title("time-resolved data analysis gui - current data file: " + os.path.basename(self.curr_reconstruct_data_file_strVar.get()) + ";  approximate start time value: " + str(self.curr_reconstruct_data_start_time_value.get()) + ";  initial fit parameter values: " + str(self.initial_fit_parameter_values))
+        self.parent.title("time-resolved data analysis gui - current data file: " + os.path.basename(self.curr_reconstruct_data_file_strVar.get()) + ";  approximate start time value: " + str(self.curr_reconstruct_data_start_time_value.get()))
 
     def test_value_digits_only(self, inStr, acttyp):
         if acttyp == '1': #insert
@@ -309,11 +311,14 @@ class GuiAppTAAnalysis(tk.Frame):
 
         return None
 
-    def set_initial_fit_parameter_values(self):
-        self.initial_fit_parameter_values_window = initial_fit_parameter_values_Toplevel.initial_fit_parameters_Window(self, self.initial_fit_parameter_values_file, self.initial_fit_parameter_values)
-        self.wait_window(self.initial_fit_parameter_values_window)
+    def handler_assign_initial_fit_parameter_values(self, new_initial_values_dict_from_toplevel):
+        self.initial_fit_parameter_values = new_initial_values_dict_from_toplevel
 
-        self.update_title_callback("","","")
+        return None
+
+    def set_initial_fit_parameter_values(self):
+        self.initial_fit_parameter_values_window = initial_fit_parameter_values_Toplevel.initial_fit_parameters_Window(self, self.initial_fit_parameter_values_file, self.initial_fit_parameter_values, self.handler_assign_initial_fit_parameter_values)
+        self.wait_window(self.initial_fit_parameter_values_window)
 
         return None
 
@@ -329,19 +334,12 @@ class GuiAppTAAnalysis(tk.Frame):
 
         return None
 
-    def check_curr_fileVar_and_start_timeVar_value_exist(self, file_var, start_time_var):
-        # check whether a file and start time has been selected at all to create a heatmap from
+    def check_curr_fileVar_exists(self, file_var):
         if file_var.get()=="no file selected":
             self.set_curr_fileVar(file_var)
             if file_var.get()=="no file selected":
                 # do nothing if user cancelled
-                return None
-
-        if start_time_var.get()=="None":
-            self.set_curr_start_time_value(start_time_var)
-            if start_time_var.get()=="None":
-                # do nothing if user cancelled
-                return None
+                return "Cancelled"
 
     def get_index_of_next_tab_for_nb(self, notebook, maximum_allowed_nr_of_tabs_on_nb):
         """
@@ -490,7 +488,9 @@ class GuiAppTAAnalysis(tk.Frame):
             return None
 
         # check whether a file and start time has been selected at all to create a heatmap from
-        self.check_curr_fileVar_and_start_timeVar_value_exist(self.curr_reconstruct_data_file_strVar, self.curr_reconstruct_data_start_time_value)
+        file_state = self.check_curr_fileVar_exists(self.curr_reconstruct_data_file_strVar)
+        if file_state == "Cancelled":
+            return None
 
         # disable the used button during computation
         self.btn_show_orig_data_heatmap['state'] = tk.DISABLED
@@ -516,7 +516,9 @@ class GuiAppTAAnalysis(tk.Frame):
             return None
 
         # check whether a file and start time has been selected at all to create a heatmap from
-        self.check_curr_fileVar_and_start_timeVar_value_exist(self.curr_reconstruct_data_file_strVar, self.curr_reconstruct_data_start_time_value)
+        file_state = self.check_curr_fileVar_exists(self.curr_reconstruct_data_file_strVar)
+        if file_state == "Cancelled":
+            return None
 
         self.components_to_use = self.get_components_to_use()
         if (self.components_to_use is None):
@@ -551,7 +553,9 @@ class GuiAppTAAnalysis(tk.Frame):
             return None
 
         # check whether a file and start time has been selected at all to create a heatmap from
-        self.check_curr_fileVar_and_start_timeVar_value_exist(self.curr_reconstruct_data_file_strVar, self.curr_reconstruct_data_start_time_value)
+        file_state = self.check_curr_fileVar_exists(self.curr_reconstruct_data_file_strVar)
+        if file_state == "Cancelled":
+            return None
 
         self.components_to_use = self.get_components_to_use()
         if (self.components_to_use is None):

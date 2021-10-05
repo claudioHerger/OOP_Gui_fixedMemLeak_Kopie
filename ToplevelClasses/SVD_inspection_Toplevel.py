@@ -23,7 +23,7 @@ class SVD_inspection_Window(tk.Toplevel):
         Args:
             parent (GUIApp): parent is the Gui App that creates the instance of this class.
             tab_index (int): used in title of Toplevel, so that one knows to which tab this toplevel belongs.
-            data_obj (ORIG data PlotClass): the data object to which the to be inspected data matrix belongs.
+            data_obj (ORIG data Plot instance): the instance of the data object to which the to be inspected data matrix belongs.
 
         Returns:
             None
@@ -47,10 +47,10 @@ class SVD_inspection_Window(tk.Toplevel):
         self.frm_leftSVs_figure.grid(row=1, column=1, columnspan=21)
 
         self.filename = os.path.basename(self.data_obj.filename)
-        self.title('Singular values and vectors for ORIG data tab: ' + str(tab_index + 1) + " - file: "+self.filename)
+        self.title('Singular values and vectors for ORIG data tab: ' + str(tab_index + 1) + " - data file: "+self.filename)
 
         self.lbl_nr_of_sing_values = tk.Label(self, text="nr of singular values?", fg=self.parent.violet)
-        self.ent_nr_of_sing_values = tk.Entry(self, width=6, fg=self.parent.violet, validate="key", validatecommand=(self.register(self.test_value_digits_only),'%P','%d'))
+        self.ent_nr_of_sing_values = tk.Entry(self, width=6, fg=self.parent.violet, validate="key", justify=tk.RIGHT, validatecommand=(self.register(self.test_value_digits_only),'%P','%d'))
 
         self.lbl_nr_of_sing_values.grid(column=0, row=2, sticky='sw', pady=5, padx=3)
         self.ent_nr_of_sing_values.grid(row=self.lbl_nr_of_sing_values.grid_info()["row"], padx=150, pady=5, sticky="sw")
@@ -58,7 +58,11 @@ class SVD_inspection_Window(tk.Toplevel):
         self.ent_nr_of_sing_values.insert(0, 10)
 
         self.max_nr_of_sing_vectors = 11    # set this to a higher number if you want to be able to inspect even less significant singular vectors
-        self.max_nr_of_singValues = 50      # set this to a higher number if you want to be able to inspect even less significant singular values
+        self.max_nr_of_sing_values = 51      # set this to a higher number if you want to be able to inspect even less significant singular values
+
+        # set which singular vectors are to be displayed when initially opening the window
+        self.leftSVs_components_list = [0,1,2]
+        self.rightSVs_components_list = [0,1,2]
 
         self.make_checkbuttons()
 
@@ -79,8 +83,6 @@ class SVD_inspection_Window(tk.Toplevel):
 
         self.update_sing_values_plot(event=None)
 
-        self.leftSVs_components_list = [0,1,2]
-        self.rightSVs_components_list = [0,1,2]
         self.update_leftSVs_plot()
         self.update_rightSVs_plot()
 
@@ -91,8 +93,12 @@ class SVD_inspection_Window(tk.Toplevel):
         self.rightSVs_checkbutton_vars = [tk.IntVar(0) for _ in range(self.max_nr_of_sing_vectors)]
 
         for i in range(self.max_nr_of_sing_vectors):
-            self.leftSVs_checkbutton_vars[i].set(0)
-            self.rightSVs_checkbutton_vars[i].set(0)
+            if i in self.leftSVs_components_list:
+                self.leftSVs_checkbutton_vars[i].set(1)
+                self.rightSVs_checkbutton_vars[i].set(1)
+            else:
+                self.leftSVs_checkbutton_vars[i].set(0)
+                self.rightSVs_checkbutton_vars[i].set(0)
 
         self.leftSVs_checkbuttons = [tk.Checkbutton(self, text=checkbox, variable=self.leftSVs_checkbutton_vars[checkbox], onvalue=1, offvalue=0) for checkbox in range(self.max_nr_of_sing_vectors)]
         self.rightSVs_checkbuttons = [tk.Checkbutton(self, text=checkbox, variable=self.rightSVs_checkbutton_vars[checkbox], onvalue=1, offvalue=0) for checkbox in range(self.max_nr_of_sing_vectors)]
@@ -114,7 +120,7 @@ class SVD_inspection_Window(tk.Toplevel):
         self.time_delays = self.data_obj.time_delays
         self.wavelengths = self.data_obj.wavelengths
 
-        self.rightSVs, self.leftSVs, self.singValues = get_retained_rightSVs_leftSVs_singularvs.run(self.data, [i for i in range(self.max_nr_of_singValues)])
+        self.rightSVs, self.leftSVs, self.singValues = get_retained_rightSVs_leftSVs_singularvs.run(self.data, [i for i in range(self.max_nr_of_sing_values)])
 
         self.leftSVs_scaled = np.zeros((len(self.wavelengths), self.max_nr_of_sing_vectors))
         self.rightSVs_scaled = np.zeros((self.max_nr_of_sing_vectors, len(self.time_delays)))
@@ -172,7 +178,7 @@ class SVD_inspection_Window(tk.Toplevel):
         self.leftSVs_xaxis = self.wavelengths
 
         self.leftSVs_num_ticks = 5
-        self.leftSVs_label_format = '{:,.1f}'
+        self.leftSVs_label_format = '{:.1f}'
         self.leftSVs_xticks = np.linspace(0, len(self.leftSVs_xaxis) - 1, self.leftSVs_num_ticks, dtype=np.int)
         self.leftSVs_xticklabels = [float(self.leftSVs_xaxis[idx]) for idx in self.leftSVs_xticks]
         self.leftSVs_xticklabels = [self.leftSVs_label_format.format(x) for x in self.leftSVs_xticklabels]
@@ -198,7 +204,7 @@ class SVD_inspection_Window(tk.Toplevel):
         self.rightSVs_xaxis = self.time_delays
 
         self.rightSVs_num_ticks = 5
-        self.rightSVs_label_format = '{:,.1f}'
+        self.rightSVs_label_format = '{:.1f}'
         self.rightSVs_xticks = np.linspace(0, len(self.rightSVs_xaxis) - 1, self.rightSVs_num_ticks, dtype=np.int)
         self.rightSVs_xticklabels = [float(self.rightSVs_xaxis[idx]) for idx in self.rightSVs_xticks]
         self.rightSVs_xticklabels = [self.rightSVs_label_format.format(x) for x in self.rightSVs_xticklabels]
@@ -222,9 +228,9 @@ class SVD_inspection_Window(tk.Toplevel):
         """ event = None is needed because used as callback"""
 
         # check if user wants to plot more singular values than are stored:
-        if (int(self.ent_nr_of_sing_values.get()) >= self.max_nr_of_singValues):
+        if (int(self.ent_nr_of_sing_values.get()) >= self.max_nr_of_sing_values):
             tk.messagebox.showerror("Warning, an exception occurred!",
-                                    f"The program only stored the first {self.max_nr_of_singValues-1} singular values!\n"
+                                    f"The program only stored the first {self.max_nr_of_sing_values-1} singular values!\n"
                                     +f"If you want to see more, you would need to change one line of the code of\n {__name__}\n"
                                     +"as the coder selected a lazy solution.")
             return None

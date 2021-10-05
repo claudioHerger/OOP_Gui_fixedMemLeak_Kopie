@@ -23,6 +23,7 @@ import lmfit
 import math
 import scipy.signal
 import asteval
+import tkinter as tk
 
 def convolute_first_part_of_fit_function(sum_of_exponentials, time_delays, index_of_first_increased_time_interval, gaussian_for_convolution):
     """ convolutes the part of the fit function (sum of exponentials) that corresponds to the small initial time intervals
@@ -39,7 +40,7 @@ def convolute_first_part_of_fit_function(sum_of_exponentials, time_delays, index
 
     return convolution
 
-def model_func_user_defined(time_delays, amplitudes, decay_constants, retained_components, parsed_user_defined_summands, asteval_interpreter: asteval.Interpreter):
+def model_func_user_defined(time_delays, amplitudes, decay_constants, retained_components, parsed_user_defined_summands, asteval_interpreter: asteval.Interpreter = asteval.Interpreter(use_numpy=True)):
     taus = {}
     for (i,comp) in enumerate(retained_components):
         taus[f"component{comp}"] = decay_constants[i]
@@ -53,7 +54,7 @@ def model_func_user_defined(time_delays, amplitudes, decay_constants, retained_c
 
     return exp_sum
 
-def model_func(time_delays, amplitudes, decay_constants, index_of_first_increased_time_interval, gaussian_for_convolution):
+def model_func(time_delays, amplitudes, decay_constants, index_of_first_increased_time_interval=0, gaussian_for_convolution=0):
     """ model function for fit: a sum of exponentials (as many as SVD components are used for SVDGF reconstruction).\n
     the amplitudes of the expontials are individual fit parameters, the decay constants are shared fit parameters.\n
     the first part (up to index_of_first_increased_time_interval) is convoluted with a gaussian IRF of the same length.
@@ -74,7 +75,7 @@ def model_func(time_delays, amplitudes, decay_constants, index_of_first_increase
 
 def model_func_dataset(time_delays, idx_of_vector, fit_params, retained_components, index_of_first_increased_time_interval, gaussian_for_convolution, parsed_user_defined_summands, asteval_interpreter):
     """ calc model func from fit params for vectors_to_fit[idx_of_vector] """
-    decay_constants = [fit_params['tau_component%i' % (j)] for j in retained_components]
+    decay_constants = [fit_params[f'tau_component{comp}'] for comp in retained_components]
 
     # This way amplitudes have same indexes as in cannizzo paper
     amplitudes = [fit_params[f'amp_rSV{idx_of_vector}_component{component}'] for component in retained_components]
@@ -88,7 +89,7 @@ def model_func_dataset(time_delays, idx_of_vector, fit_params, retained_componen
                             +"check your entered target model summands file for any errors like missing brackets or so...")
 
     else:
-        return model_func(time_delays, amplitudes, decay_constants, index_of_first_increased_time_interval, gaussian_for_convolution)
+        return model_func(time_delays, amplitudes, decay_constants, index_of_first_increased_time_interval=index_of_first_increased_time_interval, gaussian_for_convolution=gaussian_for_convolution)
 
 def objective(fit_params, time_delays, vectors_to_fit, retained_components, index_of_first_increased_time_interval, gaussian_for_convolution, parsed_user_defined_summands, asteval_interpreter):
     """ calculate total residual for fits to several \"vectors\" held
@@ -149,6 +150,42 @@ def get_gaussian_for_convolution(time_delays, time_zero, temp_resolution, index_
 
     return gaussian_for_convolution
 
+def initialize_fit_parameters(retained_components, initial_fit_parameter_values):
+    minimumNrOfValues = 100
+    user_file_has_too_few_values = False
+    for key in initial_fit_parameter_values.keys():
+        if (len(initial_fit_parameter_values[key]) <= minimumNrOfValues):
+            minimumNrOfValues = len(initial_fit_parameter_values[key])
+
+    if (minimumNrOfValues < len(retained_components)):
+        user_file_has_too_few_values = True
+        tk.messagebox.showerror("Warning,", "There are insufficient parameter values in your initial fit parameter values file.\n"+
+                                            "See the help button in the window where you can set the initial fit parameter values.\n"+
+                                            "(Button 'Set initial fit parameter values'.)\n\n"+
+                                            "In the mean while, the program will use default initial values for the fit parameters, which have been found to work somewhat well.\n"+
+                                            "all decay constants = 50.0, all amplitudes = 0.7")
+
+    fit_params = lmfit.Parameters()
+    if user_file_has_too_few_values:
+        for component in retained_components:
+            fit_params.add(f'tau_component{component}', value=50.0)
+            for rSV_index in range(0, len(retained_components)):
+                fit_params.add(f'amp_rSV{rSV_index}_component{component}', value=0.7)
+    else:
+        try:
+            for component in retained_components:
+                fit_params.add(f'tau_component{component}', value=float(initial_fit_parameter_values["time_constants"][component]))
+                for rSV_index in range(0, len(retained_components)):
+                    fit_params.add(f'amp_rSV{rSV_index}_component{component}', value=float(initial_fit_parameter_values[f"amps_rSV{rSV_index}"][component]))
+        except KeyError as error:
+            raise ValueError("a key error occured when reading your initial fit parameter values dict.\n"+
+                            f"first missing key {error}.\n"+
+                            "The Initial_fit_parameter_values.txt should contain a dictinary with the keys: 'time_constants', 'amps_rSV0', 'amps_rSV1', ... "+
+                            "depending on how many components are selected for the fit.")
+
+    return fit_params
+
+
 def start_the_fit(retained_components, time_delays, retained_rSVs, retained_singular_values, initial_fit_parameter_values, time_zero, temp_resolution, parsed_user_defined_summands):
     """ initialize vectors to fit and fit parameters, then calls lmfit function """
     # multiplication of each retained right SV with its respective singular value:
@@ -158,11 +195,7 @@ def start_the_fit(retained_components, time_delays, retained_rSVs, retained_sing
         vectors_to_fit[component, :] = sing_value*retained_rSVs[component, :]
 
     # initialize fit parameters
-    fit_params = lmfit.Parameters()
-    for component in retained_components:
-        fit_params.add( f'tau_component{component}', value=initial_fit_parameter_values["time_constants"])
-        for rSV_index in range(0, len(retained_components)):
-            fit_params.add( f'amp_rSV{rSV_index}_component{component}', value=initial_fit_parameter_values["amplitudes"])
+    fit_params = initialize_fit_parameters(retained_components, initial_fit_parameter_values)
 
     # need this index for the convolution in fit procedure:
     index_of_first_increased_time_interval = get_index_at_which_time_intervals_increase_the_first_time(time_delays)
@@ -178,7 +211,7 @@ def start_the_fit(retained_components, time_delays, retained_rSVs, retained_sing
     # run the global fit over all the data sets, i.e. all VT_i
     # per default uses method='levenberg-marquardt-leastsq' = 'leastsq'
     # could change the fit method via "method" argument. see web for possible fit methods
-    result = lmfit.minimize(objective, fit_params, method='leastsq', args=(time_delays, vectors_to_fit, retained_components, index_of_first_increased_time_interval, gaussian_for_convolution, parsed_user_defined_summands, asteval_interpreter))
+    result = lmfit.minimize(objective, fit_params, method='least_squares', args=(time_delays, vectors_to_fit, retained_components, index_of_first_increased_time_interval, gaussian_for_convolution, parsed_user_defined_summands, asteval_interpreter))
 
     return result
 
