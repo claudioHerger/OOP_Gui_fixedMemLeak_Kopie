@@ -28,9 +28,9 @@ base_directory = os.getcwd()        # SHOULD BE ADJUSTED! Leads to Error if prog
 
 class GuiAppTAAnalysis(tk.Frame):
 
-    def __init__(self, master):
-        tk.Frame.__init__(self, master)
-        self.parent = master
+    def __init__(self, parent):
+        tk.Frame.__init__(self, parent)
+        self.parent = parent
 
         self.get_initial_fit_parameter_values_from_file()
 

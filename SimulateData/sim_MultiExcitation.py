@@ -164,14 +164,14 @@ if __name__ == "__main__":
     # dir_path = os.getcwd()+"/configFiles/temporal_overlap/"
     # dir_path = os.getcwd()+"/configFiles/"
 
-    files_in_dir = [f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))]
-    for file in files_in_dir:
-        print()
-        print(f'file: {file}')
-        start = time.time()
-        multi_excitation_obj = MultiExcitation(dir_path+file, results_dir="MultiExcitation/wavelength_overlap/", make_plots=True)
-        multi_excitation_obj.run_simulation()
-        print(f'MultiExcitation excecution time: {time.time()-start}')
+    # files_in_dir = [f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))]
+    # for file in files_in_dir:
+    #     print()
+    #     print(f'file: {file}')
+    #     start = time.time()
+    #     multi_excitation_obj = MultiExcitation(dir_path+file, results_dir="MultiExcitation/wavelength_overlap/", make_plots=True)
+    #     multi_excitation_obj.run_simulation()
+    #     print(f'MultiExcitation excecution time: {time.time()-start}')
 
-    # multi_excitation_obj = MultiExcitation(os.getcwd()+"/configFiles/wavelength_overlap/overlap_0.ini", results_dir="", make_plots=True)
-    # multi_excitation_obj.run_simulation()
+    multi_excitation_obj = MultiExcitation(os.getcwd()+"/configFiles/wavelength_overlap/overlap_0.ini", results_dir="", make_plots=True)
+    multi_excitation_obj.run_simulation()
