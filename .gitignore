@@ -4,4 +4,4 @@
 /SimulateData/old_simulations
 /SimulateData/moreSimulationPlots
 /PlotClasses_noThreads/SingularValues
-/make_plots_for_thesis.py
+make_plots_for_thesis.py
