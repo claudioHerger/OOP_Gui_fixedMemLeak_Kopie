@@ -1,1 +1,0 @@
-{'summand_component0': 'exp(-t/k0)', 'summand_component1': 'exp(-t/k1)', 'summand_component2': 'exp(-t/k2)', 'summand_component3': 'exp(-t/k3)+exp(-t/-k2)', 'summand_component4': 'exp(-t/k4)', 'summand_component5': 'exp(-t/k5)', 'summand_component6': 'exp(-t/k6)'}
