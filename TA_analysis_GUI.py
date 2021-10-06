@@ -23,22 +23,23 @@ from PlotClasses_noThreads import ORIGData, SVDGF_reconstruction, SVD_reconstruc
 from SupportClasses import ToolTip, NotebookContainer
 from ToplevelClasses import FitResult_Toplevel, DAS_Toplevel, initial_fit_parameter_values_Toplevel, target_model_Toplevel
 
-# the directory from where program is started
-base_directory = os.getcwd()        # SHOULD BE ADJUSTED! Leads to Error if program is not started from directory where it is in
-
 class GuiAppTAAnalysis(tk.Frame):
 
     def __init__(self, parent):
         tk.Frame.__init__(self, parent)
         self.parent = parent
 
+        # the directory from where program is started
+        self.base_directory = os.getcwd()        # Leads to Error if program is not started from directory where it is in
+        self.config_files_directory = self.base_directory + "/configFiles/"
+
         self.get_initial_fit_parameter_values_from_file()
 
         # set initial data file variable etc.
         self.curr_reconstruct_data_file_strVar = tk.StringVar()
         self.curr_reconstruct_data_file_strVar.set("no file selected")
-        # self.curr_reconstruct_data_file_strVar.set(base_directory+"/DataFiles/simulatedTAData_formatted.txt")
-        # self.curr_reconstruct_data_file_strVar.set(base_directory+"/DataFiles/data_full_0.txt")
+        # self.curr_reconstruct_data_file_strVar.set(self.base_directory+"/DataFiles/simulatedTAData_formatted.txt")
+        # self.curr_reconstruct_data_file_strVar.set(self.base_directory+"/DataFiles/data_full_0.txt")
         self.curr_reconstruct_data_file_strVar.trace_add("write", self.update_title_callback)
         self.curr_reconstruct_data_start_time_value = tk.DoubleVar()
         self.curr_reconstruct_data_start_time_value.trace_add("write", self.update_title_callback)
@@ -96,7 +97,7 @@ class GuiAppTAAnalysis(tk.Frame):
         return None
 
     def get_initial_fit_parameter_values_from_file(self):
-        self.initial_fit_parameter_values_file = base_directory+"/global_fit_configuration_files"+"/Initial_fit_parameter_values.txt"
+        self.initial_fit_parameter_values_file = self.config_files_directory + "/Initial_fit_parameter_values.txt"
 
         # if user has for some reason deleted the file that stores initial fit parameter dictionary, set default fit parameter values:
         if not os.path.exists(self.initial_fit_parameter_values_file):
@@ -280,7 +281,7 @@ class GuiAppTAAnalysis(tk.Frame):
         # here you can update which files the user can select in the dialog.
         # in "All files" i do not just write a complete wildcard "*", as i want to keep some control over which files the user can choose.
         ftypes = [('txt files', '*.txt'), ('All files', '*.txt; *.csv'), ('CSV files', '*.csv')]
-        filename = tk.filedialog.askopenfilename(initialdir=base_directory+"/DataFiles", title="Select a file to work with", filetypes=ftypes)
+        filename = tk.filedialog.askopenfilename(initialdir=self.base_directory+"/DataFiles", title="Select a file to work with", filetypes=ftypes)
 
         if filename != "":
             file_var.set(filename)
@@ -328,7 +329,7 @@ class GuiAppTAAnalysis(tk.Frame):
             # getting components failed, do nothing
             return None
 
-        self.target_model_fit_function_file = base_directory+"/global_fit_configuration_files"+"/target_model_summands.txt"
+        self.target_model_fit_function_file = self.config_files_directory + "/target_model_summands.txt"
         self.define_target_model_window = target_model_Toplevel.target_model_Window(self, self.components_to_use, self.target_model_fit_function_file)
         self.wait_window(self.define_target_model_window)
 
