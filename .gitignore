@@ -3,5 +3,6 @@
 /DataFiles/ResultData
 /SimulateData/old_simulations
 /SimulateData/moreSimulationPlots
-/PlotClasses_noThreads/SingularValues
+/PlotClasses_noThreads/SingularValues.py
 make_plots_for_thesis.py
+**/__pycache__
