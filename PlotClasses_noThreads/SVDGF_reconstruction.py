@@ -18,7 +18,7 @@ from SupportClasses import ToolTip, saveData
 from ToplevelClasses import Kinetics_Spectrum_Toplevel, new_decay_times_Toplevel, CompareRightSVsWithFit_Toplevel
 
 class SVDGF_Heatmap():
-    def __init__(self, parent, filename, start_time, components_list, temp_resolution, time_zero, tab_idx, tab_idx_difference, initial_fit_parameter_values, user_defined_fit_function):
+    def __init__(self, parent, filename, start_time, components_list, temp_resolution, time_zero, tab_idx, tab_idx_difference, initial_fit_parameter_values, user_defined_fit_function, colormaps_dict):
         """A class to make a heatmap of via SVD_GlobalFit reconstructed TA data.
         * the (default, i.e. non user defined) global fit should:\n
             # fit the selection (the selected components)\n
@@ -43,6 +43,7 @@ class SVDGF_Heatmap():
             tab_idx_difference (int):the index of the tab of the ttk notebook of the GUI, (on which the difference heatmap will be put)
             initial_fit_parameter_values (dict): the dictionary that defines the initial values for the fit parameters
             user_defined_fit_function (bool): True if you want to use the user defined fit function
+            colormaps_dict (dict): dictionary containing the colormap names for the heatmaps
 
         Returns:
             NoneType: None
@@ -66,6 +67,7 @@ class SVDGF_Heatmap():
         self.user_selected_decay_times = None
 
         self.initial_fit_parameter_values = initial_fit_parameter_values
+        self.colormaps_dict = colormaps_dict
 
         return None
 
@@ -108,7 +110,17 @@ class SVDGF_Heatmap():
         self.yticklabels = [self.label_format.format(x) for x in self.yticklabels]
         self.xticklabels = [self.label_format.format(x) for x in self.xticklabels]
 
-        self.cm = sns.diverging_palette(220, 20, s=100, as_cmap=True)
+        try:
+            cmap_name = self.colormaps_dict["Fit"]
+            if cmap_name == "default":
+                self.cm = sns.diverging_palette(220, 20, s=300, as_cmap=True)
+            else:
+                self.cm = sns.color_palette(cmap_name, as_cmap=True)
+        except (ValueError, KeyError):
+            print("Could not assign the selected colormap. Using a default one. Try to change the colormaps via button.")
+            # default to this cmap
+            self.cm = sns.diverging_palette(320, 20, s=300, as_cmap=True)
+
         sns.heatmap(self.data, ax = self.axes, cbar_kws={'label': 'rel transmission'}, cmap=self.cm)
 
         self.axes.set_yticks(self.yticks)
@@ -156,7 +168,17 @@ class SVDGF_Heatmap():
         self.yticklabels = [self.label_format.format(x) for x in self.yticklabels]
         self.xticklabels = [self.label_format.format(x) for x in self.xticklabels]
 
-        self.cm = sns.diverging_palette(220, 20, s=100, as_cmap=True)
+        try:
+            cmap_name = self.colormaps_dict["Fit_diff"]
+            if cmap_name == "default":
+                self.cm = sns.diverging_palette(220, 20, s=300, as_cmap=True)
+            else:
+                self.cm = sns.color_palette(cmap_name, as_cmap=True)
+        except (ValueError, KeyError):
+            print("Could not assign the selected colormap. Using a default one. Try to change the colormaps via button.")
+            # default to this cmap
+            self.cm = sns.diverging_palette(320, 20, s=300, as_cmap=True)
+
         sns.heatmap(self.difference_data, ax = self.axes_difference, cbar_kws={'label': 'rel transmission'}, cmap=self.cm)
 
         self.axes_difference.set_yticks(self.yticks)

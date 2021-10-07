@@ -21,7 +21,7 @@ from PlotClasses_noThreads import ORIGData, SVDGF_reconstruction, SVD_reconstruc
 
 # SupportClasses - used to e.g. explain functionality of widget in gui
 from SupportClasses import ToolTip, NotebookContainer
-from ToplevelClasses import FitResult_Toplevel, DAS_Toplevel, initial_fit_parameter_values_Toplevel, target_model_Toplevel
+from ToplevelClasses import FitResult_Toplevel, DAS_Toplevel, initial_fit_parameter_values_Toplevel, target_model_Toplevel, ChooseColorMaps_Toplevel
 
 class GuiAppTAAnalysis(tk.Frame):
 
@@ -33,7 +33,8 @@ class GuiAppTAAnalysis(tk.Frame):
         self.base_directory = os.getcwd()        # Leads to Error if program is not started from directory where it is in
         self.config_files_directory = self.base_directory + "/configFiles/"
 
-        self.get_initial_fit_parameter_values_from_file()
+        self.read_initial_fit_parameter_values_from_file()
+        self.read_currently_used_cmaps_from_file()
 
         # set initial data file variable etc.
         self.curr_reconstruct_data_file_strVar = tk.StringVar()
@@ -96,7 +97,30 @@ class GuiAppTAAnalysis(tk.Frame):
 
         return None
 
-    def get_initial_fit_parameter_values_from_file(self):
+    def read_currently_used_cmaps_from_file(self):
+        self.colormaps_dict_file = self.config_files_directory + "/colormaps_for_heatmaps_file.txt"
+
+        # if user has for some reason deleted the file, set default colormaps:
+        if not os.path.exists(self.colormaps_dict_file):
+            self.currently_used_cmaps_dict = {"ORIG": "", "SVD": "", "Fit": "", "SVD_diff": "", "Fit_diff": ""}
+            with open(self.colormaps_dict_file, mode='w') as dict_file:
+                dict_file.write(str(self.currently_used_cmaps_dict))
+
+        else:
+            try:
+                with open(self.colormaps_dict_file, mode='r') as dict_file:
+                    self.currently_used_cmaps_dict = ast.literal_eval(dict_file.read().strip())
+            except SyntaxError as error:
+                tk.messagebox.showwarning(title="Warning, problem with cmaps config file!",
+                                        message="cmaps config file can not be evaluated correctly!\n\n"
+                                        +f"error: {error}"
+                                        +"\n\nIt should contain only one python dictionary and nothing else!"
+                                        +"\n\nProgram will use default cmap!")
+                self.currently_used_cmaps_dict = {"ORIG": "", "SVD": "", "Fit": "", "SVD_diff": "", "Fit_diff": ""}
+
+        return None
+
+    def read_initial_fit_parameter_values_from_file(self):
         self.initial_fit_parameter_values_file = self.config_files_directory + "/Initial_fit_parameter_values.txt"
 
         # if user has for some reason deleted the file that stores initial fit parameter dictionary, set default fit parameter values:
@@ -335,6 +359,15 @@ class GuiAppTAAnalysis(tk.Frame):
 
         return None
 
+    def handler_assign_colormaps_for_heatmaps(self, new_colormaps_dict):
+        self.currently_used_cmaps_dict = new_colormaps_dict
+        return None
+
+    def set_colormaps_for_heatmaps(self):
+        self.set_colormaps_window = ChooseColorMaps_Toplevel.SetColorMapWindow(self, self.colormaps_dict_file, self.currently_used_cmaps_dict, self.handler_assign_colormaps_for_heatmaps)
+
+        return None
+
     def check_curr_fileVar_exists(self, file_var):
         if file_var.get()=="no file selected":
             self.set_curr_fileVar(file_var)
@@ -505,7 +538,7 @@ class GuiAppTAAnalysis(tk.Frame):
             self.nbCon_orig.tab_control.grid(row=0, column=2, sticky="ne")
         self.nbCon_orig.add_indexed_tab(self.next_tab_idx_orig, title=str(self.curr_reconstruct_data_start_time_value.get()) + " " + os.path.splitext(self.truncated_filename)[0])
 
-        self.nbCon_orig.data_objs[self.next_tab_idx_orig] = ORIGData.ORIGData_Heatmap(self, self.next_tab_idx_orig, self.curr_reconstruct_data_file_strVar.get(), self.curr_reconstruct_data_start_time_value.get(), self.truncated_filename)
+        self.nbCon_orig.data_objs[self.next_tab_idx_orig] = ORIGData.ORIGData_Heatmap(self, self.next_tab_idx_orig, self.curr_reconstruct_data_file_strVar.get(), self.curr_reconstruct_data_start_time_value.get(), self.truncated_filename, self.currently_used_cmaps_dict)
         thread_instance_orig = threading.Thread(target=self.nbCon_orig.data_objs[self.next_tab_idx_orig].make_data)
         thread_instance_orig.start()
         self.monitor_thread(thread_instance_orig, self.nbCon_orig.data_objs[self.next_tab_idx_orig], self.btn_show_orig_data_heatmap, self.lbl_reassuring_orig)
@@ -542,7 +575,7 @@ class GuiAppTAAnalysis(tk.Frame):
             self.nbCon_difference.tab_control.grid(row=1, column=2, sticky="ne")
         self.nbCon_difference.add_indexed_tab(self.next_tab_idx_difference, title="SVD "+str(self.next_tab_idx_SVD+1))
 
-        self.nbCon_SVD.data_objs[self.next_tab_idx_SVD] = SVD_reconstruction.SVD_Heatmap(self, self.curr_reconstruct_data_file_strVar.get(), self.curr_reconstruct_data_start_time_value.get(), self.components_to_use, self.next_tab_idx_SVD, self.next_tab_idx_difference)
+        self.nbCon_SVD.data_objs[self.next_tab_idx_SVD] = SVD_reconstruction.SVD_Heatmap(self, self.curr_reconstruct_data_file_strVar.get(), self.curr_reconstruct_data_start_time_value.get(), self.components_to_use, self.next_tab_idx_SVD, self.next_tab_idx_difference, self.currently_used_cmaps_dict)
         thread_instance_SVD = threading.Thread(target=self.nbCon_SVD.data_objs[self.next_tab_idx_SVD].make_data)
         thread_instance_SVD.start()
         self.monitor_thread(thread_instance_SVD, self.nbCon_SVD.data_objs[self.next_tab_idx_SVD], self.btn_show_SVD_reconstructed_data_heatmap, self.lbl_reassuring_SVD)
@@ -584,7 +617,7 @@ class GuiAppTAAnalysis(tk.Frame):
             self.nbCon_difference.tab_control.grid(row=1, column=2, sticky="ne")
         self.nbCon_difference.add_indexed_tab(self.next_tab_idx_difference, title="SVDGF "+str(self.next_tab_idx_SVDGF+1))
 
-        self.nbCon_SVDGF.data_objs[self.next_tab_idx_SVDGF] = SVDGF_reconstruction.SVDGF_Heatmap(self, self.curr_reconstruct_data_file_strVar.get(), self.curr_reconstruct_data_start_time_value.get(), self.components_to_use, self.temporal_resolution_in_ps, self.time_zero_in_ps, self.next_tab_idx_SVDGF, self.next_tab_idx_difference, self.initial_fit_parameter_values, bool(self.checkbox_var_use_target_model.get()))
+        self.nbCon_SVDGF.data_objs[self.next_tab_idx_SVDGF] = SVDGF_reconstruction.SVDGF_Heatmap(self, self.curr_reconstruct_data_file_strVar.get(), self.curr_reconstruct_data_start_time_value.get(), self.components_to_use, self.temporal_resolution_in_ps, self.time_zero_in_ps, self.next_tab_idx_SVDGF, self.next_tab_idx_difference, self.initial_fit_parameter_values, bool(self.checkbox_var_use_target_model.get()), self.currently_used_cmaps_dict)
         thread_instance_SVDGF = threading.Thread(target=self.nbCon_SVDGF.data_objs[self.next_tab_idx_SVDGF].make_data)
         thread_instance_SVDGF.start()
         self.monitor_thread(thread_instance_SVDGF, self.nbCon_SVDGF.data_objs[self.next_tab_idx_SVDGF], self.btn_show_SVDGF_reconstructed_data_heatmap, self.lbl_reassuring_SVDGF)
@@ -748,6 +781,10 @@ class GuiAppTAAnalysis(tk.Frame):
         self.checkbox_use_target_model.grid(row=self.btn_set_target_model_fit_function.grid_info()["row"], sticky="se", pady=8, padx=3)
         self.checkbox_use_target_model.bind("<ButtonPress>", lambda x: self.flash_target_model_btn_callback())
 
+        """button to set colormaps for heatmaps"""
+        self.btn_set_colormaps = tk.Button(self.frm_orig_data_tab1, text="set colormaps for\n heatmaps", command=self.set_colormaps_for_heatmaps)
+        self.btn_set_colormaps.grid(row=3, column=0, padx=3, pady=5, sticky="s")
+        self.frm_orig_data_tab1.rowconfigure(self.btn_set_colormaps.grid_info()["row"], weight=1)
 
         return None
 
