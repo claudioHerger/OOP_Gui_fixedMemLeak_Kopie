@@ -1,8 +1,11 @@
 /PlotClasses
 /thesis_plots
 /DataFiles/ResultData
+/DataFiles/datforclaudio
+/DataFiles/Anne_Ruth_Dyad_12_2017
 /SimulateData/old_simulations
 /SimulateData/moreSimulationPlots
 /PlotClasses_noThreads/SingularValues.py
 make_plots_for_thesis.py
+
 **/__pycache__
