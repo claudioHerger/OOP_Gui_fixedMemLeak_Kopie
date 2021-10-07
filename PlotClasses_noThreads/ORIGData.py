@@ -16,21 +16,25 @@ from SupportClasses import saveData, ToolTip
 from ToplevelClasses import SVD_inspection_Toplevel, Kinetics_Spectrum_Toplevel
 
 class ORIGData_Heatmap():
-    def __init__(self, parent, tab_idx, filename, start_time, tab_title_filename):
-        """ A class used to show the heatmap of an input (TA) data file starting from input start time value on the OOP Gui. \n
-        The plot will be put on a tab of a ttk notebook.\n\n
-        * parent is the Gui App that creates the instance of this class\n
-        * tab_idx is the index of the tab that is added to the ttk notebook.\n
-        * filename is the full path of the datafile\n
-        * start_time is the value of the start time starting from which the data will be used for the plot\n
-        * self.tab_title_filename (string): filename possibly truncated so that tab titles do not become too large
+    def __init__(self, parent, tab_idx, filename, start_time, tab_title_filename, colormaps_dict):
+        """A class used to create a heatmap of a data matrix read from a file. \n
+        The plot will be put on a tab of a ttk notebook.
+
+        Args:
+            parent (GuiAppTAAnalysis): the Gui App that creates the instance of this class\
+            tab_idx (int): the index of the tab that is added to the ttk notebook.
+            filename (String): the full path to the datafile
+            start_time (float or string): the value of the start time starting from which the data will be used for the plot
+            tab_title_filename (string): filename possibly truncated so that tab titles do not become too large
+            colormaps_dict (dict): dictionary containing the colormap names for the heatmaps
         """
+
         self.parent = parent
         self.filename = filename
         self.start_time = start_time
         self.tab_idx = tab_idx
         self.tab_title_filename = tab_title_filename
-
+        self.colormaps_dict = colormaps_dict
 
         return None
 
@@ -62,9 +66,17 @@ class ORIGData_Heatmap():
         self.yticklabels = [self.label_format.format(x) for x in self.yticklabels]
         self.xticklabels = [self.label_format.format(x) for x in self.xticklabels]
 
-        self.cm = sns.diverging_palette(220, 20, s=300, as_cmap=True)
-        # self.cm = sns.color_palette("light:#5A9", as_cmap=True)
-        # self.cm = sns.diverging_palette( as_cmap=True)
+        try:
+            cmap_name = self.colormaps_dict["ORIG"]
+            if cmap_name == "default":
+                self.cm = sns.diverging_palette(220, 20, s=300, as_cmap=True)
+            else:
+                self.cm = sns.color_palette(cmap_name, as_cmap=True)
+        except (ValueError, KeyError):
+            print("Could not assign the selected colormap. Using a default one. Try to change the colormaps via button.")
+            # default to this cmap
+            self.cm = sns.diverging_palette(320, 20, s=300, as_cmap=True)
+
         sns.heatmap(self.data, ax = self.axes, cbar_kws={'label': 'rel transmission'}, cmap=self.cm)
 
         self.axes.set_yticks(self.yticks)
