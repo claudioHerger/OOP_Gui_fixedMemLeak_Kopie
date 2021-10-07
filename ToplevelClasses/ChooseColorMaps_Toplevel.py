@@ -169,7 +169,7 @@ class SetColorMapWindow(tk.Toplevel):
 
         return fig, axes, canvas
 
-    def update_axes(self, colormap_name="viridis"):
+    def update_axes(self, colormap_name="default"):
         self.axes.clear()
 
         gradient = np.linspace(0, 1, 256)
