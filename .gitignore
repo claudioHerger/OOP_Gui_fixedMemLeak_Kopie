@@ -11,3 +11,6 @@
 make_plots_for_thesis.py
 
 **/__pycache__
+
+prepare_maryam_data.py
+/DataFiles/datforclaudio.txt

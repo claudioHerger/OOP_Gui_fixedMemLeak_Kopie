@@ -98,7 +98,7 @@ class GuiAppTAAnalysis(tk.Frame):
         return None
 
     def read_currently_used_cmaps_from_file(self):
-        self.colormaps_dict_file = self.config_files_directory + "/colormaps_for_heatmaps_file.txt"
+        self.colormaps_dict_file = self.config_files_directory + "/colormaps_for_heatmaps.txt"
 
         # if user has for some reason deleted the file, set default colormaps:
         if not os.path.exists(self.colormaps_dict_file):
@@ -742,7 +742,7 @@ class GuiAppTAAnalysis(tk.Frame):
         self.lbl_show_SVDGF_result_toplevel = tk.Label(self.frm_update_reconstruct_data_tab1, text="fit results for tabnr?", fg=self.violet)
         ttp_lbl_show_SVDGF_result_toplevel = ToolTip.CreateToolTip(self.lbl_show_SVDGF_result_toplevel, \
         'Enter an number of an existing SVDGF tab and hit return!')
-        self.ent_show_SVDGF_result_toplevel = tk.Entry(self.frm_update_reconstruct_data_tab1, width=6, fg=self.violet, validate="key", validatecommand=(self.register(self.test_value_digits_only),'%P','%d'))
+        self.ent_show_SVDGF_result_toplevel = tk.Entry(self.frm_update_reconstruct_data_tab1, width=6, fg=self.violet, validate="key", validatecommand=(self.register(self.test_value_digits_only),'%P','%d'), justify=tk.RIGHT)
 
         self.lbl_show_SVDGF_result_toplevel.grid(column=0, sticky='sw', pady=5, padx=3)
         self.ent_show_SVDGF_result_toplevel.grid(row=self.lbl_show_SVDGF_result_toplevel.grid_info()["row"], padx=3, pady=5, sticky="se")
@@ -753,7 +753,7 @@ class GuiAppTAAnalysis(tk.Frame):
         self.lbl_show_DAS_toplevel = tk.Label(self.frm_update_reconstruct_data_tab1, text="DAS for tabnr?", fg=self.violet)
         ttp_lbl_show_DAS_toplevel = ToolTip.CreateToolTip(self.lbl_show_DAS_toplevel, \
         'Enter an number of an existing SVDGF tab and hit return!')
-        self.ent_show_DAS_toplevel = tk.Entry(self.frm_update_reconstruct_data_tab1, width=6, fg=self.violet, validate="key", validatecommand=(self.register(self.test_value_digits_only),'%P','%d'))
+        self.ent_show_DAS_toplevel = tk.Entry(self.frm_update_reconstruct_data_tab1, width=6, fg=self.violet, validate="key", validatecommand=(self.register(self.test_value_digits_only),'%P','%d'), justify=tk.RIGHT)
 
         self.lbl_show_DAS_toplevel.grid(column=0, sticky='sw', pady=5, padx=3)
         self.ent_show_DAS_toplevel.grid(row=self.lbl_show_DAS_toplevel.grid_info()["row"], padx=3, pady=5, sticky="se")

@@ -110,7 +110,7 @@ class SetColorMapWindow(tk.Toplevel):
         self.lbl_current_selection_dict.grid(row=3, column=2, columnspan=7)
 
     def make_scrollable_listbox(self):
-        self.listbox = tk.Listbox(self, background='white', width=35, selectbackground="cornflowerblue")
+        self.listbox = tk.Listbox(self, background='white', width=35, selectbackground="cornflowerblue", height=12)
         self.listbox_scrollbar = tk.Scrollbar(self, orient=tk.VERTICAL)
         self.listbox.config(yscrollcommand=self.listbox_scrollbar.set)
         self.listbox_scrollbar.configure(command=self.listbox.yview)
@@ -126,7 +126,7 @@ class SetColorMapWindow(tk.Toplevel):
         self.listbox.grid(row=0, sticky="w")
         self.listbox_scrollbar.grid(row=0, column=1, sticky="ns")
 
-        self.listbox.select_set(1)
+        self.listbox.select_set(3)
 
         return None
 
@@ -169,7 +169,7 @@ class SetColorMapWindow(tk.Toplevel):
 
         return fig, axes, canvas
 
-    def update_axes(self, colormap_name="default"):
+    def update_axes(self, colormap_name="viridis"):
         self.axes.clear()
 
         gradient = np.linspace(0, 1, 256)
