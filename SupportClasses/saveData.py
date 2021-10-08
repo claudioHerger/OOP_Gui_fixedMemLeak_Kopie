@@ -38,7 +38,7 @@ def make_log_file(final_dir, **kwargs):
 
 def save_result_data(final_dir, data_dict):
     for kw,arg in data_dict.items():
-        if kw == "DAS":
+        if kw in ["DAS", "U_matrix", "VT_matrix", "retained_left_SVs"] :
             np.savetxt(final_dir+"/"+kw+".txt", arg, delimiter = '\t', fmt='%.7e')
         else:
             with open(final_dir+"/"+kw+".txt", "a") as myfile:

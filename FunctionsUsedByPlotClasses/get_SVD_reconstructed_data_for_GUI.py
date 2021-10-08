@@ -24,4 +24,4 @@ def run(data, retained_components):
 
     noise_reduced_data_matrix = np.matmul(np.matmul(retained_U, retained_Sigma), retained_VT)
 
-    return noise_reduced_data_matrix
+    return noise_reduced_data_matrix, sigma, U, VT

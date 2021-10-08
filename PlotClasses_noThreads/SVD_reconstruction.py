@@ -211,7 +211,7 @@ class SVD_Heatmap():
             self.delete_attributes()
             return None
 
-        self.SVD_reconstructed_data = get_SVD_reconstructed_data_for_GUI.run(self.TA_data_after_time, self.components_list)
+        self.SVD_reconstructed_data, self.singular_values, self.U_matrix, self.VT_matrix = get_SVD_reconstructed_data_for_GUI.run(self.TA_data_after_time, self.components_list)
 
         self.difference_matrix = self.TA_data_after_time.astype(float) - self.SVD_reconstructed_data.astype(float)
 
@@ -230,7 +230,7 @@ class SVD_Heatmap():
 
         saveData.make_log_file(self.full_path_to_final_dir, filename=self.filename, start_time=self.start_time, components=self.components_list)
 
-        self.result_data_to_save = {"time_delays": self.time_delays, "wavelengths": self.wavelengths}
+        self.result_data_to_save = {"time_delays": self.time_delays, "wavelengths": self.wavelengths, "singular_values": self.singular_values, "U_matrix": self.U_matrix, "VT_matrix": self.VT_matrix}
         saveData.save_result_data(self.full_path_to_final_dir, self.result_data_to_save)
 
         # save data matrices
