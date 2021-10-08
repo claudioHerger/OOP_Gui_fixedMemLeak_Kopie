@@ -78,8 +78,7 @@ class GuiAppTAAnalysis(tk.Frame):
 
         # geometry, title etc of window
         self.parent.config(bg=self.violet)
-        self.truncated_filename = (os.path.basename(self.curr_reconstruct_data_file_strVar.get())[:20] + '...') if len(os.path.basename(self.curr_reconstruct_data_file_strVar.get())) > 23 else os.path.basename(self.curr_reconstruct_data_file_strVar.get())
-        self.parent.title("time-resolved data analysis gui - current data file: " + os.path.basename(self.curr_reconstruct_data_file_strVar.get()) + ";  approximate start time value: " + str(self.curr_reconstruct_data_start_time_value.get()))
+        self.update_title_callback("","","")
         self.make_window_fullscreen()
         root.update_idletasks()         # has to be done before checking the widget dimensions with winfo_.. as it else returns 1!
         root.minsize(1000, 550)
@@ -172,7 +171,7 @@ class GuiAppTAAnalysis(tk.Frame):
         mode = tells you which operation triggered the callback\n
         they are apparently necessary to have a correct syntax with trace_add method
         """
-        self.truncated_filename = (os.path.basename(self.curr_reconstruct_data_file_strVar.get())[:20] + '...') if len(os.path.basename(self.curr_reconstruct_data_file_strVar.get())) > 23 else os.path.basename(self.curr_reconstruct_data_file_strVar.get())
+        self.truncated_filename = (os.path.basename(self.curr_reconstruct_data_file_strVar.get())[:4] + '~~'+ os.path.basename(self.curr_reconstruct_data_file_strVar.get())[-7:-4]) if len(os.path.basename(self.curr_reconstruct_data_file_strVar.get())) > 9 else os.path.basename(self.curr_reconstruct_data_file_strVar.get())
         self.parent.title("time-resolved data analysis gui - current data file: " + os.path.basename(self.curr_reconstruct_data_file_strVar.get()) + ";  approximate start time value: " + str(self.curr_reconstruct_data_start_time_value.get()))
 
     def test_value_digits_only(self, inStr, acttyp):
