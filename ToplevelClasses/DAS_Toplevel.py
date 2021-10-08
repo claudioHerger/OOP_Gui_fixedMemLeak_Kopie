@@ -85,7 +85,10 @@ class DAS_Window(tk.Toplevel):
         self.xticklabels = [self.label_format.format(x) for x in self.xticklabels]
 
         for i in self.which_DAS_list:
-            self.ax.plot(self.wavelengths, self.DAS[:, i], label=f'DAS_comp{i}, tau= {self.decay_constants[i]} ps', color=sns.color_palette("Set2")[i])
+            try:
+                self.ax.plot(self.wavelengths, self.DAS[:, i], label=f'DAS_comp{i}, tau= {self.decay_constants[i]} ps', color=sns.color_palette("Set2")[i])
+            except IndexError:
+                self.ax.plot(self.wavelengths, self.DAS[:, i], label=f'DAS_comp{i}, tau= {self.decay_constants[i]} ps', color=sns.color_palette("husl", 8)[i-8])
 
         self.ax.legend()
         self.ax.set_xticks(self.xticks)

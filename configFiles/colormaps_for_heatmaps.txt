@@ -1,1 +1,1 @@
-{'ORIG': 'PRGn', 'SVD': 'PRGn', 'Fit': 'PRGn', 'SVD_diff': 'PRGn', 'Fit_diff': 'PRGn'}
+{'ORIG': 'viridis', 'SVD': 'viridis', 'Fit': 'viridis', 'SVD_diff': 'viridis', 'Fit_diff': 'viridis'}
