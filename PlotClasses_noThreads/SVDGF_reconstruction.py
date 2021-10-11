@@ -121,15 +121,15 @@ class SVDGF_Heatmap():
             # default to this cmap
             self.cm = sns.diverging_palette(320, 20, s=300, as_cmap=True)
 
-        sns.heatmap(self.data, ax = self.axes, cbar_kws={'label': 'rel transmission'}, cmap=self.cm)
+        sns.heatmap(self.data, ax = self.axes, cbar_kws={'label': 'amplitude'}, cmap=self.cm)
 
         self.axes.set_yticks(self.yticks)
         self.axes.set_yticklabels(self.yticklabels, fontsize=14)
         self.axes.set_xticks(self.xticks)
         self.axes.set_xticklabels(self.xticklabels, rotation=30, fontsize=14)
 
-        self.axes.set_ylabel("wavelengths [nm]", fontsize=16)
-        self.axes.set_xlabel("time since overlap [ps]", fontsize=16)
+        self.axes.set_ylabel("wavelengths", fontsize=16)
+        self.axes.set_xlabel("time since overlap", fontsize=16)
 
         title_string = self.base_filename+" SVDGF data, fit comps: " + str(self.components_list) + " DAS: " + str(self.indeces_for_DAS_matrix)
         if self.use_user_defined_fit_function:
@@ -179,15 +179,15 @@ class SVDGF_Heatmap():
             # default to this cmap
             self.cm = sns.diverging_palette(320, 20, s=300, as_cmap=True)
 
-        sns.heatmap(self.difference_data, ax = self.axes_difference, cbar_kws={'label': 'rel transmission'}, cmap=self.cm)
+        sns.heatmap(self.difference_data, ax = self.axes_difference, cbar_kws={'label': 'amplitude'}, cmap=self.cm)
 
         self.axes_difference.set_yticks(self.yticks)
         self.axes_difference.set_yticklabels(self.yticklabels, fontsize=14)
         self.axes_difference.set_xticks(self.xticks)
         self.axes_difference.set_xticklabels(self.xticklabels, rotation=30, fontsize=14)
 
-        self.axes_difference.set_ylabel("wavelengths [nm]", fontsize=16)
-        self.axes_difference.set_xlabel("time since overlap [ps]", fontsize=16)
+        self.axes_difference.set_ylabel("wavelengths", fontsize=16)
+        self.axes_difference.set_xlabel("time since overlap", fontsize=16)
 
         title_string = self.base_filename+" diff: orig - SVDGF "+str(self.components_list)+ " DAS: " + str(self.indeces_for_DAS_matrix)
         if self.use_user_defined_fit_function:

@@ -77,15 +77,15 @@ class ORIGData_Heatmap():
             # default to this cmap
             self.cm = sns.diverging_palette(320, 20, s=300, as_cmap=True)
 
-        sns.heatmap(self.data, ax = self.axes, cbar_kws={'label': 'rel transmission'}, cmap=self.cm)
+        sns.heatmap(self.data, ax = self.axes, cbar_kws={'label': 'amplitude'}, cmap=self.cm)
 
         self.axes.set_yticks(self.yticks)
         self.axes.set_yticklabels(self.yticklabels, fontsize=14)
         self.axes.set_xticks(self.xticks)
         self.axes.set_xticklabels(self.xticklabels, rotation=30, fontsize=14)
 
-        self.axes.set_ylabel("wavelengths [nm]", fontsize=16)
-        self.axes.set_xlabel("time since overlap [ps]", fontsize=16)
+        self.axes.set_ylabel("wavelengths", fontsize=16)
+        self.axes.set_xlabel("time since overlap", fontsize=16)
 
         self.axes.set_title(self.base_filename+" original data")
 

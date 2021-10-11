@@ -189,7 +189,7 @@ class SVD_inspection_Window(tk.Toplevel):
         self.leftSVs_axes.set_xticks(self.leftSVs_xticks)
         self.leftSVs_axes.set_xticklabels(self.leftSVs_xticklabels, rotation=0)
         self.leftSVs_axes.set_title("left singular vectors * singular value")
-        self.leftSVs_axes.set_xlabel("wavelengths [nm]")
+        self.leftSVs_axes.set_xlabel("wavelengths")
         self.leftSVs_axes.set_ylabel("amplitude a.u.")
         self.leftSVs_axes.legend(fontsize=8)
 
@@ -215,7 +215,7 @@ class SVD_inspection_Window(tk.Toplevel):
         self.rightSVs_axes.set_xticks(self.rightSVs_xticks)
         self.rightSVs_axes.set_xticklabels(self.rightSVs_xticklabels, rotation=0)
         self.rightSVs_axes.set_title("right singular vectors * singular value")
-        self.rightSVs_axes.set_xlabel("time delay [ps]")
+        self.rightSVs_axes.set_xlabel("time delay")
         self.rightSVs_axes.set_ylabel("amplitude a.u.")
         self.rightSVs_axes.legend(fontsize=8)
 

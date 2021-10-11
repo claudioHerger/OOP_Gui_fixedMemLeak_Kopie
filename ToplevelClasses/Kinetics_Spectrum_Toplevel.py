@@ -112,8 +112,8 @@ class Kinetics_Spectrum_Window(tk.Toplevel):
         self.wavelength_kinetics_axes.set_xticks(self.xticks)
         self.wavelength_kinetics_axes.set_xticklabels(self.xticklabels, fontsize=10, rotation=30)
 
-        self.wavelength_kinetics_axes.set_title('wavelength = ' + self.wavelengths[self.nr_of_wavelength] + " [nm]")
-        self.wavelength_kinetics_axes.set_xlabel("Time delays [ps]")
+        self.wavelength_kinetics_axes.set_title('wavelength = ' + self.label_format.format(float(self.wavelengths[self.nr_of_wavelength])))
+        self.wavelength_kinetics_axes.set_xlabel("Time delays")
         self.wavelength_kinetics_axes.set_ylabel("amplitude")
 
         # unnecessary things to have "correct" linecolors in wavelength_kinetics plot
@@ -146,8 +146,8 @@ class Kinetics_Spectrum_Window(tk.Toplevel):
         self.spectrum_at_time_delay_axes.set_xticks(self.spectrum_at_time_delay_xticks)
         self.spectrum_at_time_delay_axes.set_xticklabels(self.spectrum_at_time_delay_xticklabels, fontsize=10, rotation=30)
 
-        self.spectrum_at_time_delay_axes.set_title('time delay = ' + self.time_delays[self.nr_of_time_delay] + " [ps]")
-        self.spectrum_at_time_delay_axes.set_xlabel("Wavelengths [nm]")
+        self.spectrum_at_time_delay_axes.set_title('time delay = ' + self.label_format.format(float(self.time_delays[self.nr_of_time_delay])))
+        self.spectrum_at_time_delay_axes.set_xlabel("Wavelengths")
         self.spectrum_at_time_delay_axes.set_ylabel("amplitude")
 
         self.spectrum_at_time_delay_axes.plot(self.wavelengths, self.spectrum_at_time_delay, color="cornflowerblue")
@@ -211,8 +211,8 @@ class Kinetics_Spectrum_Window(tk.Toplevel):
         self.spectrum_at_time_delay_axes.set_xticks(self.spectrum_at_time_delay_xticks)
         self.spectrum_at_time_delay_axes.set_xticklabels(self.spectrum_at_time_delay_xticklabels, fontsize=10, rotation=30)
 
-        self.spectrum_at_time_delay_axes.set_title('time delay = ' + self.time_delays[self.nr_of_time_delay] + " [ps]")
-        self.spectrum_at_time_delay_axes.set_xlabel("Wavelengths [nm]")
+        self.spectrum_at_time_delay_axes.set_title('time delay = ' + self.label_format.format(float(self.time_delays[self.nr_of_time_delay])))
+        self.spectrum_at_time_delay_axes.set_xlabel("Wavelengths")
         self.spectrum_at_time_delay_axes.set_ylabel("amplitude")
 
         self.spectrum_at_time_delay_axes.plot(self.wavelengths, self.spectrum_at_time_delay, color="cornflowerblue")
@@ -230,8 +230,8 @@ class Kinetics_Spectrum_Window(tk.Toplevel):
         self.wavelength_kinetics_axes.clear()
         self.wavelength_kinetics_axes.set_xticks(self.xticks)
         self.wavelength_kinetics_axes.set_xticklabels(self.xticklabels, fontsize=10, rotation=30)
-        self.wavelength_kinetics_axes.set_title('wavelength = ' + self.wavelengths[self.nr_of_wavelength]  + " [nm]")
-        self.wavelength_kinetics_axes.set_xlabel("Time delays [ps]")
+        self.wavelength_kinetics_axes.set_title('wavelength = ' + self.label_format.format(float(self.wavelengths[self.nr_of_wavelength])) )
+        self.wavelength_kinetics_axes.set_xlabel("Time delays")
         self.wavelength_kinetics_axes.set_ylabel("amplitude")
 
         # unnecessary things to have "correct" linecolors in wavelength_kinetics plot

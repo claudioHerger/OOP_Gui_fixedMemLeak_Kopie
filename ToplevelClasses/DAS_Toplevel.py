@@ -53,7 +53,7 @@ class DAS_Window(tk.Toplevel):
         self.label_format = '{:.2f}'
 
         matplotlib.style.use("seaborn")
-        matplotlib.rcParams.update({'axes.labelsize': 12.0, 'axes.titlesize': 14.0, 'xtick.labelsize':10, 'ytick.labelsize':12.0, "axes.edgecolor":"black", "axes.linewidth":1})
+        matplotlib.rcParams.update({'axes.labelsize': 12.0, 'axes.titlesize': 13.0, 'xtick.labelsize':10, 'ytick.labelsize':12.0, "axes.edgecolor":"black", "axes.linewidth":1})
 
         self.fig = Figure(figsize=(7,5))
         self.ax = self.fig.add_subplot(1,1,1)
@@ -86,17 +86,17 @@ class DAS_Window(tk.Toplevel):
 
         for i in self.which_DAS_list:
             try:
-                self.ax.plot(self.wavelengths, self.DAS[:, i], label=f'DAS_comp{i}, tau= {self.decay_constants[i]} ps', color=sns.color_palette("Set2")[i])
+                self.ax.plot(self.wavelengths, self.DAS[:, i], label=fr'DAS_comp{i}, $\tau$ = {self.decay_constants[i]}', color=sns.color_palette("Set2")[i])
             except IndexError:
-                self.ax.plot(self.wavelengths, self.DAS[:, i], label=f'DAS_comp{i}, tau= {self.decay_constants[i]} ps', color=sns.color_palette("husl", 8)[i-8])
+                self.ax.plot(self.wavelengths, self.DAS[:, i], label=fr'DAS_comp{i}, $\tau$ = {self.decay_constants[i]}', color=sns.color_palette("husl", 8)[i-8])
 
         self.ax.legend()
         self.ax.set_xticks(self.xticks)
         self.ax.set_xticklabels(self.xticklabels)
         self.ax.set_ylabel("amplitude a.u.")
-        self.ax.set_xlabel("wavelengths [nm]")
+        self.ax.set_xlabel("wavelengths")
         self.basefilename = os.path.splitext(os.path.basename(self.filename))[0]
-        self.ax.set_title("DAS via global fit for " + self.basefilename + " " + str(self.start_time)+"ps")
+        self.ax.set_title("DAS for " + self.basefilename + " start time:" + self.label_format.format(float(self.start_time)))
 
         self.fig.tight_layout()
         self.canvas.draw_idle()
