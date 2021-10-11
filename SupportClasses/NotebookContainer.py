@@ -63,3 +63,13 @@ class NotebookContainer():
         self.tab_control.select(tab_idx)
 
         return None
+
+    def set_tab_title(self, tab_idx, title=""):
+        """set a title for the tab
+
+        Args:
+            tab_idx (integer index): index of tab in ttk notebook
+            title (str, optional): the new title string of the tab. Defaults to "".
+        """
+        self.tab_control.tab(tab_idx, text=title)
+        return None

@@ -97,8 +97,8 @@ class ORIGData_Heatmap():
     def make_canvas(self):
         self.make_plot()
 
-        self.tab_title = '{:,.1f}'.format(float(self.start_time)) + " " + os.path.splitext(self.tab_title_filename)[0]
-        self.parent.nbCon_orig.tab_control.tab(self.parent.nbCon_orig.tab_control.index("current"), text=f'{self.tab_idx+1}: ' + self.tab_title)
+        self.tab_title = '{:,.1f}'.format(float(self.start_time)) + " " + self.tab_title_filename
+        self.parent.nbCon_orig.set_tab_title(self.parent.nbCon_orig.tab_control.index("current"), title=f'{self.tab_idx+1}: ' + self.tab_title)
 
         self.btn_delete_attrs = tk.Button(self.parent.nbCon_orig.figure_frames[self.tab_idx], text="remove tab", fg=self.parent.violet, command=lambda: self.remove_tab(self.parent.nbCon_orig))
         self.btn_delete_attrs.grid(row=1, column=3, sticky="se")

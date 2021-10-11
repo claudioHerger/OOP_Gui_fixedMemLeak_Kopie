@@ -41,9 +41,9 @@ class GuiAppTAAnalysis(tk.Frame):
         self.curr_reconstruct_data_file_strVar.set("no file selected")
         # self.curr_reconstruct_data_file_strVar.set(self.base_directory+"/DataFiles/simulatedTAData_formatted.txt")
         # self.curr_reconstruct_data_file_strVar.set(self.base_directory+"/DataFiles/data_full_0.txt")
-        self.curr_reconstruct_data_file_strVar.trace_add("write", self.update_title_callback)
+        self.curr_reconstruct_data_file_strVar.trace_add("write", self.update_filename_in_title_and_truncated_filename_for_tab_header_callback)
         self.curr_reconstruct_data_start_time_value = tk.DoubleVar()
-        self.curr_reconstruct_data_start_time_value.trace_add("write", self.update_title_callback)
+        self.curr_reconstruct_data_start_time_value.trace_add("write", self.update_filename_in_title_and_truncated_filename_for_tab_header_callback)
         self.curr_reconstruct_data_start_time_value.set(-999.0)
         # self.curr_reconstruct_data_start_time_value.set(0.0)
 
@@ -78,7 +78,7 @@ class GuiAppTAAnalysis(tk.Frame):
 
         # geometry, title etc of window
         self.parent.config(bg=self.violet)
-        self.update_title_callback("","","")
+        self.update_filename_in_title_and_truncated_filename_for_tab_header_callback("","","")
         self.make_window_fullscreen()
         root.update_idletasks()         # has to be done before checking the widget dimensions with winfo_.. as it else returns 1!
         root.minsize(1000, 550)
@@ -164,14 +164,14 @@ class GuiAppTAAnalysis(tk.Frame):
         return None
 
     """ callback methods """
-    def update_title_callback(self, name, idx, mode):
+    def update_filename_in_title_and_truncated_filename_for_tab_header_callback(self, name, idx, mode):
         """
         name = internal variable name of traced variable\n
         idx = list index of traced variable if name is a list variable, else an empty string\n
         mode = tells you which operation triggered the callback\n
         they are apparently necessary to have a correct syntax with trace_add method
         """
-        self.truncated_filename = (os.path.basename(self.curr_reconstruct_data_file_strVar.get())[:4] + '~~'+ os.path.basename(self.curr_reconstruct_data_file_strVar.get())[-7:-4]) if len(os.path.basename(self.curr_reconstruct_data_file_strVar.get())) > 9 else os.path.basename(self.curr_reconstruct_data_file_strVar.get())
+        self.truncated_filename = (os.path.basename(self.curr_reconstruct_data_file_strVar.get())[:8] + '..'+ os.path.basename(self.curr_reconstruct_data_file_strVar.get())[-7:-4]) if len(os.path.splitext(os.path.basename(self.curr_reconstruct_data_file_strVar.get()))[0]) > 13 else os.path.splitext(os.path.basename(self.curr_reconstruct_data_file_strVar.get()))[0]
         self.parent.title("time-resolved data analysis gui - current data file: " + os.path.basename(self.curr_reconstruct_data_file_strVar.get()) + ";  approximate start time value: " + str(self.curr_reconstruct_data_start_time_value.get()))
 
     def test_value_digits_only(self, inStr, acttyp):
@@ -535,7 +535,7 @@ class GuiAppTAAnalysis(tk.Frame):
         self.next_tab_idx_orig = self.get_index_of_next_tab_for_nb(self.nbCon_orig.tab_control, self.NR_OF_TABS)
         if not self.nbCon_orig.tab_control.winfo_ismapped():
             self.nbCon_orig.tab_control.grid(row=0, column=2, sticky="ne")
-        self.nbCon_orig.add_indexed_tab(self.next_tab_idx_orig, title=str(self.curr_reconstruct_data_start_time_value.get()) + " " + os.path.splitext(self.truncated_filename)[0])
+        self.nbCon_orig.add_indexed_tab(self.next_tab_idx_orig, title=str(self.curr_reconstruct_data_start_time_value.get()) + " " + self.truncated_filename)
 
         self.nbCon_orig.data_objs[self.next_tab_idx_orig] = ORIGData.ORIGData_Heatmap(self, self.next_tab_idx_orig, self.curr_reconstruct_data_file_strVar.get(), self.curr_reconstruct_data_start_time_value.get(), self.truncated_filename, self.currently_used_cmaps_dict)
         thread_instance_orig = threading.Thread(target=self.nbCon_orig.data_objs[self.next_tab_idx_orig].make_data)
