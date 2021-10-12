@@ -36,6 +36,9 @@ class GuiAppTAAnalysis(tk.Frame):
         self.read_initial_fit_parameter_values_from_file()
         self.read_currently_used_cmaps_from_file()
 
+        # which files the user can select in the tk.filedialog.askopenfilename
+        self.ftypes = [('txt files', '*.txt'), ('All files', '*.txt; *.csv; *.dat'), ('CSV files', '*.csv'), ('DAT files', '*.dat')]
+
         # set initial data file variable etc.
         self.curr_reconstruct_data_file_strVar = tk.StringVar()
         self.curr_reconstruct_data_file_strVar.set("no file selected")
@@ -301,10 +304,7 @@ class GuiAppTAAnalysis(tk.Frame):
         return components_to_use
 
     def set_curr_fileVar(self, file_var):
-        # here you can update which files the user can select in the dialog.
-        # in "All files" i do not just write a complete wildcard "*", as i want to keep some control over which files the user can choose.
-        ftypes = [('txt files', '*.txt'), ('All files', '*.txt; *.csv'), ('CSV files', '*.csv')]
-        filename = tk.filedialog.askopenfilename(initialdir=self.base_directory+"/DataFiles", title="Select a file to work with", filetypes=ftypes)
+        filename = tk.filedialog.askopenfilename(initialdir=self.base_directory+"/DataFiles", title="Select a file to work with", filetypes=self.ftypes)
 
         if filename != "":
             file_var.set(filename)
