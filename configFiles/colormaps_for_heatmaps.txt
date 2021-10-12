@@ -1,1 +1,1 @@
-{'ORIG': 'gist_rainbow', 'SVD': 'gist_rainbow', 'Fit': 'gist_rainbow', 'SVD_diff': 'gist_rainbow', 'Fit_diff': 'gist_rainbow'}
+{'ORIG': 'default', 'SVD': 'default', 'Fit': 'default', 'SVD_diff': 'default', 'Fit_diff': 'default'}
