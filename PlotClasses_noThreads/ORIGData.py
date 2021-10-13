@@ -12,7 +12,7 @@ import os
 
 # my own modules
 from FunctionsUsedByPlotClasses import get_TA_data_after_start_time, get_closest_nr_from_array_like
-from SupportClasses import saveData, ToolTip
+from SupportClasses import saveData, ToolTip, SmallToolbar
 from ToplevelClasses import SVD_inspection_Toplevel, Kinetics_Spectrum_Toplevel
 
 class ORIGData_Heatmap():
@@ -97,6 +97,9 @@ class ORIGData_Heatmap():
     def make_canvas(self):
         self.make_plot()
 
+        self.toolbar = SmallToolbar.SmallToolbar(self.parent.nbCon_orig.figs[self.tab_idx].canvas, self.parent.nbCon_orig.figure_frames[self.tab_idx], pack_toolbar=False)
+        self.toolbar.grid(row=0, column=4)
+
         self.tab_title = '{:,.1f}'.format(float(self.start_time)) + " " + self.tab_title_filename
         self.parent.nbCon_orig.set_tab_title(self.parent.nbCon_orig.tab_control.index("current"), title=f'{self.tab_idx+1}: ' + self.tab_title)
 
@@ -106,7 +109,7 @@ class ORIGData_Heatmap():
         self.btn_inspect_SVD_components = tk.Button(self.parent.nbCon_orig.figure_frames[self.tab_idx], text="inspect SVD", fg=self.parent.violet, command=self.make_SVD_inspection_toplevel)
         self.ttp_btn_inspect_SVD_components = ToolTip.CreateToolTip(self.btn_inspect_SVD_components, \
         'This opens a window to inspect the SVD components of this data matrix.')
-        self.btn_inspect_SVD_components.grid(row=1, column=1, padx=0)
+        self.btn_inspect_SVD_components.grid(row=1, column=1, sticky="s")
 
         self.btn_save_data = tk.Button(self.parent.nbCon_orig.figure_frames[self.tab_idx], text="save data", fg=self.parent.violet, command=self.save_data_to_file)
         self.btn_save_data.grid(row=1, column=0, sticky="sw")
@@ -216,6 +219,7 @@ class ORIGData_Heatmap():
         self.btn_save_data.grid_remove()
         self.btn_inspect_data_matrix.grid_remove()
         self.btn_inspect_SVD_components.grid_remove()
+        self.toolbar.grid_remove()
 
         # clear figure when tab is removed
         self.axes.get_figure().clear()

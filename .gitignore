@@ -13,6 +13,7 @@ make_plots_for_thesis.py
 **/__pycache__
 
 prepare_maryam_data.py
+/DataFiles/maryam2/
+/DataFiles/maryam2.txt
 /DataFiles/datforclaudio.txt
 /DataFiles/mBDF-TPNlookupc_avg_MV.dat
-asdf
