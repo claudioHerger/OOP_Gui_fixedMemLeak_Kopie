@@ -98,8 +98,8 @@ class ORIGData_Heatmap():
     def make_canvas(self):
         self.make_plot()
 
-        self.toolbar = SmallToolbar.SmallToolbar(self.notebook_container.figs[self.tab_idx].canvas, self.notebook_container.figure_frames[self.tab_idx], pack_toolbar=False)
-        self.toolbar.grid(row=0, column=4)
+        self.toolbar_orig = SmallToolbar.SmallToolbar(self.notebook_container.figs[self.tab_idx].canvas, self.notebook_container.figure_frames[self.tab_idx], pack_toolbar=False)
+        self.toolbar_orig.grid(row=0, column=4)
 
         self.tab_title = '{:,.1f}'.format(float(self.start_time)) + " " + self.tab_title_filename
         self.notebook_container.set_tab_title(self.notebook_container.tab_control.index("current"), title=f'{self.tab_idx+1}: ' + self.tab_title)
@@ -220,7 +220,7 @@ class ORIGData_Heatmap():
         self.btn_save_data.grid_remove()
         self.btn_inspect_data_matrix.grid_remove()
         self.btn_inspect_SVD_components.grid_remove()
-        self.toolbar.grid_remove()
+        self.toolbar_orig.grid_remove()
 
         # clear figure when tab is removed
         self.axes.get_figure().clear()
