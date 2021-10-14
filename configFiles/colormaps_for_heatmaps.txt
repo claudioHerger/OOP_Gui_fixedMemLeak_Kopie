@@ -1,1 +1,1 @@
-{'ORIG': 'terrain', 'SVD': 'terrain', 'Fit': 'terrain', 'SVD_diff': 'terrain', 'Fit_diff': 'terrain'}
+{'ORIG': 'viridis', 'SVD': 'viridis', 'Fit': 'viridis', 'SVD_diff': 'viridis', 'Fit_diff': 'viridis'}

@@ -12,7 +12,7 @@ import os
 
 # my own modules
 from FunctionsUsedByPlotClasses import get_TA_data_after_start_time, get_closest_nr_from_array_like
-from SupportClasses import saveData, ToolTip
+from SupportClasses import saveData, ToolTip, SmallToolbar
 from ToplevelClasses import SVD_inspection_Toplevel, Kinetics_Spectrum_Toplevel
 
 class ORIGData_Heatmap():
@@ -30,6 +30,7 @@ class ORIGData_Heatmap():
         """
 
         self.parent = parent
+        self.notebook_container = self.parent.nbCon_orig
         self.filename = filename
         self.start_time = start_time
         self.tab_idx = tab_idx
@@ -42,7 +43,7 @@ class ORIGData_Heatmap():
         sns.set(font_scale = 1.3, rc={"xtick.bottom" : True, "ytick.left" : True})
 
         # create axes on parent.figure with correct index:
-        self.axes = self.parent.nbCon_orig.figs[self.tab_idx].add_subplot(1,1,1)
+        self.axes = self.notebook_container.figs[self.tab_idx].add_subplot(1,1,1)
 
         # adjust figsize as computed correspondingly to gui size:
         self.axes.get_figure().set_figwidth(self.parent.heatmaps_figure_geometry_list[0])
@@ -89,7 +90,7 @@ class ORIGData_Heatmap():
 
         self.axes.set_title(self.base_filename+" original data")
 
-        self.parent.nbCon_orig.figs[self.tab_idx].tight_layout()
+        self.notebook_container.figs[self.tab_idx].tight_layout()
 
         return None
 
@@ -97,29 +98,32 @@ class ORIGData_Heatmap():
     def make_canvas(self):
         self.make_plot()
 
-        self.tab_title = '{:,.1f}'.format(float(self.start_time)) + " " + self.tab_title_filename
-        self.parent.nbCon_orig.set_tab_title(self.parent.nbCon_orig.tab_control.index("current"), title=f'{self.tab_idx+1}: ' + self.tab_title)
+        self.toolbar_orig = SmallToolbar.SmallToolbar(self.notebook_container.figs[self.tab_idx].canvas, self.notebook_container.figure_frames[self.tab_idx], pack_toolbar=False)
+        self.toolbar_orig.grid(row=0, column=4)
 
-        self.btn_delete_attrs = tk.Button(self.parent.nbCon_orig.figure_frames[self.tab_idx], text="remove tab", fg=self.parent.violet, command=lambda: self.remove_tab(self.parent.nbCon_orig))
+        self.tab_title = '{:,.1f}'.format(float(self.start_time)) + " " + self.tab_title_filename
+        self.notebook_container.set_tab_title(self.notebook_container.tab_control.index("current"), title=f'{self.tab_idx+1}: ' + self.tab_title)
+
+        self.btn_delete_attrs = tk.Button(self.notebook_container.figure_frames[self.tab_idx], text="remove tab", fg=self.parent.violet, command=lambda: self.remove_tab(self.notebook_container))
         self.btn_delete_attrs.grid(row=1, column=3, sticky="se")
 
-        self.btn_inspect_SVD_components = tk.Button(self.parent.nbCon_orig.figure_frames[self.tab_idx], text="inspect SVD", fg=self.parent.violet, command=self.make_SVD_inspection_toplevel)
+        self.btn_inspect_SVD_components = tk.Button(self.notebook_container.figure_frames[self.tab_idx], text="inspect SVD", fg=self.parent.violet, command=self.make_SVD_inspection_toplevel)
         self.ttp_btn_inspect_SVD_components = ToolTip.CreateToolTip(self.btn_inspect_SVD_components, \
         'This opens a window to inspect the SVD components of this data matrix.')
-        self.btn_inspect_SVD_components.grid(row=1, column=1, padx=0)
+        self.btn_inspect_SVD_components.grid(row=1, column=1, sticky="s")
 
-        self.btn_save_data = tk.Button(self.parent.nbCon_orig.figure_frames[self.tab_idx], text="save data", fg=self.parent.violet, command=self.save_data_to_file)
+        self.btn_save_data = tk.Button(self.notebook_container.figure_frames[self.tab_idx], text="save data", fg=self.parent.violet, command=self.save_data_to_file)
         self.btn_save_data.grid(row=1, column=0, sticky="sw")
 
-        self.btn_inspect_data_matrix = tk.Button(self.parent.nbCon_orig.figure_frames[self.tab_idx], text="inspect matrix", fg=self.parent.violet, command=self.inspect_data_matrix_via_toplevel)
+        self.btn_inspect_data_matrix = tk.Button(self.notebook_container.figure_frames[self.tab_idx], text="inspect matrix", fg=self.parent.violet, command=self.inspect_data_matrix_via_toplevel)
         self.ttp_btn_inspect_data_matrix = ToolTip.CreateToolTip(self.btn_inspect_data_matrix, \
         'Open a window to inspect this data matrix row-by-row and column-by-column.')
         self.btn_inspect_data_matrix.grid(row=1, column=2, sticky="se", padx=5)
 
         # set dimensions of figure frame as computed correspondingly to gui size
-        self.configure_figure_frame_size(self.parent.nbCon_orig, self.tab_idx)
+        self.configure_figure_frame_size(self.notebook_container, self.tab_idx)
 
-        self.parent.nbCon_orig.canvases[self.tab_idx].get_tk_widget().grid(row=0, column=0, sticky="nsew", columnspan=4)
+        self.notebook_container.canvases[self.tab_idx].get_tk_widget().grid(row=0, column=0, sticky="nsew", columnspan=4)
 
         return None
 
@@ -152,7 +156,7 @@ class ORIGData_Heatmap():
 
 
             # return gui to initial state if above data preparation failed
-            self.parent.return_some_gui_widgets_to_initial_state(button=self.parent.btn_show_orig_data_heatmap, label=self.parent.lbl_reassuring_orig, tab_control=self.parent.nbCon_orig.tab_control)
+            self.parent.return_some_gui_widgets_to_initial_state(button=self.parent.btn_show_orig_data_heatmap, label=self.parent.lbl_reassuring_orig, tab_control=self.notebook_container.tab_control)
             self.delete_attributes()
 
             return None
@@ -167,7 +171,7 @@ class ORIGData_Heatmap():
             os.makedirs(self.full_path_to_final_dir)
 
         # save data
-        self.parent.nbCon_orig.figs[self.tab_idx].savefig(self.full_path_to_final_dir+"/originalData.png")
+        self.notebook_container.figs[self.tab_idx].savefig(self.full_path_to_final_dir+"/originalData.png")
 
         saveData.make_log_file(self.full_path_to_final_dir, filename=self.filename, start_time=self.start_time)
 
@@ -216,6 +220,7 @@ class ORIGData_Heatmap():
         self.btn_save_data.grid_remove()
         self.btn_inspect_data_matrix.grid_remove()
         self.btn_inspect_SVD_components.grid_remove()
+        self.toolbar_orig.grid_remove()
 
         # clear figure when tab is removed
         self.axes.get_figure().clear()
