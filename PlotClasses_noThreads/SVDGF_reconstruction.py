@@ -14,7 +14,7 @@ import ast
 # my own modules
 from FunctionsUsedByPlotClasses import get_DAS_from_lSVs_res_amplitudes, get_TA_data_after_start_time, get_retained_rightSVs_leftSVs_singularvs, get_SVDGFit_parameters
 from FunctionsUsedByPlotClasses import get_closest_nr_from_array_like, get_SVDGF_reconstructed_data
-from SupportClasses import ToolTip, saveData
+from SupportClasses import ToolTip, saveData, SmallToolbar
 from ToplevelClasses import Kinetics_Spectrum_Toplevel, new_decay_times_Toplevel, CompareRightSVsWithFit_Toplevel
 
 class SVDGF_Heatmap():
@@ -50,6 +50,9 @@ class SVDGF_Heatmap():
         """
 
         self.parent = parent
+        self.notebook_container_SVDGF = self.parent.nbCon_SVDGF
+        self.notebook_container_diff = self.parent.nbCon_difference
+
         self.filename = filename
         self.start_time = start_time
         self.tab_idx = tab_idx
@@ -72,8 +75,8 @@ class SVDGF_Heatmap():
         return None
 
     def return_gui_to_initial_state(self):
-        self.parent.return_some_gui_widgets_to_initial_state(button=self.parent.btn_show_SVDGF_reconstructed_data_heatmap, label=self.parent.lbl_reassuring_SVDGF, tab_control=self.parent.nbCon_SVDGF.tab_control)
-        self.parent.return_some_gui_widgets_to_initial_state(tab_control=self.parent.nbCon_difference.tab_control)
+        self.parent.return_some_gui_widgets_to_initial_state(button=self.parent.btn_show_SVDGF_reconstructed_data_heatmap, label=self.parent.lbl_reassuring_SVDGF, tab_control=self.notebook_container_SVDGF.tab_control)
+        self.parent.return_some_gui_widgets_to_initial_state(tab_control=self.notebook_container_diff.tab_control)
         self.delete_attributes()
 
         return None
@@ -82,7 +85,7 @@ class SVDGF_Heatmap():
         sns.set(font_scale = 1.3, rc={"xtick.bottom" : True, "ytick.left" : True})
 
         # create axes on parent.figure with correct index:
-        self.axes = self.parent.nbCon_SVDGF.figs[self.tab_idx].add_subplot(1,1,1)
+        self.axes = self.notebook_container_SVDGF.figs[self.tab_idx].add_subplot(1,1,1)
         # adjust figsize as computed correspondingly to gui size:
         # stupid hack for stupid problem: not done when plot is updated with selected DAS,
         # as that leads to a strange plot size for reasons unknown
@@ -138,14 +141,14 @@ class SVDGF_Heatmap():
             title_string = r"updated! $\tau_i$ ="+str(['{:.4f}'.format(float(self.user_selected_decay_times[x])) for x in self.indeces_for_DAS_matrix])+"\n"  + title_string
         self.axes.set_title(title_string)
 
-        self.parent.nbCon_SVDGF.figs[self.tab_idx].tight_layout()
+        self.notebook_container_SVDGF.figs[self.tab_idx].tight_layout()
 
         return None
 
     def make_difference_plot(self, update_with_selected_DAS=False):
         sns.set(font_scale = 1.3, rc={"xtick.bottom" : True, "ytick.left" : True})
 
-        self.axes_difference = self.parent.nbCon_difference.figs[self.tab_idx_difference].add_subplot(1,1,1)
+        self.axes_difference = self.notebook_container_diff.figs[self.tab_idx_difference].add_subplot(1,1,1)
         # adjust figsize as computed correspondingly to gui size:
         # stupid hack for stupid problem: not done when plot is updated with selected DAS,
         # as that leads to a strange plot size for reasons unknown
@@ -196,7 +199,7 @@ class SVDGF_Heatmap():
             title_string = r"updated! $\tau_i$ ="+str(['{:.4f}'.format(float(self.user_selected_decay_times[x])) for x in self.indeces_for_DAS_matrix])+"\n" + title_string
         self.axes_difference.set_title(title_string)
 
-        self.parent.nbCon_difference.figs[self.tab_idx_difference].tight_layout()
+        self.notebook_container_diff.figs[self.tab_idx_difference].tight_layout()
 
         return None
 
@@ -205,12 +208,18 @@ class SVDGF_Heatmap():
         self.make_reconstruction_plot()
         self.make_difference_plot()
 
-        self.btn_save_data = tk.Button(self.parent.nbCon_SVDGF.figure_frames[self.tab_idx], text=f"save data", fg=self.parent.violet, command=self.save_data_to_file)
+        self.toolbar_SVDGF = SmallToolbar.SmallToolbar(self.notebook_container_SVDGF.figs[self.tab_idx].canvas, self.notebook_container_SVDGF.figure_frames[self.tab_idx], pack_toolbar=False)
+        self.toolbar_SVDGF.grid(row=0, column=99)
+
+        self.toolbar_diff = SmallToolbar.SmallToolbar(self.notebook_container_diff.figs[self.tab_idx_difference].canvas, self.notebook_container_diff.figure_frames[self.tab_idx_difference], pack_toolbar=False)
+        self.toolbar_diff.grid(row=0, column=4)
+
+        self.btn_save_data = tk.Button(self.notebook_container_SVDGF.figure_frames[self.tab_idx], text=f"save data", fg=self.parent.violet, command=self.save_data_to_file)
         self.ttp_btn_save_data = ToolTip.CreateToolTip(self.btn_save_data, \
         'This also saves the corresponding difference heatmap and data. ')
         self.btn_save_data.grid(row=1, column=0, sticky="sw")
 
-        self.btn_update_with_DAS = tk.Button(self.parent.nbCon_SVDGF.figure_frames[self.tab_idx], text="update with:", fg=self.parent.violet, command=lambda: self.update_canvases_with_selected_DAS(self.checkbutton_vars))
+        self.btn_update_with_DAS = tk.Button(self.notebook_container_SVDGF.figure_frames[self.tab_idx], text="update with:", fg=self.parent.violet, command=lambda: self.update_canvases_with_selected_DAS(self.checkbutton_vars))
         self.ttp_btn_update_with_DAS = ToolTip.CreateToolTip(self.btn_update_with_DAS, \
         'This updates this plot and the difference plot with data computed using only the selected DAS. '
         'It also opens up a dialog field, where the decay times for the DAS decays could be changed', optional_y_direction_bump=60, optional_x_direction_bump=50)
@@ -218,30 +227,30 @@ class SVDGF_Heatmap():
 
         self.make_DAS_checkbuttons()
 
-        self.btn_delete_attrs = tk.Button(self.parent.nbCon_SVDGF.figure_frames[self.tab_idx], text=f"remove tab", fg=self.parent.violet, command=lambda: self.remove_SVDGF_and_difference_tabs(self.parent.nbCon_SVDGF.tab_control, self.parent.nbCon_difference.tab_control))
+        self.btn_delete_attrs = tk.Button(self.notebook_container_SVDGF.figure_frames[self.tab_idx], text=f"remove tab", fg=self.parent.violet, command=lambda: self.remove_SVDGF_and_difference_tabs(self.notebook_container_SVDGF.tab_control, self.notebook_container_diff.tab_control))
         self.ttp_btn_delete_attrs = ToolTip.CreateToolTip(self.btn_delete_attrs, \
         'This also removes the corresponding difference tab. ')
         self.btn_delete_attrs.grid(row=1, column=2+len(self.components_list), sticky="se")
 
         # set dimensions of figure frame as computed correspondingly to gui size
-        self.configure_figure_frame_size(self.parent.nbCon_SVDGF, self.tab_idx)
+        self.configure_figure_frame_size(self.notebook_container_SVDGF, self.tab_idx)
 
-        self.parent.nbCon_SVDGF.canvases[self.tab_idx].get_tk_widget().grid(row=0, column=0, sticky="nsew", columnspan=3+len(self.components_list))
+        self.notebook_container_SVDGF.canvases[self.tab_idx].get_tk_widget().grid(row=0, column=0, sticky="nsew", columnspan=3+len(self.components_list))
 
-        self.btn_compare_rightSVs_with_fit = tk.Button(self.parent.nbCon_difference.figure_frames[self.tab_idx_difference], text="rightSVs vs fit", fg=self.parent.violet, command=self.compare_rightSVs_with_fit)
+        self.btn_compare_rightSVs_with_fit = tk.Button(self.notebook_container_diff.figure_frames[self.tab_idx_difference], text="rightSVs vs fit", fg=self.parent.violet, command=self.compare_rightSVs_with_fit)
         self.ttp_btn_compare_rightSVs_with_fit = ToolTip.CreateToolTip(self.btn_compare_rightSVs_with_fit, \
         'Open a window to compare the right singular vectors of original data matrix with their reconstruction via fit.', optional_y_direction_bump=100)
         self.btn_compare_rightSVs_with_fit.grid(row=1, column=0, sticky="sw")
 
-        self.btn_inspect_diff_matrix = tk.Button(self.parent.nbCon_difference.figure_frames[self.tab_idx_difference], text="inspect matrix", fg=self.parent.violet, command=self.inspect_difference_matrix_via_toplevel)
+        self.btn_inspect_diff_matrix = tk.Button(self.notebook_container_diff.figure_frames[self.tab_idx_difference], text="inspect matrix", fg=self.parent.violet, command=self.inspect_difference_matrix_via_toplevel)
         self.ttp_btn_inspect_diff_matrix = ToolTip.CreateToolTip(self.btn_inspect_diff_matrix, \
         'Open a window to inspect this difference matrix row-by-row and column-by-column.', optional_y_direction_bump=100)
         self.btn_inspect_diff_matrix.grid(row=1, column=1, sticky="se")
 
         # set dimensions of figure frame as computed correspondingly to gui size
-        self.configure_figure_frame_size(self.parent.nbCon_difference, self.tab_idx_difference)
+        self.configure_figure_frame_size(self.notebook_container_diff, self.tab_idx_difference)
 
-        self.parent.nbCon_difference.canvases[self.tab_idx_difference].get_tk_widget().grid(row=0, column=0, sticky="nsew", columnspan=2)
+        self.notebook_container_diff.canvases[self.tab_idx_difference].get_tk_widget().grid(row=0, column=0, sticky="nsew", columnspan=2)
 
         return None
 
@@ -276,7 +285,7 @@ class SVDGF_Heatmap():
         for i in range(self.nr_of_checkbuttons):
             self.checkbutton_vars[i].set(1)
 
-        self.checkbuttons = [tk.Checkbutton(self.parent.nbCon_SVDGF.figure_frames[self.tab_idx], text=self.indeces_for_DAS_matrix[checkbox], variable=self.checkbutton_vars[checkbox], onvalue=1, offvalue=0) for checkbox in range(self.nr_of_checkbuttons)]
+        self.checkbuttons = [tk.Checkbutton(self.notebook_container_SVDGF.figure_frames[self.tab_idx], text=self.indeces_for_DAS_matrix[checkbox], variable=self.checkbutton_vars[checkbox], onvalue=1, offvalue=0) for checkbox in range(self.nr_of_checkbuttons)]
 
         for checkbox in range(self.nr_of_checkbuttons):
             self.checkbuttons[checkbox].grid(row=1, column=checkbox+2, sticky='sew')
@@ -319,8 +328,8 @@ class SVDGF_Heatmap():
         self.make_difference_plot(update_with_selected_DAS=True)
 
         # draw new figures on canvases
-        self.parent.nbCon_SVDGF.canvases[self.tab_idx].draw_idle()
-        self.parent.nbCon_difference.canvases[self.tab_idx_difference].draw_idle()
+        self.notebook_container_SVDGF.canvases[self.tab_idx].draw_idle()
+        self.notebook_container_diff.canvases[self.tab_idx_difference].draw_idle()
 
         return None
 
@@ -480,8 +489,8 @@ class SVDGF_Heatmap():
             os.makedirs(self.full_path_to_final_dir)
 
         # save data
-        self.parent.nbCon_SVDGF.figs[self.tab_idx].savefig(self.full_path_to_final_dir+"/reconstruction_heatmap_DAS"+str(self.indeces_for_DAS_matrix)+".png")
-        self.parent.nbCon_difference.figs[self.tab_idx_difference].savefig(self.full_path_to_final_dir+"/difference_heatmap_DAS"+str(self.indeces_for_DAS_matrix)+".png")
+        self.notebook_container_SVDGF.figs[self.tab_idx].savefig(self.full_path_to_final_dir+"/reconstruction_heatmap_DAS"+str(self.indeces_for_DAS_matrix)+".png")
+        self.notebook_container_diff.figs[self.tab_idx_difference].savefig(self.full_path_to_final_dir+"/difference_heatmap_DAS"+str(self.indeces_for_DAS_matrix)+".png")
         saveData.make_log_file(self.full_path_to_final_dir, filename=self.filename, start_time=self.start_time, components=self.components_list)
         self.result_data_to_save = {"retained_sing_values": self.retained_singular_values, "DAS": self.DAS, "fit_report_complete": lmfit.fit_report(self.fit_result), "time_delays": self.time_delays, "wavelengths": self.wavelengths, "retained_left_SVs": self.retained_lSVs, "retained_right_SVs": self.retained_rSVs}
         if self.parsed_summands_of_user_defined_fit_function: # if dictionary with parsed user defined fit function exists, add it to data to be saved.
@@ -525,14 +534,16 @@ class SVDGF_Heatmap():
         self.btn_save_data.grid_remove()
         self.btn_inspect_diff_matrix.grid_remove()
         self.btn_compare_rightSVs_with_fit.grid_remove()
+        self.toolbar_SVDGF.grid_remove()
+        self.toolbar_diff.grid_remove()
 
         self.axes.get_figure().clear()
         self.axes_difference.get_figure().clear()
 
-        self.parent.nbCon_SVDGF.figure_frames[self.tab_idx].grid_propagate(True)
-        self.parent.nbCon_difference.figure_frames[self.tab_idx_difference].grid_propagate(True)
-        self.parent.nbCon_SVDGF.canvases[self.tab_idx].get_tk_widget().configure(height=0, width=0)
-        self.parent.nbCon_difference.canvases[self.tab_idx].get_tk_widget().configure(height=0, width=0)
+        self.notebook_container_SVDGF.figure_frames[self.tab_idx].grid_propagate(True)
+        self.notebook_container_diff.figure_frames[self.tab_idx_difference].grid_propagate(True)
+        self.notebook_container_SVDGF.canvases[self.tab_idx].get_tk_widget().configure(height=0, width=0)
+        self.notebook_container_diff.canvases[self.tab_idx].get_tk_widget().configure(height=0, width=0)
 
 
         self.delete_attributes()
