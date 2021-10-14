@@ -161,11 +161,12 @@ if __name__ == "__main__":
     # print(f'MultiExcitation excecution time: {time.time()-start}')
 
     # config_files_dir = os.getcwd()+"/configFiles/wavelength_overlap/"
-    config_files_dir = os.getcwd()+"/configFiles/temporal_overlap/"
+    # config_files_dir = os.getcwd()+"/configFiles/temporal_overlap/"
+    config_files_dir = os.getcwd()+"/configFiles/temporal_overlap_reduced_noise/"
     # config_files_dir = os.getcwd()+"/configFiles/"
 
     # results_dir = "MultiExcitation/wavelength_overlap/"
-    results_dir = "MultiExcitation/temporal_overlap/"
+    results_dir = "MultiExcitation/temporal_overlap_reduced_noise/"
 
 
     files_in_dir = [f for f in os.listdir(config_files_dir) if os.path.isfile(os.path.join(config_files_dir, f))]
