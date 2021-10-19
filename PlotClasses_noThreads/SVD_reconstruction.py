@@ -10,7 +10,7 @@ import os
 
 # my own modules
 from FunctionsUsedByPlotClasses import get_TA_data_after_start_time, get_SVD_reconstructed_data_for_GUI, get_closest_nr_from_array_like
-from SupportClasses import ToolTip, saveData
+from SupportClasses import ToolTip, saveData, SmallToolbar
 from ToplevelClasses import Kinetics_Spectrum_Toplevel
 
 class SVD_Heatmap():
@@ -25,6 +25,9 @@ class SVD_Heatmap():
             * colormaps_dict (dict): dictionary containing the colormap names for the heatmaps\n\n
         """
         self.parent = parent
+        self.notebook_container_SVD = self.parent.nbCon_SVD
+        self.notebook_container_diff = self.parent.nbCon_difference
+
         self.filename = filename
         self.start_time = start_time
         self.tab_idx = tab_idx
@@ -37,7 +40,7 @@ class SVD_Heatmap():
     def make_SVD_reconstruction_plot(self):
         sns.set(font_scale = 1.3, rc={"xtick.bottom" : True, "ytick.left" : True})
 
-        self.axes = self.parent.nbCon_SVD.figs[self.tab_idx].add_subplot(1,1,1)
+        self.axes = self.notebook_container_SVD.figs[self.tab_idx].add_subplot(1,1,1)
         # adjust figsize as computed correspondingly to gui size:
         self.axes.get_figure().set_figwidth(self.parent.heatmaps_figure_geometry_list[0])
         self.axes.get_figure().set_figheight(self.parent.heatmaps_figure_geometry_list[1])
@@ -83,14 +86,14 @@ class SVD_Heatmap():
 
         self.axes.set_title(self.base_filename+" SVD reconstructed data "+str(self.components_list))
 
-        self.parent.nbCon_SVD.figs[self.tab_idx].tight_layout()
+        self.notebook_container_SVD.figs[self.tab_idx].tight_layout()
 
         return None
 
     def make_difference_plot(self):
         sns.set(font_scale = 1.3, rc={"xtick.bottom" : True, "ytick.left" : True})
 
-        self.axes_difference = self.parent.nbCon_difference.figs[self.tab_idx_difference].add_subplot(1,1,1)
+        self.axes_difference = self.notebook_container_diff.figs[self.tab_idx_difference].add_subplot(1,1,1)
         # adjust figsize as computed correspondingly to gui size:
         self.axes_difference.get_figure().set_figwidth(self.parent.heatmaps_figure_geometry_list[0])
         self.axes_difference.get_figure().set_figheight(self.parent.heatmaps_figure_geometry_list[1])
@@ -133,7 +136,7 @@ class SVD_Heatmap():
 
         self.axes_difference.set_title(self.base_filename+" diff: orig - SVD "+str(self.components_list))
 
-        self.parent.nbCon_difference.figs[self.tab_idx_difference].tight_layout()
+        self.notebook_container_diff.figs[self.tab_idx_difference].tight_layout()
 
         return None
 
@@ -142,30 +145,36 @@ class SVD_Heatmap():
         self.make_SVD_reconstruction_plot()
         self.make_difference_plot()
 
-        self.btn_delete_attrs = tk.Button(self.parent.nbCon_SVD.figure_frames[self.tab_idx], text=f"remove tab", fg=self.parent.violet, command=lambda: self.remove_SVD_and_difference_tabs(self.parent.nbCon_SVD.tab_control, self.parent.nbCon_difference.tab_control))
+        self.toolbar_SVD = SmallToolbar.SmallToolbar(self.notebook_container_SVD.figs[self.tab_idx].canvas, self.notebook_container_SVD.figure_frames[self.tab_idx], pack_toolbar=False)
+        self.toolbar_SVD.grid(row=0, column=4)
+
+        self.toolbar_diff = SmallToolbar.SmallToolbar(self.notebook_container_diff.figs[self.tab_idx_difference].canvas, self.notebook_container_diff.figure_frames[self.tab_idx_difference], pack_toolbar=False)
+        self.toolbar_diff.grid(row=0, column=4)
+
+        self.btn_delete_attrs = tk.Button(self.notebook_container_SVD.figure_frames[self.tab_idx], text=f"remove tab", fg=self.parent.violet, command=lambda: self.remove_SVD_and_difference_tabs(self.notebook_container_SVD.tab_control, self.notebook_container_diff.tab_control))
         self.ttp_btn_delete_attrs = ToolTip.CreateToolTip(self.btn_delete_attrs, \
         'This also removes the corresponding difference tab. ')
         self.btn_delete_attrs.grid(row=1, column=1, sticky="se")
 
-        self.btn_save_data = tk.Button(self.parent.nbCon_SVD.figure_frames[self.tab_idx], text=f"save data", fg=self.parent.violet, command=self.save_data_to_file)
+        self.btn_save_data = tk.Button(self.notebook_container_SVD.figure_frames[self.tab_idx], text=f"save data", fg=self.parent.violet, command=self.save_data_to_file)
         self.ttp_btn_save_data = ToolTip.CreateToolTip(self.btn_save_data, \
         'This also saves the corresponding difference heatmap and data. ')
         self.btn_save_data.grid(row=1, column=0, sticky="sw")
 
         # set dimensions of figure frame as computed correspondingly to gui size
-        self.configure_figure_frame_size(self.parent.nbCon_SVD, self.tab_idx)
+        self.configure_figure_frame_size(self.notebook_container_SVD, self.tab_idx)
 
-        self.parent.nbCon_SVD.canvases[self.tab_idx].get_tk_widget().grid(row=0, column=0, sticky="nsew", columnspan=2)
+        self.notebook_container_SVD.canvases[self.tab_idx].get_tk_widget().grid(row=0, column=0, sticky="nsew", columnspan=2)
 
-        self.btn_inspect_diff_matrix = tk.Button(self.parent.nbCon_difference.figure_frames[self.tab_idx_difference], text="inspect matrix", fg=self.parent.violet, command=self.inspect_difference_matrix_via_toplevel)
+        self.btn_inspect_diff_matrix = tk.Button(self.notebook_container_diff.figure_frames[self.tab_idx_difference], text="inspect matrix", fg=self.parent.violet, command=self.inspect_difference_matrix_via_toplevel)
         self.ttp_btn_inspect_diff_matrix = ToolTip.CreateToolTip(self.btn_inspect_diff_matrix, \
         'Open a window to inspect this difference matrix row-by-row and column-by-column.', optional_y_direction_bump=100)
         self.btn_inspect_diff_matrix.grid(row=1, column=0, sticky="se")
 
         # set dimensions of figure frame as computed correspondingly to gui size
-        self.configure_figure_frame_size(self.parent.nbCon_difference, self.tab_idx_difference)
+        self.configure_figure_frame_size(self.notebook_container_diff, self.tab_idx_difference)
 
-        self.parent.nbCon_difference.canvases[self.tab_idx_difference].get_tk_widget().grid(row=0, column=0, sticky="nsew")
+        self.notebook_container_diff.canvases[self.tab_idx_difference].get_tk_widget().grid(row=0, column=0, sticky="nsew")
 
         return None
 
@@ -205,8 +214,8 @@ class SVD_Heatmap():
                                     f"Exception {type(error)} message: \n"+ str(error)+"\n")
 
             # return gui to initial state if above data preparation failed
-            self.parent.return_some_gui_widgets_to_initial_state(button=self.parent.btn_show_SVD_reconstructed_data_heatmap, label=self.parent.lbl_reassuring_SVD, tab_control=self.parent.nbCon_SVD.tab_control)
-            self.parent.return_some_gui_widgets_to_initial_state(tab_control=self.parent.nbCon_difference.tab_control)
+            self.parent.return_some_gui_widgets_to_initial_state(button=self.parent.btn_show_SVD_reconstructed_data_heatmap, label=self.parent.lbl_reassuring_SVD, tab_control=self.notebook_container_SVD.tab_control)
+            self.parent.return_some_gui_widgets_to_initial_state(tab_control=self.notebook_container_diff.tab_control)
 
             self.delete_attributes()
             return None
@@ -225,8 +234,8 @@ class SVD_Heatmap():
             os.makedirs(self.full_path_to_final_dir)
 
         # save data
-        self.parent.nbCon_SVD.figs[self.tab_idx].savefig(self.full_path_to_final_dir+"/SVD_reconstruction_heatmap.png")
-        self.parent.nbCon_difference.figs[self.tab_idx_difference].savefig(self.full_path_to_final_dir+"/SVD_difference_heatmap.png")
+        self.notebook_container_SVD.figs[self.tab_idx].savefig(self.full_path_to_final_dir+"/SVD_reconstruction_heatmap.png")
+        self.notebook_container_diff.figs[self.tab_idx_difference].savefig(self.full_path_to_final_dir+"/SVD_difference_heatmap.png")
 
         saveData.make_log_file(self.full_path_to_final_dir, filename=self.filename, start_time=self.start_time, components=self.components_list)
 
@@ -265,14 +274,16 @@ class SVD_Heatmap():
         self.btn_delete_attrs.grid_remove()
         self.btn_save_data.grid_remove()
         self.btn_inspect_diff_matrix.grid_remove()
+        self.toolbar_SVD.grid_remove()
+        self.toolbar_diff.grid_remove()
 
         self.axes.get_figure().clear()
         self.axes_difference.get_figure().clear()
 
-        self.parent.nbCon_SVD.figure_frames[self.tab_idx].grid_propagate(True)
-        self.parent.nbCon_difference.figure_frames[self.tab_idx_difference].grid_propagate(True)
-        self.parent.nbCon_SVD.canvases[self.tab_idx].get_tk_widget().configure(height=0, width=0)
-        self.parent.nbCon_difference.canvases[self.tab_idx].get_tk_widget().configure(height=0, width=0)
+        self.notebook_container_SVD.figure_frames[self.tab_idx].grid_propagate(True)
+        self.notebook_container_diff.figure_frames[self.tab_idx_difference].grid_propagate(True)
+        self.notebook_container_SVD.canvases[self.tab_idx].get_tk_widget().configure(height=0, width=0)
+        self.notebook_container_diff.canvases[self.tab_idx].get_tk_widget().configure(height=0, width=0)
 
         self.delete_attributes()
 
