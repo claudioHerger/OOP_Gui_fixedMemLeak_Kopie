@@ -26,22 +26,6 @@ def load_complete_data(data_file):
     elif data_file.endswith(".csv"):
         with open(data_file, 'r') as file:
             data = [x.replace('\n', '').split(",") for x in file]
-    # elif data_file.endswith(".rar"):
-    #     # import rarfile, csv
-    #     # rar_path = rarfile.RarFile(data_file)
-    #     # csv_file_name = "rar_file.csv"
-    #     # rar_file = rarfile.RarFile.open(rar_path, csv_file_name, mode='r')
-    #     # csv_reader = csv.reader(rar_file, delimiter=',')
-    #     # print(csv_reader.next())
-
-    #     import rarfile
-    #     rf = rarfile.RarFile(data_file)
-    #     for f in rf.infolist():
-    #         print(f.filename, f.file_size)
-    #         print(f'\n\n\n stuff\n\n\n')
-    #         if f.filename == "README":
-    #             print(rf.read(f))
-    #     raise ValueError("I do not yet do .rar files!")
 
     data = np.array(data)
 
