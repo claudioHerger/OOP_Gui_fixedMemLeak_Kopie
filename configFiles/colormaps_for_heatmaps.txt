@@ -1,3 +1,1 @@
-{'ORIG': 'default', 'SVD': 'default', 'Fit': 'default', 'SVD_diff': 'default', 'Fit_diff': 'default'}
-=======
-{'ORIG': 'default', 'SVD': 'default', 'Fit': 'default', 'SVD_diff': 'default', 'Fit_diff': 'default'}
+{'ORIG': 'terrain', 'SVD': 'terrain', 'Fit': 'terrain', 'SVD_diff': 'terrain', 'Fit_diff': 'terrain'}

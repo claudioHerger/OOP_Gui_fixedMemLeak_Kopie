@@ -37,7 +37,7 @@ class GuiAppTAAnalysis(tk.Frame):
         self.read_currently_used_cmaps_from_file()
 
         # which files the user can select in the tk.filedialog.askopenfilename
-        self.ftypes = [('txt files', '*.txt'), ('All files', '*.txt; *.csv; *.dat'), ('CSV files', '*.csv'), ('DAT files', '*.dat')]
+        self.ftypes = [('txt files', '*.txt'), ('All files', '*.txt; *.csv'), ('CSV files', '*.csv')]
 
         # set initial data file variable etc.
         self.curr_reconstruct_data_file_strVar = tk.StringVar()

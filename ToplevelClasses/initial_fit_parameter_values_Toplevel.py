@@ -4,6 +4,7 @@ import re
 import numpy as np
 
 from SupportClasses import ToolTip
+from ToplevelClasses import CompareRightSVsWithFit_Toplevel
 
 class initial_fit_parameters_Window(tk.Toplevel):
     def __init__(self, parent, file_name, current_values, assign_handler):
@@ -53,9 +54,15 @@ class initial_fit_parameters_Window(tk.Toplevel):
         'Removes the parameters for the last component.')
         self.btn_remove_parameters.grid(pady=10, sticky="se", row=99, column=2)
 
+        self.btn_show_rSVs_as_reconstructed_by_initial_fit_param_values = tk.Button(self, text="show rSVs as reconstructed\nby initial values", command=self.show_rightSVs_window)
+        self.btn_show_rSVs_as_reconstructed_by_initial_fit_param_values.grid(row=2, column=3, rowspan=5)
+
         self.grab_set()         # to keep the window in front of application until it gets closed
         self.focus_set()
         self.bind("<Return>", lambda x: self.ignore_and_quit())
+
+    def show_rightSVs_window(self):
+        pass
 
     def remove_last_parameters(self):
         try:
