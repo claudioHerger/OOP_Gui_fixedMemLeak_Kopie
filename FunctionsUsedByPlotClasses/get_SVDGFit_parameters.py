@@ -62,6 +62,8 @@ def model_func(time_delays, amplitudes, decay_constants, index_of_first_increase
     exp_sum = np.zeros(len(time_delays))
     for amp, decay_constant in zip(amplitudes, decay_constants):
         exp_sum += amp*np.exp(-(time_delays/decay_constant))
+        # exp_sum += amp*np.convolve(np.exp(-(time_delays/decay_constant)), gaussian_for_convolution, mode='same')
+        # exp_sum += amp*scipy.signal.fftconvolve(np.exp(-(time_delays/decay_constant)), gaussian_for_convolution, mode='same')
 
     """ convolve the exp_sum with IRF gaussian from time_zero and temporal_resolution, not yet finished! """
     # convolution = convolute_first_part_of_fit_function(exp_sum, time_delays, index_of_first_increased_time_interval, gaussian_for_convolution)
@@ -211,7 +213,7 @@ def start_the_fit(retained_components, time_delays, retained_rSVs, retained_sing
     # run the global fit over all the data sets, i.e. all VT_i
     # per default uses method='levenberg-marquardt-leastsq' = 'leastsq'
     # could change the fit method via "method" argument. see web for possible fit methods
-    result = lmfit.minimize(objective, fit_params, method='least_squares', args=(time_delays, vectors_to_fit, retained_components, index_of_first_increased_time_interval, gaussian_for_convolution, parsed_user_defined_summands, asteval_interpreter))
+    result = lmfit.minimize(objective, fit_params, method='leastsq', args=(time_delays, vectors_to_fit, retained_components, index_of_first_increased_time_interval, gaussian_for_convolution, parsed_user_defined_summands, asteval_interpreter))
 
     return result
 
