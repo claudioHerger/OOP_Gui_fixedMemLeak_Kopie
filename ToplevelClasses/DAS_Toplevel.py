@@ -50,10 +50,10 @@ class DAS_Window(tk.Toplevel):
         self.frm_DAS_figure.rowconfigure(0, weight=1)
 
         self.num_ticks = 5
-        self.label_format = '{:.2f}'
+        self.label_format = '{:.1f}'
 
         matplotlib.style.use("seaborn")
-        matplotlib.rcParams.update({'axes.labelsize': 12.0, 'axes.titlesize': 13.0, 'xtick.labelsize':10, 'ytick.labelsize':12.0, "axes.edgecolor":"black", "axes.linewidth":1})
+        matplotlib.rcParams.update({'axes.labelsize': 14.0, 'axes.titlesize': 14.0, 'xtick.labelsize':14, 'ytick.labelsize':14, 'legend.fontsize':12, "axes.edgecolor":"black", "axes.linewidth":1})
 
         self.fig = Figure(figsize=(7,5))
         self.ax = self.fig.add_subplot(1,1,1)
@@ -69,7 +69,7 @@ class DAS_Window(tk.Toplevel):
     def get_data(self):
         self.DAS = self.data_obj.DAS
         self.wavelengths = self.data_obj.wavelengths
-        self.decay_constants = [self.label_format.format(self.data_obj.resulting_SVDGF_fit_parameters['tau_component%i' % (j)].value) for j in self.data_obj.components_list]
+        self.decay_constants = ['{:.2f}'.format(self.data_obj.resulting_SVDGF_fit_parameters['tau_component%i' % (j)].value) for j in self.data_obj.components_list]
         self.filename = self.data_obj.filename
         self.start_time = self.data_obj.start_time
 
@@ -93,7 +93,7 @@ class DAS_Window(tk.Toplevel):
         self.ax.legend()
         self.ax.set_xticks(self.xticks)
         self.ax.set_xticklabels(self.xticklabels)
-        self.ax.set_ylabel("amplitude a.u.")
+        self.ax.set_ylabel("amplitude")
         self.ax.set_xlabel("wavelengths")
         self.basefilename = os.path.splitext(os.path.basename(self.filename))[0]
         self.ax.set_title("DAS for " + self.basefilename + " start time:" + self.label_format.format(float(self.start_time)))

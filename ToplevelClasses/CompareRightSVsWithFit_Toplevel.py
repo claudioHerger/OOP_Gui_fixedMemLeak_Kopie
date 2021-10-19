@@ -82,7 +82,7 @@ class CompareWindow(tk.Toplevel):
 
         # some styling for plots
         matplotlib.style.use("seaborn")
-        matplotlib.rcParams.update({'axes.labelsize': 12.0, 'axes.titlesize': 14.0, 'xtick.labelsize':10, 'ytick.labelsize':12.0, "axes.edgecolor":"black", "axes.linewidth":1})
+        matplotlib.rcParams.update({'axes.labelsize': 14.0, 'axes.titlesize': 14.0, 'xtick.labelsize':14, 'ytick.labelsize':14, 'legend.fontsize':12, "axes.edgecolor":"black", "axes.linewidth":1})
 
         fig = Figure(figsize=(7,5))
         axes = fig.add_subplot(1,1,1)
@@ -153,8 +153,8 @@ class CompareWindow(tk.Toplevel):
         self.axes.set_xticklabels(self.rightSVs_xticklabels, rotation=0)
         self.axes.set_title("weighted right singular vectors vs fit")
         self.axes.set_xlabel("time delays")
-        self.axes.set_ylabel("amplitude a.u.")
-        self.axes.legend()
+        self.axes.set_ylabel("amplitude")
+        self.axes.legend(ncol=2, labelspacing=0.1)
 
         self.figure.tight_layout()
 

@@ -6,6 +6,7 @@ import time
 import os
 
 import matplotlib.pyplot as plt
+import matplotlib
 import seaborn as sns
 
 class MultiExcitation():
@@ -113,10 +114,14 @@ class MultiExcitation():
         return None
 
     def make_and_save_plots(self, wavelengths, time_delays):
+
+        # styling
+        matplotlib.rcParams.update({'axes.labelsize': 17.0, 'axes.titlesize': 17.0, 'xtick.labelsize':15, 'ytick.labelsize':15})
+
         data = self.data_matrix.T.astype(float)
 
-        num_ticks = 10
-        label_format = '{:,.2f}'
+        num_ticks = 5
+        label_format = '{:.1f}'
 
         # the index of the position of yticks
         yticks = np.linspace(0, len(wavelengths) - 1, num_ticks, dtype=np.int)
@@ -130,19 +135,19 @@ class MultiExcitation():
 
         plt.figure(figsize=(10,7))
         cmap = sns.diverging_palette(220, 20, as_cmap=True)
-        ax = sns.heatmap(data, cmap=cmap, cbar_kws={'label': 'intensity a.u.'})
+        ax = sns.heatmap(data, cmap=cmap, cbar_kws={'label': 'intensity'})
         cbar = ax.collections[0].colorbar
-        cbar.ax.yaxis.label.set_size(14)        # taking a detour to set the fontsize of colorbar label
+        cbar.ax.yaxis.label.set_size(17)        # taking a detour to set the fontsize of colorbar label
 
         ax.set_yticks(yticks)
         ax.set_yticklabels(yticklabels)
         ax.set_xticks(xticks)
         ax.set_xticklabels(xticklabels, rotation=30)
 
-        ax.set_ylabel("wavelengths", fontsize=14)
-        ax.set_xlabel("time since excitation", fontsize=14)
+        ax.set_ylabel("wavelengths")
+        ax.set_xlabel("time since excitation")
         # ax.set_title(type(self).__name__)
-        ax.set_title("coarsly simulated time-resolved spectroscopy data", fontsize = 15)
+        ax.set_title("coarsly simulated time-resolved spectroscopy data")
 
         plt.tight_layout()
 
@@ -160,13 +165,13 @@ if __name__ == "__main__":
     # test_ta_sim_obj = MultiExcitation(os.getcwd()+"/configFiles/test/test_config_file.ini", make_plots=True)
     # print(f'MultiExcitation excecution time: {time.time()-start}')
 
-    # config_files_dir = os.getcwd()+"/configFiles/wavelength_overlap/"
+    config_files_dir = os.getcwd()+"/configFiles/wavelength_overlap/"
     # config_files_dir = os.getcwd()+"/configFiles/temporal_overlap/"
-    config_files_dir = os.getcwd()+"/configFiles/temporal_overlap_reduced_noise/"
+    # config_files_dir = os.getcwd()+"/configFiles/temporal_overlap_reduced_noise/"
     # config_files_dir = os.getcwd()+"/configFiles/"
 
-    # results_dir = "MultiExcitation/wavelength_overlap/"
-    results_dir = "MultiExcitation/temporal_overlap_reduced_noise/"
+    results_dir = "MultiExcitation/wavelength_overlap/"
+    # results_dir = "MultiExcitation/temporal_overlap_reduced_noise/"
 
 
     files_in_dir = [f for f in os.listdir(config_files_dir) if os.path.isfile(os.path.join(config_files_dir, f))]
@@ -178,5 +183,5 @@ if __name__ == "__main__":
         multi_excitation_obj.run_simulation()
         print(f'MultiExcitation excecution time: {time.time()-start}')
 
-    # multi_excitation_obj = MultiExcitation(os.getcwd()+"/configFiles/wavelength_overlap/overlap_0.ini", results_dir="", make_plots=True)
+    # multi_excitation_obj = MultiExcitation(os.getcwd()+"/configFiles/wavelength_overlap/overlap_0.ini", results_dir=results_dir, make_plots=True)
     # multi_excitation_obj.run_simulation()

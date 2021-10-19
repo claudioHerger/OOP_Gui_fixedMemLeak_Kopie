@@ -1,1 +1,3 @@
-{'ORIG': 'viridis', 'SVD': 'viridis', 'Fit': 'viridis', 'SVD_diff': 'viridis', 'Fit_diff': 'viridis'}
+{'ORIG': 'default', 'SVD': 'default', 'Fit': 'default', 'SVD_diff': 'default', 'Fit_diff': 'default'}
+=======
+{'ORIG': 'default', 'SVD': 'default', 'Fit': 'default', 'SVD_diff': 'default', 'Fit_diff': 'default'}
