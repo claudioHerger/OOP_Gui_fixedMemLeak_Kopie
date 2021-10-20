@@ -32,6 +32,7 @@ class GuiAppTAAnalysis(tk.Frame):
         # the directory from where program is started
         self.base_directory = os.getcwd()        # Leads to Error if program is not started from directory where it is in
         self.config_files_directory = self.base_directory + "/configFiles/"
+        self.target_model_fit_function_file = self.config_files_directory + "/target_model_summands.txt"
 
         self.read_initial_fit_parameter_values_from_file()
         self.read_currently_used_cmaps_from_file()
@@ -43,12 +44,12 @@ class GuiAppTAAnalysis(tk.Frame):
         self.curr_reconstruct_data_file_strVar = tk.StringVar()
         self.curr_reconstruct_data_file_strVar.set("no file selected")
         # self.curr_reconstruct_data_file_strVar.set(self.base_directory+"/DataFiles/simulatedTAData_formatted.txt")
-        # self.curr_reconstruct_data_file_strVar.set(self.base_directory+"/DataFiles/data_full_0.txt")
+        self.curr_reconstruct_data_file_strVar.set(self.base_directory+"/DataFiles/data_full_0.txt")
         self.curr_reconstruct_data_file_strVar.trace_add("write", self.update_filename_in_title_and_truncated_filename_for_tab_header_callback)
         self.curr_reconstruct_data_start_time_value = tk.DoubleVar()
         self.curr_reconstruct_data_start_time_value.trace_add("write", self.update_filename_in_title_and_truncated_filename_for_tab_header_callback)
         self.curr_reconstruct_data_start_time_value.set(-999.0)
-        # self.curr_reconstruct_data_start_time_value.set(0.0)
+        self.curr_reconstruct_data_start_time_value.set(0.0)
 
         # determine the number of tabs possible for all the different notebooks:
         self.NR_OF_TABS = 6    # this should really be left below 50!
@@ -341,7 +342,7 @@ class GuiAppTAAnalysis(tk.Frame):
         return None
 
     def set_initial_fit_parameter_values(self):
-        self.initial_fit_parameter_values_window = initial_fit_parameter_values_Toplevel.initial_fit_parameters_Window(self, self.initial_fit_parameter_values_file, self.initial_fit_parameter_values, self.handler_assign_initial_fit_parameter_values)
+        self.initial_fit_parameter_values_window = initial_fit_parameter_values_Toplevel.initial_fit_parameters_Window(self, self.initial_fit_parameter_values_file, self.initial_fit_parameter_values, self.handler_assign_initial_fit_parameter_values, data_file_name=self.curr_reconstruct_data_file_strVar.get(), target_model_configuration_file=self.target_model_fit_function_file, components_list=self.get_components_to_use())
         self.wait_window(self.initial_fit_parameter_values_window)
 
         return None
@@ -352,7 +353,6 @@ class GuiAppTAAnalysis(tk.Frame):
             # getting components failed, do nothing
             return None
 
-        self.target_model_fit_function_file = self.config_files_directory + "/target_model_summands.txt"
         self.define_target_model_window = target_model_Toplevel.target_model_Window(self, self.components_to_use, self.target_model_fit_function_file)
         self.wait_window(self.define_target_model_window)
 
@@ -616,7 +616,7 @@ class GuiAppTAAnalysis(tk.Frame):
             self.nbCon_difference.tab_control.grid(row=1, column=2, sticky="ne")
         self.nbCon_difference.add_indexed_tab(self.next_tab_idx_difference, title="SVDGF "+str(self.next_tab_idx_SVDGF+1))
 
-        self.nbCon_SVDGF.data_objs[self.next_tab_idx_SVDGF] = SVDGF_reconstruction.SVDGF_Heatmap(self, self.curr_reconstruct_data_file_strVar.get(), self.curr_reconstruct_data_start_time_value.get(), self.components_to_use, self.temporal_resolution_in_ps, self.time_zero_in_ps, self.next_tab_idx_SVDGF, self.next_tab_idx_difference, self.initial_fit_parameter_values, bool(self.checkbox_var_use_target_model.get()), self.currently_used_cmaps_dict)
+        self.nbCon_SVDGF.data_objs[self.next_tab_idx_SVDGF] = SVDGF_reconstruction.SVDGF_Heatmap(self, self.curr_reconstruct_data_file_strVar.get(), self.curr_reconstruct_data_start_time_value.get(), self.components_to_use, self.temporal_resolution_in_ps, self.time_zero_in_ps, self.next_tab_idx_SVDGF, self.next_tab_idx_difference, self.initial_fit_parameter_values, bool(self.checkbox_var_use_target_model.get()), self.currently_used_cmaps_dict, self.target_model_fit_function_file)
         thread_instance_SVDGF = threading.Thread(target=self.nbCon_SVDGF.data_objs[self.next_tab_idx_SVDGF].make_data)
         thread_instance_SVDGF.start()
         self.monitor_thread(thread_instance_SVDGF, self.nbCon_SVDGF.data_objs[self.next_tab_idx_SVDGF], self.btn_show_SVDGF_reconstructed_data_heatmap, self.lbl_reassuring_SVDGF)

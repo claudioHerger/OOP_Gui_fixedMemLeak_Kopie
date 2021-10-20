@@ -17,7 +17,7 @@ import tkinter as tk
 
 class CompareWindow(tk.Toplevel):
 
-    def __init__(self, parent, user_defined_fit_function_in_use, tab_index, components, time_steps, rightSVs, singular_values, fit_result_decay_times, fit_result_amplitudes, data_file_name, save_dir, parsed_summands_of_user_defined_fit_function=None):
+    def __init__(self, parent, user_defined_fit_function_in_use, tab_index, components, time_steps, rightSVs, singular_values, fit_result_decay_times, fit_result_amplitudes, data_file_name, save_dir, parsed_summands_of_user_defined_fit_function=None, is_from_initial_values_window=None):
         """Compare the right singular vectors (kinetics) of data matrix with the fit results in a plot.
 
         Args:
@@ -33,6 +33,7 @@ class CompareWindow(tk.Toplevel):
             data_file_name (String): name of data file used to conduct fit.
             save_dir (String): path to directory to save figure to.
             parsed_summands_of_user_defined_fit_function (list of Strings, Default is None): the parsed summands of the user defined fit function.
+            is_from_initial_values_window (boolean, Default is None): whether or not the window is opened from initial fit params value window.
         """
         super().__init__(parent)
         self.parent = parent
@@ -52,6 +53,8 @@ class CompareWindow(tk.Toplevel):
         self.parsed_summands_of_user_defined_fit_function = parsed_summands_of_user_defined_fit_function
         self.first_plot = True
 
+        self.is_from_initial_values_window = is_from_initial_values_window
+
         return None
 
     def run(self):
@@ -63,9 +66,12 @@ class CompareWindow(tk.Toplevel):
 
         self.weighted_rSVs = self.compute_weighted_rSVs()
 
-        self.title('Right singular vectors vs fit reconstruction for difference tab: ' + str(self.tab_index + 1) + " - data file: "+os.path.basename(self.data_file_name))
-
-        self.reconstructed_rSVs_from_fit_results = self.reconstruct_rSVs_from_fit_results()
+        if self.is_from_initial_values_window:
+            self.title('Right singular vectors vs fit function with entered intial fit parameter values - data file: ' + os.path.basename(self.data_file_name))
+            self.reconstructed_rSVs_from_fit_results = self.reconstruct_rSVs_from_fit_results_using_intial_values(self.decay_times, self.amplitudes)
+        else:
+            self.title('Right singular vectors vs fit reconstruction for difference tab: ' + str(self.tab_index + 1) + " - data file: "+os.path.basename(self.data_file_name))
+            self.reconstructed_rSVs_from_fit_results = self.reconstruct_rSVs_from_fit_results()
 
         self.update_axes()
 
@@ -106,6 +112,23 @@ class CompareWindow(tk.Toplevel):
             weighted_rSVs[component_index, :] = sing_value*self.rightSVs[component_index, :]
 
         return weighted_rSVs
+
+    def reconstruct_rSVs_from_fit_results_using_intial_values(self, decay_times, amplitudes):
+        reconstructed_rSVs_from_fit_results = np.zeros(shape=(len(self.components), len(self.time_steps)))
+        decay_constants = list(decay_times.values())
+        self.amplitudes = amplitudes
+        time_steps_array = self.time_steps = np.array(self.time_steps)
+
+        for component_index in range(len(self.components)):
+            curr_amplitudes = []
+            for component in self.components:
+                curr_amplitudes.append(self.amplitudes[f'amp_rSV{component_index}_component{component}'])
+            if not self.user_defined_fit_function_in_use:
+                reconstructed_rSVs_from_fit_results[component_index, :] = get_SVDGFit_parameters.model_func(time_steps_array, curr_amplitudes, decay_constants, index_of_first_increased_time_interval=0, gaussian_for_convolution=0)
+            else:
+                reconstructed_rSVs_from_fit_results[component_index, :] = get_SVDGFit_parameters.model_func_user_defined(time_steps_array, curr_amplitudes, decay_constants, self.components, self.parsed_summands_of_user_defined_fit_function)
+
+        return reconstructed_rSVs_from_fit_results
 
     def reconstruct_rSVs_from_fit_results(self):
         reconstructed_rSVs_from_fit_results = np.zeros(shape=(len(self.components), len(self.time_steps)))
@@ -164,6 +187,10 @@ class CompareWindow(tk.Toplevel):
     def save_current_figure_to_file(self):
         print("saving current rightSVs vs fit figure to file!")
 
+        if self.is_from_initial_values_window:
+            self.save_current_figure_and_more_data_to_file()
+            return None
+
         # check if directory exists:
         if not os.path.exists(self.save_dir):
             os.makedirs(self.save_dir)
@@ -172,6 +199,10 @@ class CompareWindow(tk.Toplevel):
         self.figure.savefig(self.save_dir+"/rightSVs_Vs_Fit_"+str(self.currently_plotted_components)+".png")
 
         return None
+
+    def save_current_figure_and_more_data_to_file(self):
+        print("saving figure and data corresponding to intial fit parameter values window")
+        pass
 
     def delete_attrs_and_destroy(self):
         self.destroy()
