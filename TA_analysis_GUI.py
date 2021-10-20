@@ -20,7 +20,7 @@ import threading
 from PlotClasses_noThreads import ORIGData, SVDGF_reconstruction, SVD_reconstruction
 
 # SupportClasses - used to e.g. explain functionality of widget in gui
-from SupportClasses import ToolTip, NotebookContainer
+from SupportClasses import ToolTip, NotebookContainer, saveData
 from ToplevelClasses import FitResult_Toplevel, DAS_Toplevel, initial_fit_parameter_values_Toplevel, target_model_Toplevel, ChooseColorMaps_Toplevel
 
 class GuiAppTAAnalysis(tk.Frame):
@@ -342,7 +342,12 @@ class GuiAppTAAnalysis(tk.Frame):
         return None
 
     def set_initial_fit_parameter_values(self):
-        self.initial_fit_parameter_values_window = initial_fit_parameter_values_Toplevel.initial_fit_parameters_Window(self, self.initial_fit_parameter_values_file, self.initial_fit_parameter_values, self.handler_assign_initial_fit_parameter_values, data_file_name=self.curr_reconstruct_data_file_strVar.get(), target_model_configuration_file=self.target_model_fit_function_file, components_list=self.get_components_to_use())
+
+        date_dir, final_dir = saveData.get_directory_paths(self.curr_reconstruct_data_start_time_value.get(), 0, components="")
+        save_dir = saveData.get_final_path(self.base_directory, date_dir, "/Initial_fit_parameter_validation_data/", final_dir, self.curr_reconstruct_data_file_strVar.get())
+        print(save_dir)
+
+        self.initial_fit_parameter_values_window = initial_fit_parameter_values_Toplevel.initial_fit_parameters_Window(self, self.initial_fit_parameter_values_file, self.initial_fit_parameter_values, self.handler_assign_initial_fit_parameter_values, data_file_name=self.curr_reconstruct_data_file_strVar.get(), target_model_configuration_file=self.target_model_fit_function_file, components_list=self.get_components_to_use(), use_user_defined_fit_function=bool(self.checkbox_var_use_target_model.get()), full_path_to_final_dir=save_dir)
         self.wait_window(self.initial_fit_parameter_values_window)
 
         return None

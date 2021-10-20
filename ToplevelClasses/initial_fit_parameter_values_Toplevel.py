@@ -2,6 +2,7 @@ import ast
 import re
 import tkinter as tk
 import numpy as np
+import gc
 
 from FunctionsUsedByPlotClasses import (get_closest_nr_from_array_like, get_retained_rightSVs_leftSVs_singularvs, get_TA_data_after_start_time)
 from SupportClasses import ToolTip
@@ -116,8 +117,10 @@ class initial_fit_parameters_Window(tk.Toplevel):
 
         try:
             self.compareWindow.winfo_ismapped()
-            print("success")
-            print(f"updating {self.compareWindow=}")
+
+            self.check_if_valid_numbers_entered()
+            if self.new_initial_fit_parameter_values == "invalid":
+                return None
 
             self.initial_decay_constants_dict={f'tau_component{component}':self.new_initial_fit_parameter_values["time_constants"][component] for component in self.components_list}
 
@@ -126,7 +129,8 @@ class initial_fit_parameters_Window(tk.Toplevel):
                 for i in range(len(self.components_list)):
                     self.initial_amplitude_values_dict[f'amp_rSV{i}_component{component}'] = self.new_initial_fit_parameter_values[f'amps_rSV{i}'][component]
 
-            self.compareWindow.reconstructed_rSVs_from_fit_results= self.compareWindow.reconstruct_rSVs_from_fit_results_using_intial_values(self.initial_decay_constants_dict, self.initial_amplitude_values_dict)
+            self.compareWindow.reconstruct_rSVs_from_fit_results_using_intial_values(self.initial_decay_constants_dict, self.initial_amplitude_values_dict)
+
             self.compareWindow.update_axes()
         except AttributeError:
             self.show_rightSVs_window()
@@ -141,9 +145,6 @@ class initial_fit_parameters_Window(tk.Toplevel):
             tk.messagebox.showerror("Error", "For this you need to have selected a datafile first")
             self.lift()
             return None
-
-        self.use_user_defined_fit_function = True
-        self.full_path_to_final_dir = "final dir"
 
         if self.use_user_defined_fit_function:
             try:
@@ -381,6 +382,27 @@ class initial_fit_parameters_Window(tk.Toplevel):
 
     def ignore_and_quit(self):
         if hasattr(self, "compareWindow"):
-            self.compareWindow.delete_attrs_and_destroy()
+            try:
+                self.compareWindow.delete_attrs_and_destroy()
+            except AttributeError:
+                pass # compareWindow has already been destroyed / closed
 
+        self.delete_attrs_and_destroy()
+
+    def delete_attrs_and_destroy(self):
         self.destroy()
+        self.delete_attrs()
+
+        return None
+
+    def delete_attrs(self):
+        attr_lst = list(vars(self))
+        attr_lst.remove('parent')
+        for attr in attr_lst:
+            delattr(self, attr)
+
+        del attr_lst
+
+        gc.collect()
+
+        return None

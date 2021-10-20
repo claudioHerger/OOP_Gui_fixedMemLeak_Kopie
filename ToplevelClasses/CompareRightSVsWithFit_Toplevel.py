@@ -68,7 +68,7 @@ class CompareWindow(tk.Toplevel):
 
         if self.is_from_initial_values_window:
             self.title('Right singular vectors vs fit function with entered intial fit parameter values - data file: ' + os.path.basename(self.data_file_name))
-            self.reconstructed_rSVs_from_fit_results = self.reconstruct_rSVs_from_fit_results_using_intial_values(self.decay_times, self.amplitudes)
+            self.reconstruct_rSVs_from_fit_results_using_intial_values(self.decay_times, self.amplitudes)
         else:
             self.title('Right singular vectors vs fit reconstruction for difference tab: ' + str(self.tab_index + 1) + " - data file: "+os.path.basename(self.data_file_name))
             self.reconstructed_rSVs_from_fit_results = self.reconstruct_rSVs_from_fit_results()
@@ -128,6 +128,7 @@ class CompareWindow(tk.Toplevel):
             else:
                 reconstructed_rSVs_from_fit_results[component_index, :] = get_SVDGFit_parameters.model_func_user_defined(time_steps_array, curr_amplitudes, decay_constants, self.components, self.parsed_summands_of_user_defined_fit_function)
 
+        self.reconstructed_rSVs_from_fit_results = reconstructed_rSVs_from_fit_results
         return reconstructed_rSVs_from_fit_results
 
     def reconstruct_rSVs_from_fit_results(self):
