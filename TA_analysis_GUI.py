@@ -351,14 +351,12 @@ class GuiAppTAAnalysis(tk.Frame):
     def set_initial_fit_parameter_values(self):
 
         save_dir = self.get_save_dir_for_initial_fit_params_window()
-        print(save_dir)
-
         use_target_model = bool(self.checkbox_var_use_target_model.get())
         data_file_name = self.curr_reconstruct_data_file_strVar.get()
         comp_list = self.get_components_to_use()
         start_time = self.curr_reconstruct_data_start_time_value.get()
 
-        self.initial_fit_parameter_values_window = initial_fit_parameter_values_Toplevel.initial_fit_parameters_Window(self, self.initial_fit_parameter_values_file, self.initial_fit_parameter_values, self.handler_assign_initial_fit_parameter_values, data_file_name=data_file_name, target_model_configuration_file=self.target_model_fit_function_file, components_list=comp_list, use_user_defined_fit_function=use_target_model, full_path_to_final_dir=save_dir, start_time=start_time)
+        self.initial_fit_parameter_values_window = initial_fit_parameter_values_Toplevel.initial_fit_parameters_Window(self, self.initial_fit_parameter_values_file, self.initial_fit_parameter_values, self.handler_assign_initial_fit_parameter_values, comp_list, use_target_model, self.target_model_fit_function_file, data_file_name, save_dir, start_time)
         self.wait_window(self.initial_fit_parameter_values_window)
 
         return None

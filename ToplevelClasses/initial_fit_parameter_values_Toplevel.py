@@ -9,7 +9,7 @@ from SupportClasses import ToolTip
 from ToplevelClasses import CompareRightSVsWithFit_Toplevel
 
 class initial_fit_parameters_Window(tk.Toplevel):
-    def __init__(self, parent, initial_values_file_name, current_values, assign_handler, components_list=None, use_user_defined_fit_function=False, target_model_configuration_file="", data_file_name="", full_path_to_final_dir="", start_time=None):
+    def __init__(self, parent, initial_values_file_name, current_values, assign_handler, components_list, use_user_defined_fit_function, target_model_configuration_file, data_file_name, full_path_to_final_dir, start_time):
         """a toplevel window to inspect the initial fit parameter values in the SVDGF procedure.
         Whenever these values are changed, the new ones will be used for each fit until the user selects to change them again.
         In order to reuse these selected values once the user quits and restarts the program, the values are written to a file.
@@ -20,12 +20,12 @@ class initial_fit_parameters_Window(tk.Toplevel):
             initial_values_file_name (str): file to write new initial fit parameter values in
             current_values (dict): dictionary of currently used initial fit parameter values
             assign_handler (function): method that handles the assignement of new initial fit values in main Gui which instantiates the toplevel.
-            components_list (list of ints, optional): [description]. Defaults to None.
-            use_user_defined_fit_function (bool, optional): [description]. Defaults to False.
-            target_model_configuration_file (str, optional): [description]. Defaults to "".
-            data_file_name (str, optional): [description]. Defaults to "".
-            full_path_to_final_dir (str, optional): [description]. Defaults to "".
-            start_time ([type], optional): [description]. Defaults to None.
+            components_list (list of ints): list of components selected.
+            use_user_defined_fit_function (bool): whether or not to use the user defined fit function.
+            target_model_configuration_file (str): path to target model configuration file.
+            data_file_name (str): path to data file
+            full_path_to_final_dir (str): path to save figures and data to (figure in compare window).
+            start_time (str of float): the approximate time step value to cut off data matrix when making SVD.
         """
 
 
