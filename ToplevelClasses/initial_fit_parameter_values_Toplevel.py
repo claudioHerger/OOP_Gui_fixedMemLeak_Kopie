@@ -46,10 +46,10 @@ class initial_fit_parameters_Window(tk.Toplevel):
         self.start_time = start_time
         self.target_model_configuration_file = target_model_configuration_file
 
-        self.btn_ignore_and_quit = tk.Button(self, text="Hit Enter: Ignore and quit", command=lambda: self.ignore_and_quit())
-        ttp_btn_ignore_and_quit = ToolTip.CreateToolTip(self.btn_ignore_and_quit, \
+        self.btn_quit = tk.Button(self, text="Quit", command=lambda: self.ignore_and_quit())
+        ttp_btn_quit = ToolTip.CreateToolTip(self.btn_quit, \
         'Quit this window and use the last saved fit parameters.')
-        self.btn_ignore_and_quit.grid(padx=10, pady=10, sticky="se", row=99, column=3)
+        self.btn_quit.grid(padx=10, pady=10, sticky="se", row=99, column=3)
 
         self.display_fit_parameters_labels_and_entries()
 
@@ -80,7 +80,8 @@ class initial_fit_parameters_Window(tk.Toplevel):
         self.btn_update_show_rSVs_window.grid(row=5, column=3, rowspan=2)
 
         self.focus_set()
-        self.bind("<Return>", lambda x: self.ignore_and_quit())
+        self.bind("<Return>", lambda x: self.update_show_rSVs_window())
+
 
     def get_summands_of_user_defined_fit_function_from_file(self, target_model_configuration_file):
         try:
