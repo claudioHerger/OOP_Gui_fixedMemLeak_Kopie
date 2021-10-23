@@ -45,12 +45,15 @@ class GuiAppTAAnalysis(tk.Frame):
         self.curr_reconstruct_data_file_strVar = tk.StringVar()
         self.curr_reconstruct_data_file_strVar.set("no file selected")
         # self.curr_reconstruct_data_file_strVar.set(self.base_directory+"/DataFiles/simulatedTAData_formatted.txt")
-        self.curr_reconstruct_data_file_strVar.set(self.base_directory+"/DataFiles/data_full_0.txt")
+        # self.curr_reconstruct_data_file_strVar.set(self.base_directory+"/DataFiles/data_full_0.txt")
+        self.curr_reconstruct_data_file_strVar.set(self.base_directory+"/DataFiles/maryam2.txt")
         self.curr_reconstruct_data_file_strVar.trace_add("write", self.update_filename_in_title_and_truncated_filename_for_tab_header_callback)
         self.curr_reconstruct_data_start_time_value = tk.DoubleVar()
         self.curr_reconstruct_data_start_time_value.trace_add("write", self.update_filename_in_title_and_truncated_filename_for_tab_header_callback)
         self.curr_reconstruct_data_start_time_value.set(-999.0)
         self.curr_reconstruct_data_start_time_value.set(0.0)
+        self.curr_reconstruct_data_start_time_value.set(0.1)
+
 
         # determine the number of tabs possible for all the different notebooks:
         self.NR_OF_TABS = 6    # this should really be left below 50!
@@ -360,6 +363,19 @@ class GuiAppTAAnalysis(tk.Frame):
         self.wait_window(self.initial_fit_parameter_values_window)
 
         return None
+
+    def set_fit_method_name(self, fit_method_name, index):
+        # change color of menu labels to indicate which fit method is currently selected
+        for i in range(len(self.fit_methods_dict)+2):
+            self.fit_method_menu.entryconfig(i, background='#ffffffffffff')
+
+        self.fit_method_menu.entryconfig(index+2, background="lightblue")
+
+        self.fit_method_name = fit_method_name
+        return None
+
+    def get_fit_method_name(self):
+        return self.fit_method_name
 
     def define_target_model_fit_function(self):
         self.components_to_use = self.get_components_to_use()
@@ -799,7 +815,38 @@ class GuiAppTAAnalysis(tk.Frame):
         self.btn_set_colormaps.grid(row=3, column=0, padx=3, pady=5, sticky="s")
         self.frm_orig_data_tab1.rowconfigure(self.btn_set_colormaps.grid_info()["row"], weight=1)
 
+        """ menu to select fit method """
+        self.make_menu_to_select_fit_method()
+        self.set_fit_method_name('leastsq', 0)
+
+
         return None
+
+    def make_menu_to_select_fit_method(self):
+        self.fit_methods_dict = {'leastsq': 'Levenberg-Marquardt (default)',
+                            'least_squares': 'Least-Squares minimization, using Trust Region Reflective method',
+                            'basinhopping': 'basinhopping',
+                            'ampgo': 'Adaptive Memory Programming for Global Optimization',
+                            'nelder': 'Nelder-Mead',
+                            'lbfgsb': 'L-BFGS-B',
+                            'powell': 'Powell',
+                            'cg': 'Conjugate-Gradient',
+                            'cobyla': 'Cobyla',
+                            'bfgs': 'BFGS',
+                            'tnc': 'Truncated Newton'}
+
+        self.menubar = tk.Menu(self.parent)
+        self.fit_method_menu = tk.Menu(self.menubar, tearoff=0)
+
+        self.fit_method_menu.add_command(label="for more info see lmfit package: https://lmfit.github.io/lmfit-py/fitting.html", activebackground="grey")
+        self.fit_method_menu.add_separator()
+
+        menu_strings = [str(fit_method+": "+description) for fit_method, description in self.fit_methods_dict.items()]
+        for index, fit_method in enumerate(self.fit_methods_dict.keys()):
+            self.fit_method_menu.add_command(label=menu_strings[index], command = lambda x=fit_method, i=index: self.set_fit_method_name(x, i))
+
+        self.menubar.add_cascade(label="Fit method", menu=self.fit_method_menu)
+        self.parent.config(menu=self.menubar)
 
     # Widget layout of GUI
     def initialize_GUI(self):

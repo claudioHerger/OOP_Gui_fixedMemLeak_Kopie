@@ -51,6 +51,7 @@ class SVDGF_Heatmap():
         """
 
         self.parent = parent
+        self.fit_method_name = self.parent.get_fit_method_name()
         self.notebook_container_SVDGF = self.parent.nbCon_SVDGF
         self.notebook_container_diff = self.parent.nbCon_difference
 
@@ -439,7 +440,7 @@ class SVDGF_Heatmap():
 
         # do the fit: input: selected rSVs and singular values, self.temp_resolution, self.components_list - output: decay constants, amplitudes
         try:
-            self.fit_result, self.resulting_SVDGF_fit_parameters = get_SVDGFit_parameters.run(self.retained_rSVs, self.retained_singular_values, self.components_list, self.time_delays, self.start_time, self.initial_fit_parameter_values, self.time_zero, self.temp_resolution, parsed_user_defined_summands=self.parsed_summands_of_user_defined_fit_function)
+            self.fit_result, self.resulting_SVDGF_fit_parameters = get_SVDGFit_parameters.run(self.retained_rSVs, self.retained_singular_values, self.components_list, self.time_delays, self.start_time, self.initial_fit_parameter_values, self.time_zero, self.temp_resolution, parsed_user_defined_summands=self.parsed_summands_of_user_defined_fit_function, fit_method_name=self.fit_method_name)
         except (ValueError,TypeError) as error:
             if str(error) == "":
                 tk.messagebox.showerror("Warning, an exception occurred!", f"Exception {type(error)} message: \n"+ str(error)+ "\n"+

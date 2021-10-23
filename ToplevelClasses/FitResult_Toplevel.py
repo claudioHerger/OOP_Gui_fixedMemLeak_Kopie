@@ -39,8 +39,9 @@ class FitResult_Window(tk.Toplevel):
         self.parent.fit_report_toplevels.remove(self)
 
         # keep other still existing toplevels in focus
-        for toplevel in self.parent.fit_report_toplevels:
-            if toplevel.mapped:
-                toplevel.lift()
+        if self.parent.fit_report_toplevels != []:
+            for toplevel in self.parent.fit_report_toplevels:
+                if toplevel.mapped:
+                    toplevel.lift()
 
         return None
