@@ -247,7 +247,7 @@ class initial_fit_parameters_Window(tk.Toplevel):
         if self.new_values_entries != []:
             self.row_labels.append(tk.Label(self))
             self.row_labels[-1]["text"] = f"amps_rSV{len(self.row_labels)-2}"
-            self.old_values_labels.append(tk.Label(self, text="did not exist yet"))
+
             self.new_values_entries.append(tk.Entry(self, width=50, justify=tk.RIGHT))
             self.new_values_entries[-1].insert(0, self.new_values_entries[1].get())
 
