@@ -57,8 +57,8 @@ class SVD_inspection_Window(tk.Toplevel):
         self.ent_nr_of_sing_values.bind("<Return>", self.update_sing_values_plot)
         self.ent_nr_of_sing_values.insert(0, 10)
 
-        self.max_nr_of_sing_vectors = 11    # set this to a higher number if you want to be able to inspect even less significant singular vectors
-        self.max_nr_of_sing_values = 51      # set this to a higher number if you want to be able to inspect even less significant singular values
+        self.max_nr_of_sing_vectors = 11        # set this to a higher number if you want to be able to inspect even less significant singular vectors
+        self.max_nr_of_sing_values = 51         # set this to a higher number if you want to be able to inspect even less significant singular values
 
         # set which singular vectors are to be displayed when initially opening the window
         self.leftSVs_components_list = [0,1,2]
@@ -231,8 +231,7 @@ class SVD_inspection_Window(tk.Toplevel):
         if (int(self.ent_nr_of_sing_values.get()) >= self.max_nr_of_sing_values):
             tk.messagebox.showerror("Warning, an exception occurred!",
                                     f"The program only stored the first {self.max_nr_of_sing_values-1} singular values!\n"
-                                    +f"If you want to see more, you would need to change one line of the code of\n {__name__}\n"
-                                    +"as the coder selected a lazy solution.")
+                                    +f"If you want to see more, you would need to change one line of the code of\n {__name__}")
             return None
 
         self.sing_values_axes.clear()
