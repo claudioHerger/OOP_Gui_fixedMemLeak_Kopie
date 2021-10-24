@@ -38,8 +38,7 @@ class initial_fit_parameters_Window(tk.Toplevel):
         self.title('Set the initial fit parameter values - used for each fit.')
 
         # properties used for rightSVs vs initial fit parameter values window
-        if components_list is not None:
-            self.components_list = components_list
+        self.components_list = components_list
         self.use_user_defined_fit_function = use_user_defined_fit_function
         self.data_file_name = data_file_name
         self.full_path_to_final_dir = full_path_to_final_dir
@@ -74,9 +73,15 @@ class initial_fit_parameters_Window(tk.Toplevel):
         self.btn_remove_parameters.grid(pady=10, sticky="se", row=99, column=2)
 
         self.btn_show_rSVs_as_reconstructed_by_initial_fit_param_values = tk.Button(self, text="show rSVs as reconstructed\nby initial values", command=self.show_rightSVs_window)
+        ttp_btn_show_rSVs_as_reconstructed_by_initial_fit_param_values = ToolTip.CreateToolTip(self.btn_show_rSVs_as_reconstructed_by_initial_fit_param_values, \
+        'open a window to compare the weighted right singular vectors $\sigma_i * V_i$ (of the checked components) with the fit function $f_i$ as computed'
+        ' from the entered initial fit parameter values', optional_x_direction_bump=150, optional_y_direction_bump=50)
         self.btn_show_rSVs_as_reconstructed_by_initial_fit_param_values.grid(row=2, column=3, rowspan=2)
 
         self.btn_update_show_rSVs_window = tk.Button(self, text="update show rSVs window\nwith new values", command=self.update_show_rSVs_window)
+        ttp_btn_update_show_rSVs_window = ToolTip.CreateToolTip(self.btn_update_show_rSVs_window, \
+        'update (or open) the window to compare the weighted right singular vectors $\sigma_i * V_i$ (of the checked components) with the fit function $f_i$ as computed'
+        ' from the entered initial fit parameter values.\n', optional_x_direction_bump=150, optional_y_direction_bump=50)
         self.btn_update_show_rSVs_window.grid(row=5, column=3, rowspan=2)
 
         self.focus_set()
@@ -120,14 +125,20 @@ class initial_fit_parameters_Window(tk.Toplevel):
         return summand_str_with_brackets_added
 
     def set_new_initial_values_dicts_for_compare_window(self):
-        self.initial_decay_constants_dict={f'tau_component{component}':self.new_initial_fit_parameter_values["time_constants"][component] for component in self.components_list}
+        try:
+            self.initial_decay_constants_dict={f'tau_component{component}':self.new_initial_fit_parameter_values["time_constants"][component] for component in self.components_list}
 
-        self.initial_amplitude_values_dict = {}
-        for component in self.components_list:
-            for i in range(len(self.components_list)):
-                self.initial_amplitude_values_dict[f'amp_rSV{i}_component{component}'] = self.new_initial_fit_parameter_values[f'amps_rSV{i}'][component]
+            self.initial_amplitude_values_dict = {}
+            for component in self.components_list:
+                for i in range(len(self.components_list)):
+                    self.initial_amplitude_values_dict[f'amp_rSV{i}_component{component}'] = self.new_initial_fit_parameter_values[f'amps_rSV{i}'][component]
+        except (IndexError, KeyError):
+            tk.messagebox.showerror("Error", "you need to have at least as many initial fit parameter values (both time constants and amplitudes) as you have components selected!"+
+                                             f"\nSelected components when you openend this window: {self.components_list}")
+            self.lift()
+            return "invalid"
 
-        return None
+        return "valid"
 
     def update_show_rSVs_window(self):
         if not hasattr(self, "compareWindow"):
@@ -140,7 +151,8 @@ class initial_fit_parameters_Window(tk.Toplevel):
             if self.check_if_valid_numbers_entered() == "invalid":
                 return None
 
-            self.set_new_initial_values_dicts_for_compare_window()
+            if self.set_new_initial_values_dicts_for_compare_window() == "invalid":
+                return None
 
             self.compareWindow.reconstruct_rSVs_from_fit_results_using_intial_values(self.initial_decay_constants_dict, self.initial_amplitude_values_dict)
 
@@ -158,7 +170,8 @@ class initial_fit_parameters_Window(tk.Toplevel):
             self.lift()
             return None
 
-        self.set_new_initial_values_dicts_for_compare_window()
+        if self.set_new_initial_values_dicts_for_compare_window() == "invalid":
+            return None
 
         try:
             # get data
@@ -212,6 +225,7 @@ class initial_fit_parameters_Window(tk.Toplevel):
             self.new_values_entries = self.new_values_entries[0:-1]
         except IndexError:
             tk.messagebox.showwarning(title="Warning", message=f"No more parameters to remove!")
+            self.lift()
             return None
 
         try:
@@ -222,6 +236,7 @@ class initial_fit_parameters_Window(tk.Toplevel):
                 entry.insert(0, str(curr_list))
         except SyntaxError:
             tk.messagebox.showwarning(title="Warning.", message=f"One of your remaining entered lists could not be evaluated to a list.")
+            self.lift()
             return None
 
         self.add_up_and_down_key_bindings_to_entries()
