@@ -1,5 +1,6 @@
 import os
 import gc
+from datetime import datetime
 
 import numpy as np
 import matplotlib
@@ -11,28 +12,29 @@ import seaborn as sns
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from FunctionsUsedByPlotClasses import get_SVDGFit_parameters
-from SupportClasses import ToolTip
+from SupportClasses import ToolTip, saveData
 
 import tkinter as tk
 
 class CompareWindow(tk.Toplevel):
 
-    def __init__(self, parent, user_defined_fit_function_in_use, tab_index, components, time_steps, rightSVs, singular_values, fit_result_decay_times, fit_result_amplitudes, data_file_name, save_dir, parsed_summands_of_user_defined_fit_function=None):
+    def __init__(self, parent, is_target_model, tab_index, components, time_steps, rightSVs, singular_values, decay_times_parameter_values, amplitudes_parameter_values, data_file_name, save_dir, parsed_summands_of_user_defined_fit_function=None, is_from_initial_values_window=None):
         """Compare the right singular vectors (kinetics) of data matrix with the fit results in a plot.
 
         Args:
             parent (GUIApp): parent is the Gui App that creates the instance of this class.
-            user_defined_fit_function_in_use (boolean): whether or not the user used a user defined fit function.
+            is_target_model (boolean): whether or not the user used a user defined fit function.
             tab_index (int): used in title of Toplevel, so that one knows to which tab this toplevel belongs.
             components (list(int)): list of SVD components used in fit.
             time_steps (list): time steps from original data file used in fit.
             rightSVs (arraylike): 2d-array containing the right singular vectors used in fit.
             singular_values (list): list of singular values of selected SVD components used in fit.
-            fit_results_decay_times (dict[float]): dict of fit result decay times.
-            fit_results_amplitudes (dict[float]): dictionary containing resulting amplitudes from fit.
+            decay_times_parameter_values (dict[float]): dict of decay times parameter values.
+            amplitudes_parameter_values (dict[float]): dictionary of amplitudes parameter values.
             data_file_name (String): name of data file used to conduct fit.
             save_dir (String): path to directory to save figure to.
             parsed_summands_of_user_defined_fit_function (list of Strings, Default is None): the parsed summands of the user defined fit function.
+            is_from_initial_values_window (boolean, Default is None): whether or not the window is opened from initial fit params value window.
         """
         super().__init__(parent)
         self.parent = parent
@@ -43,14 +45,16 @@ class CompareWindow(tk.Toplevel):
 
         self.rightSVs = rightSVs
         self.singular_values = singular_values
-        self.decay_times = fit_result_decay_times
-        self.amplitudes = fit_result_amplitudes
+        self.decay_times = decay_times_parameter_values
+        self.amplitudes = amplitudes_parameter_values
         self.data_file_name = data_file_name
         self.save_dir = save_dir
 
-        self.user_defined_fit_function_in_use = user_defined_fit_function_in_use
+        self.is_target_model = is_target_model
         self.parsed_summands_of_user_defined_fit_function = parsed_summands_of_user_defined_fit_function
         self.first_plot = True
+
+        self.is_from_initial_values_window = is_from_initial_values_window
 
         return None
 
@@ -63,9 +67,12 @@ class CompareWindow(tk.Toplevel):
 
         self.weighted_rSVs = self.compute_weighted_rSVs()
 
-        self.title('Right singular vectors vs fit reconstruction for difference tab: ' + str(self.tab_index + 1) + " - data file: "+os.path.basename(self.data_file_name))
-
-        self.reconstructed_rSVs_from_fit_results = self.reconstruct_rSVs_from_fit_results()
+        if self.is_from_initial_values_window:
+            self.title('Right singular vectors vs fit function with entered intial fit parameter values - data file: ' + os.path.basename(self.data_file_name))
+            self.reconstruct_rSVs_from_fit_results_using_intial_values(self.decay_times, self.amplitudes)
+        else:
+            self.title('Right singular vectors vs fit reconstruction for difference tab: ' + str(self.tab_index + 1) + " - data file: "+os.path.basename(self.data_file_name))
+            self.reconstructed_rSVs_from_fit_results = self.reconstruct_rSVs_from_fit_results()
 
         self.update_axes()
 
@@ -107,6 +114,25 @@ class CompareWindow(tk.Toplevel):
 
         return weighted_rSVs
 
+    def reconstruct_rSVs_from_fit_results_using_intial_values(self, decay_times, amplitudes):
+        reconstructed_rSVs_from_fit_results = np.zeros(shape=(len(self.components), len(self.time_steps)))
+        self.decay_times = decay_times
+        decay_constants = list(self.decay_times.values())
+        self.amplitudes = amplitudes
+        time_steps_array = self.time_steps = np.array(self.time_steps)
+
+        for component_index in range(len(self.components)):
+            curr_amplitudes = []
+            for component in self.components:
+                curr_amplitudes.append(self.amplitudes[f'amp_rSV{component_index}_component{component}'])
+            if not self.is_target_model:
+                reconstructed_rSVs_from_fit_results[component_index, :] = get_SVDGFit_parameters.model_func(time_steps_array, curr_amplitudes, decay_constants, index_of_first_increased_time_interval=0, gaussian_for_convolution=0)
+            else:
+                reconstructed_rSVs_from_fit_results[component_index, :] = get_SVDGFit_parameters.model_func_user_defined(time_steps_array, curr_amplitudes, decay_constants, self.components, self.parsed_summands_of_user_defined_fit_function)
+
+        self.reconstructed_rSVs_from_fit_results = reconstructed_rSVs_from_fit_results
+        return reconstructed_rSVs_from_fit_results
+
     def reconstruct_rSVs_from_fit_results(self):
         reconstructed_rSVs_from_fit_results = np.zeros(shape=(len(self.components), len(self.time_steps)))
         decay_constants = list(self.decay_times.values())
@@ -116,7 +142,7 @@ class CompareWindow(tk.Toplevel):
             curr_amplitudes = []
             for component in self.components:
                 curr_amplitudes.append(self.amplitudes[f'amp_rSV{component_index}_component{component}'])
-            if not self.user_defined_fit_function_in_use:
+            if not self.is_target_model:
                 reconstructed_rSVs_from_fit_results[component_index, :] = get_SVDGFit_parameters.model_func(time_steps_array, curr_amplitudes, decay_constants, index_of_first_increased_time_interval=0, gaussian_for_convolution=0)
             else:
                 reconstructed_rSVs_from_fit_results[component_index, :] = get_SVDGFit_parameters.model_func_user_defined(time_steps_array, curr_amplitudes, decay_constants, self.components, self.parsed_summands_of_user_defined_fit_function)
@@ -141,37 +167,66 @@ class CompareWindow(tk.Toplevel):
         for i in range(len(self.components)):
             if (self.check_button_variables[i].get() == 1):
                 try:
-                    self.axes.plot(self.xaxis, self.weighted_rSVs[i,:], label=f'component: {self.components[i]}', color=sns.color_palette("Set2")[i])
+                    self.axes.plot(self.xaxis, self.weighted_rSVs[i,:], label=f"rSV {self.components[i]}", color=sns.color_palette("Set2")[i])
                     varied_color = (sns.color_palette("Set2")[i][0], sns.color_palette("Set2")[i][1]*0.1, sns.color_palette("Set2")[i][2]*(1.1))
-                    self.axes.plot(self.xaxis, self.reconstructed_rSVs_from_fit_results[i,:], label=f'fit for comp: {self.components[i]}', linestyle="--", color=varied_color)
+                    self.axes.plot(self.xaxis, self.reconstructed_rSVs_from_fit_results[i,:], label=f'fit for rSV {self.components[i]}', linestyle="--", color=varied_color)
                 except IndexError:
-                    self.axes.plot(self.xaxis, self.weighted_rSVs[i,:], label=f'component: {self.components[i]}', color=sns.color_palette("husl", 8)[i-8])
+                    self.axes.plot(self.xaxis, self.weighted_rSVs[i,:], label=f"rSV {self.components[i]}", color=sns.color_palette("husl", 8)[i-8])
                     varied_color = (sns.color_palette("husl", 8)[i-8][0], sns.color_palette("husl", 8)[i-8][1]*0.1, sns.color_palette("husl", 8)[i-8][2]*(1.1))
-                    self.axes.plot(self.xaxis, self.reconstructed_rSVs_from_fit_results[i,:], label=f'fit for comp: {self.components[i]}', linestyle="--", color=varied_color)
+                    self.axes.plot(self.xaxis, self.reconstructed_rSVs_from_fit_results[i,:], label=f'fit for rSV {self.components[i]}', linestyle="--", color=varied_color)
 
         self.axes.set_xticks(self.rightSVs_xticks)
         self.axes.set_xticklabels(self.rightSVs_xticklabels, rotation=0)
         self.axes.set_title("weighted right singular vectors vs fit")
+        if self.is_from_initial_values_window:
+            self.axes.set_title("weighted rSVs vs fit function using initial fit parameter values")
         self.axes.set_xlabel("time delays")
         self.axes.set_ylabel("amplitude")
         self.axes.legend(ncol=2, labelspacing=0.1)
 
         self.figure.tight_layout()
 
-        # actually draw the plot
         self.figure.canvas.draw_idle()
 
     def save_current_figure_to_file(self):
         print("saving current rightSVs vs fit figure to file!")
 
+        if self.is_from_initial_values_window:
+            self.save_current_figure_and_more_data_to_file()
+            return None
+
         # check if directory exists:
         if not os.path.exists(self.save_dir):
             os.makedirs(self.save_dir)
 
-        # save current figures:
-        self.figure.savefig(self.save_dir+"/rightSVs_Vs_Fit_"+str(self.currently_plotted_components)+".png")
+        # save current figure:
+        self.figure.savefig(self.save_dir+"/rightSVs_"+str(self.currently_plotted_components)+"_Vs_Fit.png")
 
         return None
+
+    def save_current_figure_and_more_data_to_file(self):
+        print("saving figure and data corresponding to intial fit parameter values window")
+
+        today = datetime.now()
+        second = today.strftime('%S')
+        hour = today.strftime('%H')
+        minute = today.strftime('%M')
+
+        final_dir = self.save_dir+ "saved_at_"+str(hour)+"h_"+str(minute)+"min_"+str(second)+"sec"
+
+        # check if directory exists:
+        if not os.path.exists(final_dir):
+            os.makedirs(final_dir)
+
+        data_dict = {'initial_decay_constants_values': self.decay_times, 'initial_amplitudes_values':self.amplitudes, 'right_SVectors':self.rightSVs, 'singular_values':self.singular_values}
+        if self.is_target_model:
+            data_dict['user_defined_model_summands'] = self.parsed_summands_of_user_defined_fit_function
+        saveData.save_result_data(final_dir, data_dict)
+
+        # save current figure:
+        self.figure.savefig(final_dir+"/rightSVs_"+str(self.currently_plotted_components)+"_Vs_initial_values_fit.png")
+
+        pass
 
     def delete_attrs_and_destroy(self):
         self.destroy()

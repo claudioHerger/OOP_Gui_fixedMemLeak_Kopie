@@ -18,7 +18,7 @@ from SupportClasses import ToolTip, saveData, SmallToolbar
 from ToplevelClasses import Kinetics_Spectrum_Toplevel, new_decay_times_Toplevel, CompareRightSVsWithFit_Toplevel
 
 class SVDGF_Heatmap():
-    def __init__(self, parent, filename, start_time, components_list, temp_resolution, time_zero, tab_idx, tab_idx_difference, initial_fit_parameter_values, user_defined_fit_function, colormaps_dict):
+    def __init__(self, parent, filename, start_time, components_list, temp_resolution, time_zero, tab_idx, tab_idx_difference, initial_fit_parameter_values, user_defined_fit_function, colormaps_dict, target_model_configuration_file):
         """A class to make a heatmap of via SVD_GlobalFit reconstructed TA data.
         * the (default, i.e. non user defined) global fit should:\n
             # fit the selection (the selected components)\n
@@ -44,12 +44,14 @@ class SVDGF_Heatmap():
             initial_fit_parameter_values (dict): the dictionary that defines the initial values for the fit parameters
             user_defined_fit_function (bool): True if you want to use the user defined fit function
             colormaps_dict (dict): dictionary containing the colormap names for the heatmaps
+            target_model_configuration_file (string): path to target model configuration file
 
         Returns:
             NoneType: None
         """
 
         self.parent = parent
+        self.fit_method_name = self.parent.get_fit_method_name()
         self.notebook_container_SVDGF = self.parent.nbCon_SVDGF
         self.notebook_container_diff = self.parent.nbCon_difference
 
@@ -60,7 +62,9 @@ class SVDGF_Heatmap():
         self.components_list = components_list
         self.temp_resolution = temp_resolution
         self.time_zero = time_zero
+
         self.use_user_defined_fit_function = user_defined_fit_function
+        self.target_model_configuration_file = target_model_configuration_file
 
         self.DAS_to_update_with = [i for i in range(len(self.components_list))]
         self.indeces_for_DAS_matrix = self.DAS_to_update_with
@@ -357,9 +361,9 @@ class SVDGF_Heatmap():
         print(f"\nuser has put in useable new decay times! {self.user_selected_decay_times=}")
         return "compute with new decay times"
 
-    def get_summands_of_user_defined_fit_function_from_file(self):
+    def get_summands_of_user_defined_fit_function_from_file(self, target_model_configuration_file):
         try:
-            with open(self.parent.target_model_fit_function_file, mode='r') as dict_file:
+            with open(target_model_configuration_file, mode='r') as dict_file:
                 summands_of_user_defined_fit_function = ast.literal_eval(dict_file.read().strip())
         except (SyntaxError, FileNotFoundError):
             raise ValueError("getting the user defined summands for fit function from file failed, or the dict was empty.\n"
@@ -383,15 +387,15 @@ class SVDGF_Heatmap():
     def parse_summand(self, summand_str: str):
         if summand_str == "":
             return "0"
-        parsed_time_delays = summand_str.replace("t", "time_delays")
-        parsed_decay_constants = parsed_time_delays
-        k_list = re.findall(r'k\d+', parsed_time_delays)
-        for k_str in k_list:
-            parsed_decay_constants = re.sub(r'k\d+', f"taus[\"component{k_str[1:]}\"]", parsed_decay_constants, count=1)
+        summand_str_with_time_delays_parsed = summand_str.replace("t", "time_delays")
+        summand_str_with_decay_constants_parsed = summand_str_with_time_delays_parsed
+        list_of_ks_in_summand_str = re.findall(r'k\d+', summand_str_with_time_delays_parsed)
+        for k_str in list_of_ks_in_summand_str:
+            summand_str_with_decay_constants_parsed = re.sub(r'k\d+', f"taus[\"component{k_str[1:]}\"]", summand_str_with_decay_constants_parsed, count=1)
 
-        parsed_with_brackets = "(" +parsed_decay_constants+ ")"
+        summand_str_with_brackets_added = "(" +summand_str_with_decay_constants_parsed+ ")"
 
-        return parsed_with_brackets
+        return summand_str_with_brackets_added
 
     # this is done in thread separate from gui main thread.
     def make_data(self):
@@ -425,7 +429,7 @@ class SVDGF_Heatmap():
         self.parsed_summands_of_user_defined_fit_function = []
         if self.use_user_defined_fit_function:
             try:
-                self.summands_of_user_defined_fit_function = self.get_summands_of_user_defined_fit_function_from_file()
+                self.summands_of_user_defined_fit_function = self.get_summands_of_user_defined_fit_function_from_file(self.target_model_configuration_file)
                 self.parsed_summands_of_user_defined_fit_function = self.parse_summands_of_user_defined_fit_function_to_actual_code(self.summands_of_user_defined_fit_function)
             except ValueError as error:
                 tk.messagebox.showerror("Warning,", "an exception occurred!""\nProbably due to a problem with the user defined fit function file!\n"+
@@ -436,7 +440,7 @@ class SVDGF_Heatmap():
 
         # do the fit: input: selected rSVs and singular values, self.temp_resolution, self.components_list - output: decay constants, amplitudes
         try:
-            self.fit_result, self.resulting_SVDGF_fit_parameters = get_SVDGFit_parameters.run(self.retained_rSVs, self.retained_singular_values, self.components_list, self.time_delays, self.start_time, self.initial_fit_parameter_values, self.time_zero, self.temp_resolution, parsed_user_defined_summands=self.parsed_summands_of_user_defined_fit_function)
+            self.fit_result, self.resulting_SVDGF_fit_parameters = get_SVDGFit_parameters.run(self.retained_rSVs, self.retained_singular_values, self.components_list, self.time_delays, self.start_time, self.initial_fit_parameter_values, self.time_zero, self.temp_resolution, parsed_user_defined_summands=self.parsed_summands_of_user_defined_fit_function, fit_method_name=self.fit_method_name)
         except (ValueError,TypeError) as error:
             if str(error) == "":
                 tk.messagebox.showerror("Warning, an exception occurred!", f"Exception {type(error)} message: \n"+ str(error)+ "\n"+

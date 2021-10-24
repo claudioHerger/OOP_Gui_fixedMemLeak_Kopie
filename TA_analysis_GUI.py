@@ -12,6 +12,7 @@ import traceback
 import collections              # e.g. to check whether an object is iterable, has size attribute etc
 import lmfit
 import ast
+from datetime import datetime
 
 # threading
 import threading
@@ -20,7 +21,7 @@ import threading
 from PlotClasses_noThreads import ORIGData, SVDGF_reconstruction, SVD_reconstruction
 
 # SupportClasses - used to e.g. explain functionality of widget in gui
-from SupportClasses import ToolTip, NotebookContainer
+from SupportClasses import ToolTip, NotebookContainer, saveData
 from ToplevelClasses import FitResult_Toplevel, DAS_Toplevel, initial_fit_parameter_values_Toplevel, target_model_Toplevel, ChooseColorMaps_Toplevel
 
 class GuiAppTAAnalysis(tk.Frame):
@@ -32,26 +33,26 @@ class GuiAppTAAnalysis(tk.Frame):
         # the directory from where program is started
         self.base_directory = os.getcwd()        # Leads to Error if program is not started from directory where it is in
         self.config_files_directory = self.base_directory + "/configFiles/"
+        self.target_model_fit_function_file = self.config_files_directory + "/target_model_summands.txt"
 
         self.read_initial_fit_parameter_values_from_file()
         self.read_currently_used_cmaps_from_file()
 
         # which files the user can select in the tk.filedialog.askopenfilename
-        self.ftypes = [('txt files', '*.txt'), ('All files', '*.txt; *.csv; *.dat'), ('CSV files', '*.csv'), ('DAT files', '*.dat')]
+        self.ftypes = [('txt files', '*.txt'), ('All files', '*.txt; *.csv'), ('CSV files', '*.csv')]
 
         # set initial data file variable etc.
         self.curr_reconstruct_data_file_strVar = tk.StringVar()
         self.curr_reconstruct_data_file_strVar.set("no file selected")
         # self.curr_reconstruct_data_file_strVar.set(self.base_directory+"/DataFiles/simulatedTAData_formatted.txt")
-        # self.curr_reconstruct_data_file_strVar.set(self.base_directory+"/DataFiles/data_full_0.txt")
+        self.curr_reconstruct_data_file_strVar.set(self.base_directory+"/DataFiles/data_full_0.txt")
         self.curr_reconstruct_data_file_strVar.trace_add("write", self.update_filename_in_title_and_truncated_filename_for_tab_header_callback)
         self.curr_reconstruct_data_start_time_value = tk.DoubleVar()
         self.curr_reconstruct_data_start_time_value.trace_add("write", self.update_filename_in_title_and_truncated_filename_for_tab_header_callback)
         self.curr_reconstruct_data_start_time_value.set(-999.0)
-        # self.curr_reconstruct_data_start_time_value.set(0.0)
 
         # determine the number of tabs possible for all the different notebooks:
-        self.NR_OF_TABS = 6    # this should really be left below 50!
+        self.NR_OF_TABS = 10    # this should really be left below 50!
         self.NR_OF_DIFFERENCE_TABS = 2 * self.NR_OF_TABS
 
         # some styling variables
@@ -340,11 +341,37 @@ class GuiAppTAAnalysis(tk.Frame):
 
         return None
 
+    def get_save_dir_for_initial_fit_params_window(self):
+        date_dir, final_dir = saveData.get_directory_paths(self.curr_reconstruct_data_start_time_value.get(), 0, components=None)
+        save_dir = saveData.get_final_path(self.base_directory, date_dir, "/Initial_fit_parameter_validation_data/", "", self.curr_reconstruct_data_file_strVar.get())
+
+        return save_dir
+
     def set_initial_fit_parameter_values(self):
-        self.initial_fit_parameter_values_window = initial_fit_parameter_values_Toplevel.initial_fit_parameters_Window(self, self.initial_fit_parameter_values_file, self.initial_fit_parameter_values, self.handler_assign_initial_fit_parameter_values)
+
+        save_dir = self.get_save_dir_for_initial_fit_params_window()
+        use_target_model = bool(self.checkbox_var_use_target_model.get())
+        data_file_name = self.curr_reconstruct_data_file_strVar.get()
+        comp_list = self.get_components_to_use()
+        start_time = self.curr_reconstruct_data_start_time_value.get()
+
+        self.initial_fit_parameter_values_window = initial_fit_parameter_values_Toplevel.initial_fit_parameters_Window(self, self.initial_fit_parameter_values_file, self.initial_fit_parameter_values, self.handler_assign_initial_fit_parameter_values, comp_list, use_target_model, self.target_model_fit_function_file, data_file_name, save_dir, start_time)
         self.wait_window(self.initial_fit_parameter_values_window)
 
         return None
+
+    def set_fit_method_name(self, fit_method_name, index):
+        # change color of menu labels to indicate which fit method is currently selected
+        for i in range(len(self.fit_methods_dict)+2):
+            self.fit_method_menu.entryconfig(i, background='#ffffffffffff')
+
+        self.fit_method_menu.entryconfig(index+2, background="lightblue")
+
+        self.fit_method_name = fit_method_name
+        return None
+
+    def get_fit_method_name(self):
+        return self.fit_method_name
 
     def define_target_model_fit_function(self):
         self.components_to_use = self.get_components_to_use()
@@ -352,7 +379,6 @@ class GuiAppTAAnalysis(tk.Frame):
             # getting components failed, do nothing
             return None
 
-        self.target_model_fit_function_file = self.config_files_directory + "/target_model_summands.txt"
         self.define_target_model_window = target_model_Toplevel.target_model_Window(self, self.components_to_use, self.target_model_fit_function_file)
         self.wait_window(self.define_target_model_window)
 
@@ -616,7 +642,7 @@ class GuiAppTAAnalysis(tk.Frame):
             self.nbCon_difference.tab_control.grid(row=1, column=2, sticky="ne")
         self.nbCon_difference.add_indexed_tab(self.next_tab_idx_difference, title="SVDGF "+str(self.next_tab_idx_SVDGF+1))
 
-        self.nbCon_SVDGF.data_objs[self.next_tab_idx_SVDGF] = SVDGF_reconstruction.SVDGF_Heatmap(self, self.curr_reconstruct_data_file_strVar.get(), self.curr_reconstruct_data_start_time_value.get(), self.components_to_use, self.temporal_resolution_in_ps, self.time_zero_in_ps, self.next_tab_idx_SVDGF, self.next_tab_idx_difference, self.initial_fit_parameter_values, bool(self.checkbox_var_use_target_model.get()), self.currently_used_cmaps_dict)
+        self.nbCon_SVDGF.data_objs[self.next_tab_idx_SVDGF] = SVDGF_reconstruction.SVDGF_Heatmap(self, self.curr_reconstruct_data_file_strVar.get(), self.curr_reconstruct_data_start_time_value.get(), self.components_to_use, self.temporal_resolution_in_ps, self.time_zero_in_ps, self.next_tab_idx_SVDGF, self.next_tab_idx_difference, self.initial_fit_parameter_values, bool(self.checkbox_var_use_target_model.get()), self.currently_used_cmaps_dict, self.target_model_fit_function_file)
         thread_instance_SVDGF = threading.Thread(target=self.nbCon_SVDGF.data_objs[self.next_tab_idx_SVDGF].make_data)
         thread_instance_SVDGF.start()
         self.monitor_thread(thread_instance_SVDGF, self.nbCon_SVDGF.data_objs[self.next_tab_idx_SVDGF], self.btn_show_SVDGF_reconstructed_data_heatmap, self.lbl_reassuring_SVDGF)
@@ -785,7 +811,38 @@ class GuiAppTAAnalysis(tk.Frame):
         self.btn_set_colormaps.grid(row=3, column=0, padx=3, pady=5, sticky="s")
         self.frm_orig_data_tab1.rowconfigure(self.btn_set_colormaps.grid_info()["row"], weight=1)
 
+        """ menu to select fit method """
+        self.make_menu_to_select_fit_method()
+        self.set_fit_method_name('leastsq', 0)
+
+
         return None
+
+    def make_menu_to_select_fit_method(self):
+        self.fit_methods_dict = {'leastsq': 'Levenberg-Marquardt (default)',
+                            'least_squares': 'Least-Squares minimization, using Trust Region Reflective method',
+                            'basinhopping': 'basinhopping',
+                            'ampgo': 'Adaptive Memory Programming for Global Optimization',
+                            'nelder': 'Nelder-Mead',
+                            'lbfgsb': 'L-BFGS-B',
+                            'powell': 'Powell',
+                            'cg': 'Conjugate-Gradient',
+                            'cobyla': 'Cobyla',
+                            'bfgs': 'BFGS',
+                            'tnc': 'Truncated Newton'}
+
+        self.menubar = tk.Menu(self.parent)
+        self.fit_method_menu = tk.Menu(self.menubar, tearoff=0)
+
+        self.fit_method_menu.add_command(label="for more info see lmfit package: https://lmfit.github.io/lmfit-py/fitting.html", activebackground="grey")
+        self.fit_method_menu.add_separator()
+
+        menu_strings = [str(fit_method+": "+description) for fit_method, description in self.fit_methods_dict.items()]
+        for index, fit_method in enumerate(self.fit_methods_dict.keys()):
+            self.fit_method_menu.add_command(label=menu_strings[index], command = lambda x=fit_method, i=index: self.set_fit_method_name(x, i))
+
+        self.menubar.add_cascade(label="Fit method", menu=self.fit_method_menu)
+        self.parent.config(menu=self.menubar)
 
     # Widget layout of GUI
     def initialize_GUI(self):

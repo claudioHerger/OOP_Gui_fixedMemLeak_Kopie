@@ -1,35 +1,55 @@
-import tkinter as tk
 import ast
 import re
+import tkinter as tk
 import numpy as np
+import gc
 
+from FunctionsUsedByPlotClasses import (get_closest_nr_from_array_like, get_retained_rightSVs_leftSVs_singularvs, get_TA_data_after_start_time)
 from SupportClasses import ToolTip
+from ToplevelClasses import CompareRightSVsWithFit_Toplevel
 
 class initial_fit_parameters_Window(tk.Toplevel):
-    def __init__(self, parent, file_name, current_values, assign_handler):
-        """a toplevel window to see and change the values used as initial values in the SVDGF procedure.
+    def __init__(self, parent, initial_values_file_name, current_values, assign_handler, components_list, use_user_defined_fit_function, target_model_configuration_file, data_file_name, full_path_to_final_dir, start_time):
+        """a toplevel window to inspect the initial fit parameter values in the SVDGF procedure.
         Whenever these values are changed, the new ones will be used for each fit until the user selects to change them again.
         In order to reuse these selected values once the user quits and restarts the program, the values are written to a file.
         From there they are again read when the user starts the program again.
 
         Args:
             parent (tk.Frame): the root window.
-            file_name (str): file to write new initial fit parameter values in
+            initial_values_file_name (str): file to write new initial fit parameter values in
             current_values (dict): dictionary of currently used initial fit parameter values
             assign_handler (function): method that handles the assignement of new initial fit values in main Gui which instantiates the toplevel.
+            components_list (list of ints): list of components selected.
+            use_user_defined_fit_function (bool): whether or not to use the user defined fit function.
+            target_model_configuration_file (str): path to target model configuration file.
+            data_file_name (str): path to data file
+            full_path_to_final_dir (str): path to save figures and data to (figure in compare window).
+            start_time (str of float): the approximate time step value to cut off data matrix when making SVD.
         """
+
+
         super().__init__(parent)
         self.parent = parent
         self.old_initial_fit_parameter_values = current_values
-        self.file_name = file_name
+        self.intial_values_file_name = initial_values_file_name
         self.assign_handler = assign_handler
 
         self.title('Set the initial fit parameter values - used for each fit.')
 
-        self.btn_ignore_and_quit = tk.Button(self, text="Hit Enter: Ignore and quit", command=lambda: self.ignore_and_quit())
-        ttp_btn_ignore_and_quit = ToolTip.CreateToolTip(self.btn_ignore_and_quit, \
+        # properties used for rightSVs vs initial fit parameter values window
+        if components_list is not None:
+            self.components_list = components_list
+        self.use_user_defined_fit_function = use_user_defined_fit_function
+        self.data_file_name = data_file_name
+        self.full_path_to_final_dir = full_path_to_final_dir
+        self.start_time = start_time
+        self.target_model_configuration_file = target_model_configuration_file
+
+        self.btn_quit = tk.Button(self, text="Quit", command=lambda: self.ignore_and_quit())
+        ttp_btn_quit = ToolTip.CreateToolTip(self.btn_quit, \
         'Quit this window and use the last saved fit parameters.')
-        self.btn_ignore_and_quit.grid(padx=10, pady=10, sticky="se", row=99, column=3)
+        self.btn_quit.grid(padx=10, pady=10, sticky="se", row=99, column=3)
 
         self.display_fit_parameters_labels_and_entries()
 
@@ -53,9 +73,135 @@ class initial_fit_parameters_Window(tk.Toplevel):
         'Removes the parameters for the last component.')
         self.btn_remove_parameters.grid(pady=10, sticky="se", row=99, column=2)
 
-        self.grab_set()         # to keep the window in front of application until it gets closed
+        self.btn_show_rSVs_as_reconstructed_by_initial_fit_param_values = tk.Button(self, text="show rSVs as reconstructed\nby initial values", command=self.show_rightSVs_window)
+        self.btn_show_rSVs_as_reconstructed_by_initial_fit_param_values.grid(row=2, column=3, rowspan=2)
+
+        self.btn_update_show_rSVs_window = tk.Button(self, text="update show rSVs window\nwith new values", command=self.update_show_rSVs_window)
+        self.btn_update_show_rSVs_window.grid(row=5, column=3, rowspan=2)
+
         self.focus_set()
-        self.bind("<Return>", lambda x: self.ignore_and_quit())
+        self.bind("<Return>", lambda x: self.update_show_rSVs_window())
+
+
+    def get_summands_of_user_defined_fit_function_from_file(self, target_model_configuration_file):
+        try:
+            with open(target_model_configuration_file, mode='r') as dict_file:
+                summands_of_user_defined_fit_function = ast.literal_eval(dict_file.read().strip())
+        except (SyntaxError, FileNotFoundError):
+            raise ValueError("getting the user defined summands for fit function from file failed, or the dict was empty.\n"
+                            +"Check the file!\n"
+                            +"computation is discontinued!")
+
+        return summands_of_user_defined_fit_function
+
+    def parse_summands_of_user_defined_fit_function_to_actual_code(self, all_summands_dict: dict):
+        parsed_summands_list = []
+
+        selected_components_summands_dict = {}
+        for component in self.components_list:
+            selected_components_summands_dict[f"summand_component{component}"] = all_summands_dict[f"summand_component{component}"]
+
+        for summand_str in selected_components_summands_dict.values():
+            parsed_summands_list.append(self.parse_summand(summand_str))
+
+        return parsed_summands_list
+
+    def parse_summand(self, summand_str: str):
+        if summand_str == "":
+            return "0"
+        summand_str_with_time_delays_parsed = summand_str.replace("t", "time_delays")
+        summand_str_with_decay_constants_parsed = summand_str_with_time_delays_parsed
+        list_of_ks_in_summand_str = re.findall(r'k\d+', summand_str_with_time_delays_parsed)
+        for k_str in list_of_ks_in_summand_str:
+            summand_str_with_decay_constants_parsed = re.sub(r'k\d+', f"taus[\"component{k_str[1:]}\"]", summand_str_with_decay_constants_parsed, count=1)
+
+        summand_str_with_brackets_added = "(" +summand_str_with_decay_constants_parsed+ ")"
+
+        return summand_str_with_brackets_added
+
+    def set_new_initial_values_dicts_for_compare_window(self):
+        self.initial_decay_constants_dict={f'tau_component{component}':self.new_initial_fit_parameter_values["time_constants"][component] for component in self.components_list}
+
+        self.initial_amplitude_values_dict = {}
+        for component in self.components_list:
+            for i in range(len(self.components_list)):
+                self.initial_amplitude_values_dict[f'amp_rSV{i}_component{component}'] = self.new_initial_fit_parameter_values[f'amps_rSV{i}'][component]
+
+        return None
+
+    def update_show_rSVs_window(self):
+        if not hasattr(self, "compareWindow"):
+            self.show_rightSVs_window()
+            return None
+
+        try:
+            self.compareWindow.winfo_ismapped()
+
+            if self.check_if_valid_numbers_entered() == "invalid":
+                return None
+
+            self.set_new_initial_values_dicts_for_compare_window()
+
+            self.compareWindow.reconstruct_rSVs_from_fit_results_using_intial_values(self.initial_decay_constants_dict, self.initial_amplitude_values_dict)
+
+            self.compareWindow.update_axes()
+        except AttributeError:
+            self.show_rightSVs_window()
+
+    def show_rightSVs_window(self):
+
+        if self.check_if_valid_numbers_entered() == "invalid":
+            return None
+
+        if (self.data_file_name == "" or self.data_file_name == "no file selected"):
+            tk.messagebox.showerror("Error", "For this you need to have selected a datafile first")
+            self.lift()
+            return None
+
+        self.set_new_initial_values_dicts_for_compare_window()
+
+        try:
+            # get data
+            self.TA_data_after_time, self.time_delays, self.wavelengths = get_TA_data_after_start_time.run(self.data_file_name, self.start_time)
+            # update start time to the actual time delay that is closest to user input
+            self.start_time = str(get_closest_nr_from_array_like.run(self.time_delays, float(self.start_time)))
+            if (self.start_time == self.time_delays[-1]):
+                raise ValueError("The start time you entered was above the last time delay. Thus it was moved to the last time delay.\n"+
+                                "However, an SVD and thus a fit wont work in that case.")
+        except ValueError as error:
+            tk.messagebox.showerror("error", str(error)+"\n\nTherefore you wont have any right singular vectors to compare.")
+            self.lift()
+            return None
+
+        self.time_delays = self.time_delays[self.time_delays.index(self.start_time):]
+
+        # get the selected rSVs, singular values and lSVs - input is TA data after time and self.components_list
+        self.retained_rSVs, self.retained_lSVs, self.retained_singular_values = get_retained_rightSVs_leftSVs_singularvs.run(self.TA_data_after_time, self.components_list)
+
+        # parse model function if used
+        if self.use_user_defined_fit_function:
+            try:
+                self.summands_of_user_defined_fit_function = self.get_summands_of_user_defined_fit_function_from_file(self.target_model_configuration_file)
+                self.parsed_summands_of_user_defined_fit_function = self.parse_summands_of_user_defined_fit_function_to_actual_code(self.summands_of_user_defined_fit_function)
+            except ValueError as error:
+                tk.messagebox.showerror("Warning,", "an exception occurred!""\nProbably due to a problem with the user defined fit function file!\n"+
+                                    f"Exception {type(error)} message: \n"+ str(error)+"\n")
+                self.lift()
+                return None
+
+        # make the window
+        try:
+            if not self.use_user_defined_fit_function:
+                self.compareWindow = CompareRightSVsWithFit_Toplevel.CompareWindow(self.parent, self.use_user_defined_fit_function, 0, self.components_list, self.time_delays, self.retained_rSVs, self.retained_singular_values, self.initial_decay_constants_dict, self.initial_amplitude_values_dict, self.data_file_name, self.full_path_to_final_dir, is_from_initial_values_window=True)
+            else:
+                self.compareWindow = CompareRightSVsWithFit_Toplevel.CompareWindow(self.parent, self.use_user_defined_fit_function, 0, self.components_list, self.time_delays, self.retained_rSVs, self.retained_singular_values, self.initial_decay_constants_dict, self.initial_amplitude_values_dict, self.data_file_name, self.full_path_to_final_dir, parsed_summands_of_user_defined_fit_function=self.parsed_summands_of_user_defined_fit_function, is_from_initial_values_window=True)
+            self.compareWindow.run()
+        except KeyError as error:
+            tk.messagebox.showerror("error", "an error occured when trying to open the window to compare the right SVs with the fit function output using the entered initial values!\n"
+                                    +f"type of error: {type(error)}, \nerrormsg: {error}")
+            self.lift()
+
+        return None
 
     def remove_last_parameters(self):
         try:
@@ -227,17 +373,23 @@ class initial_fit_parameters_Window(tk.Toplevel):
         except ValueError:
             return False
 
-    def assign_new_values_if_correct_format(self):
+    def check_if_valid_numbers_entered(self):
         self.new_initial_fit_parameter_values = self.entries_contain_number_strings_only()
-
         if self.new_initial_fit_parameter_values == "invalid":
             tk.messagebox.showwarning(title="Warning: parsing error.", message=f"Either your entered values could not be successfully parsed to floats,\n"+
                                                                                 "or there is some other ploblem with your entered lists! Check them again.")
 
+            self.lift()
+
+        return self.new_initial_fit_parameter_values
+
+    def assign_new_values_if_correct_format(self):
+        self.check_if_valid_numbers_entered()
+        if self.new_initial_fit_parameter_values == "invalid":
             return None
 
         # write user entered values to file, then assign them to parent object
-        with open(file=self.file_name, mode="w") as file:
+        with open(file=self.intial_values_file_name, mode="w") as file:
             file.write(str(self.new_initial_fit_parameter_values))
 
         self.assign_handler(self.new_initial_fit_parameter_values)
@@ -245,4 +397,28 @@ class initial_fit_parameters_Window(tk.Toplevel):
         self.ignore_and_quit()
 
     def ignore_and_quit(self):
+        if hasattr(self, "compareWindow"):
+            try:
+                self.compareWindow.delete_attrs_and_destroy()
+            except AttributeError:
+                pass # compareWindow has already been destroyed / closed
+
+        self.delete_attrs_and_destroy()
+
+    def delete_attrs_and_destroy(self):
         self.destroy()
+        self.delete_attrs()
+
+        return None
+
+    def delete_attrs(self):
+        attr_lst = list(vars(self))
+        attr_lst.remove('parent')
+        for attr in attr_lst:
+            delattr(self, attr)
+
+        del attr_lst
+
+        gc.collect()
+
+        return None

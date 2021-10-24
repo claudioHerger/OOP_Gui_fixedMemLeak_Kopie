@@ -15,7 +15,7 @@ def get_directory_paths(start_time, tab_idx, components=None):
     final_dir = "starttime_"+str(start_time)+"_tab"+str(tab_idx+1)+"_created_at_"+str(hour)+"h_"+str(minute)+"min"
 
     if components is not None:
-        final_dir = str(components)+"/starttime_"+str(start_time)+"_tab"+str(tab_idx+1)+"_created_at_"+str(hour)+"h_"+str(minute)+"min"
+        final_dir = str(components)+"/starttime_"+str(start_time)+"_tab"+str(tab_idx+1)+"_created_at_"+str(hour)+"min"
 
     return date_dir, final_dir
 

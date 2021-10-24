@@ -188,7 +188,7 @@ def initialize_fit_parameters(retained_components, initial_fit_parameter_values)
     return fit_params
 
 
-def start_the_fit(retained_components, time_delays, retained_rSVs, retained_singular_values, initial_fit_parameter_values, time_zero, temp_resolution, parsed_user_defined_summands):
+def start_the_fit(retained_components, time_delays, retained_rSVs, retained_singular_values, initial_fit_parameter_values, time_zero, temp_resolution, parsed_user_defined_summands, fit_method_name):
     """ initialize vectors to fit and fit parameters, then calls lmfit function """
     # multiplication of each retained right SV with its respective singular value:
     vectors_to_fit = np.zeros((len(retained_components), len(time_delays)))
@@ -213,11 +213,11 @@ def start_the_fit(retained_components, time_delays, retained_rSVs, retained_sing
     # run the global fit over all the data sets, i.e. all VT_i
     # per default uses method='levenberg-marquardt-leastsq' = 'leastsq'
     # could change the fit method via "method" argument. see web for possible fit methods
-    result = lmfit.minimize(objective, fit_params, method='leastsq', args=(time_delays, vectors_to_fit, retained_components, index_of_first_increased_time_interval, gaussian_for_convolution, parsed_user_defined_summands, asteval_interpreter))
+    result = lmfit.minimize(objective, fit_params, method=fit_method_name, args=(time_delays, vectors_to_fit, retained_components, index_of_first_increased_time_interval, gaussian_for_convolution, parsed_user_defined_summands, asteval_interpreter))
 
     return result
 
-def run(retained_rSVs, retained_singular_values, retained_components, time_delays, start_time, initial_fit_parameter_values, time_zero, temp_resolution, parsed_user_defined_summands=False):
+def run(retained_rSVs, retained_singular_values, retained_components, time_delays, start_time, initial_fit_parameter_values, time_zero, temp_resolution, parsed_user_defined_summands=False, fit_method_name='leastsq'):
 
     # for the fit function we need the time_delays reduced to the ones after start_time
     start_time_index = time_delays.index(str(start_time))
@@ -226,7 +226,7 @@ def run(retained_rSVs, retained_singular_values, retained_components, time_delay
     time_delays = np.array(time_delays)
 
     try:
-        result = start_the_fit(retained_components, time_delays, retained_rSVs, retained_singular_values, initial_fit_parameter_values, time_zero, temp_resolution, parsed_user_defined_summands)
+        result = start_the_fit(retained_components, time_delays, retained_rSVs, retained_singular_values, initial_fit_parameter_values, time_zero, temp_resolution, parsed_user_defined_summands, fit_method_name)
         resulting_fit_params = result.params
 
     except (ValueError,TypeError) as error:
