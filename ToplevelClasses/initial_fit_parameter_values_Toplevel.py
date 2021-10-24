@@ -275,6 +275,7 @@ class initial_fit_parameters_Window(tk.Toplevel):
                         entry.insert(len(entry.get())-1, ", 0.7")
                 except SyntaxError:
                     tk.messagebox.showwarning(title="Warning.", message=f"One of your remaining entered lists could not be evaluated to a list.")
+                    self.lift()
                     return None
 
         self.add_up_and_down_key_bindings_to_entries()
