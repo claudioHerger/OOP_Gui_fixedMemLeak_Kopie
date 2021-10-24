@@ -45,18 +45,14 @@ class GuiAppTAAnalysis(tk.Frame):
         self.curr_reconstruct_data_file_strVar = tk.StringVar()
         self.curr_reconstruct_data_file_strVar.set("no file selected")
         # self.curr_reconstruct_data_file_strVar.set(self.base_directory+"/DataFiles/simulatedTAData_formatted.txt")
-        # self.curr_reconstruct_data_file_strVar.set(self.base_directory+"/DataFiles/data_full_0.txt")
-        self.curr_reconstruct_data_file_strVar.set(self.base_directory+"/DataFiles/maryam2.txt")
+        self.curr_reconstruct_data_file_strVar.set(self.base_directory+"/DataFiles/data_full_0.txt")
         self.curr_reconstruct_data_file_strVar.trace_add("write", self.update_filename_in_title_and_truncated_filename_for_tab_header_callback)
         self.curr_reconstruct_data_start_time_value = tk.DoubleVar()
         self.curr_reconstruct_data_start_time_value.trace_add("write", self.update_filename_in_title_and_truncated_filename_for_tab_header_callback)
         self.curr_reconstruct_data_start_time_value.set(-999.0)
-        self.curr_reconstruct_data_start_time_value.set(0.0)
-        self.curr_reconstruct_data_start_time_value.set(0.1)
-
 
         # determine the number of tabs possible for all the different notebooks:
-        self.NR_OF_TABS = 6    # this should really be left below 50!
+        self.NR_OF_TABS = 10    # this should really be left below 50!
         self.NR_OF_DIFFERENCE_TABS = 2 * self.NR_OF_TABS
 
         # some styling variables
