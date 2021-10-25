@@ -445,7 +445,7 @@ class SVDGF_Heatmap():
             if str(error) == "":
                 tk.messagebox.showerror("Warning, an exception occurred!", f"Exception {type(error)} message: \n"+ str(error)+ "\n"+
                                         "\nProbably due to a ValueError occurring in fit down the line, \ni.e.: the fit might not have converged. "
-                                        +"\n\nMaybe try it with changed initial fit parameter values (button in bottom left corner),"
+                                        +"\n\nMaybe try it with another fit method (Fit method menu) or changed initial fit parameter values (button in bottom left corner),"
                                         +" or another start time-value or another set of components ...")
             else: tk.messagebox.showerror("Warning, an exception occurred!", f"Exception {type(error)} message: \n"+ str(error))
 
@@ -472,7 +472,7 @@ class SVDGF_Heatmap():
                                     +"\n\nLikely due to some error in fit procedure which lead to very small fitted decay constants in course of which we get numbers like exp(-bigNumber),"
                                     +" which underflows a float."
                                     +f"\n{self.fit_result_decay_times=}"
-                                    +"\n\nMaybe try it with changed initial fit parameter values (button in bottom left corner),"
+                                    +"\n\nMaybe try it with another fit method (Fit method Menu) or changed initial fit parameter values (button in bottom left corner),"
                                     +" or another set of components or another start time-value...")
             self.return_gui_to_initial_state()
             return None

@@ -46,8 +46,10 @@ class MultiExcitation():
         self.time_steps = self.compute_steps(self.matrix_dimensions_dict["time_range"], self.matrix_dimensions_dict["time_stepsize"])
 
         self.data_matrix = np.zeros((len(self.time_steps), len(self.wavelength_steps)))
-        self.pump_noise_scale = self.noise_dict["pump_noise_scale"]
-        self.probe_noise_scale = self.noise_dict["probe_noise_scale"]
+
+        self.noise_scale = self.noise_dict["scale"]
+        self.pump_noise_scale = self.noise_scale * self.noise_dict["pump_noise_scale"]
+        self.probe_noise_scale = self.noise_scale * self.noise_dict["probe_noise_scale"]
 
         return None
 
@@ -61,7 +63,7 @@ class MultiExcitation():
     # new "excitation" generated for each measurement at certain time delay
     def compute_data_matrix(self):
         for time_step_index, time_step in enumerate(self.time_steps):
-            noisy_excitations = [self.add_normal_noise_to_array(self.compute_gaussian(self.components_dict["amplitudes"][i], self.wavelength_steps, self.components_dict["wavelength_expectation_values"][i], self.components_dict["wavelength_std_deviations"][i]), noise_scale=self.pump_noise_scale) for i in range(self.nr_of_components) ]
+            noisy_excitations = [self.add_normal_noise_to_array(self.compute_gaussian(self.components_dict["amplitudes"][i], self.wavelength_steps, self.components_dict["wavelength_expectation_values"][i], self.components_dict["wavelength_std_deviations"][i]), self.pump_noise_scale) for i in range(self.nr_of_components) ]
             for component in range(self.nr_of_components):
                 decay_constant = self.components_dict["decay_constants"][component]
                 for wavelength_index in range(len(self.wavelength_steps)):
@@ -86,7 +88,7 @@ class MultiExcitation():
         gaussian = np.array(amplitude * np.exp(-((steps - exp_value)**2)/(2*(std_deviation**2))), dtype=float)
         return gaussian
 
-    def add_normal_noise_to_array(self, array, noise_scale=1):
+    def add_normal_noise_to_array(self, array, noise_scale):
         noisy_array = array + noise_scale*self.get_rand_nrs_from_somewhat_normal_distribution(how_many_numbers=len(array))
         return noisy_array
 
@@ -166,17 +168,20 @@ if __name__ == "__main__":
 
     # config_files_dir = os.getcwd()+"/configFiles/wavelength_overlap/"
     # config_files_dir = os.getcwd()+"/configFiles/temporal_overlap/"
-    config_files_dir = os.getcwd()+"/configFiles/temporal_overlap_reduced_noise_factor100/"
-    # config_files_dir = os.getcwd()+"/configFiles/"
+    # config_files_dir = os.getcwd()+"/configFiles/temporal_overlap_reduced_noise_factor100/"
+    config_files_dir = os.getcwd()+"/configFiles/temporal_overlap_reduced_noise_factor10/"
 
     # results_dir = "MultiExcitation/wavelength_overlap/"
-    results_dir = "MultiExcitation/temporal_overlap_reduced_noise_factor100/"
+    # results_dir = "MultiExcitation/temporal_overlap/"
+    # results_dir = "MultiExcitation/temporal_overlap_reduced_noise_factor100/"
+    results_dir = "MultiExcitation/temporal_overlap_reduced_noise_factor10/"
 
 
+    """loop over configFile subdirectory"""
+    start = time.time()
     files_in_dir = [f for f in os.listdir(config_files_dir) if os.path.isfile(os.path.join(config_files_dir, f))]
     multi_excitation_objs = [MultiExcitation(config_files_dir+file, results_dir=results_dir, make_plots=True) for file in files_in_dir]
 
-    start = time.time()
     with futures.ProcessPoolExecutor() as executor:
         results = [executor.submit(multi_excitation_obj.run_simulation) for multi_excitation_obj in multi_excitation_objs]
 
