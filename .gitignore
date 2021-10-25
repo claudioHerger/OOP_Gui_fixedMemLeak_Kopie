@@ -1,32 +1,33 @@
 /PlotClasses
 /thesis_plots
-/DataFiles/ResultData
 /PlotClasses_noThreads/SingularValues.py
 make_plots_for_thesis.py
 
 **/__pycache__
 
 # maryam and hansi data files stuff
-prepare_maryam_data.py
-hansi_data_prep.py
-/DataFiles/maryam2/
-/DataFiles/gridded_hansi_data.txt
-/DataFiles/maryam2.txt
-/DataFiles/datforclaudio.txt
-/DataFiles/datforclaudio_reduced.txt
-/DataFiles/datforclaudio
-/DataFiles/Anne_Ruth_Dyad_12_2017
-/DataFiles/Anne_Ruth_Dyad_12_2017.rar
-/DataFiles/datforclaudio.rar
+# prepare_maryam_data.py
+# hansi_data_prep.py
+# /DataFiles/maryam2/
+# /DataFiles/gridded_hansi_data.txt
+# /DataFiles/maryam2.txt
+# /DataFiles/datforclaudio.txt
+# /DataFiles/datforclaudio_reduced.txt
+# /DataFiles/datforclaudio
+# /DataFiles/Anne_Ruth_Dyad_12_2017
+# /DataFiles/Anne_Ruth_Dyad_12_2017.rar
+# /DataFiles/datforclaudio.rar
 
-# simulation files
-# /SimulateData/old_simulations
-# /SimulateData/moreSimulationPlots
-# /SimulateData/test
-# /SimulateData/sim_SingleExcitation.py
-# /SimulateData/simulatedData/SingleExcitation/
-# /SimulateData/configFiles/test/
+# DATAFILES:
+# still need to include the simulation data as used in thesis!
+# should do once benchmarking chapter is finished.
+/DataFiles
 
+
+
+# SIMULATION DIRECTORY:
+# still need to include the simulation data as used in thesis!
+# should do once benchmarking chapter is finished.
 /SimulateData
 !/SimulateData/sim_MultiExcitation.py
 !/SimulateData/__init__.py
