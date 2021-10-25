@@ -165,13 +165,13 @@ if __name__ == "__main__":
     # test_ta_sim_obj = MultiExcitation(os.getcwd()+"/configFiles/test/test_config_file.ini", make_plots=True)
     # print(f'MultiExcitation excecution time: {time.time()-start}')
 
-    config_files_dir = os.getcwd()+"/configFiles/wavelength_overlap/"
+    # config_files_dir = os.getcwd()+"/configFiles/wavelength_overlap/"
     # config_files_dir = os.getcwd()+"/configFiles/temporal_overlap/"
-    # config_files_dir = os.getcwd()+"/configFiles/temporal_overlap_reduced_noise/"
+    config_files_dir = os.getcwd()+"/configFiles/temporal_overlap_reduced_noise_factor100/"
     # config_files_dir = os.getcwd()+"/configFiles/"
 
-    results_dir = "MultiExcitation/wavelength_overlap/"
-    # results_dir = "MultiExcitation/temporal_overlap_reduced_noise/"
+    # results_dir = "MultiExcitation/wavelength_overlap/"
+    results_dir = "MultiExcitation/temporal_overlap_reduced_noise_factor100/"
 
 
     files_in_dir = [f for f in os.listdir(config_files_dir) if os.path.isfile(os.path.join(config_files_dir, f))]

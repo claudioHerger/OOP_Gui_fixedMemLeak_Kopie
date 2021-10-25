@@ -20,9 +20,14 @@ hansi_data_prep.py
 /DataFiles/datforclaudio.rar
 
 # simulation files
-/SimulateData/old_simulations
-/SimulateData/moreSimulationPlots
-/SimulateData/test
-/SimulateData/sim_SingleExcitation.py
-/SimulateData/simulatedData/SingleExcitation/
-/SimulateData/configFiles/test/
+# /SimulateData/old_simulations
+# /SimulateData/moreSimulationPlots
+# /SimulateData/test
+# /SimulateData/sim_SingleExcitation.py
+# /SimulateData/simulatedData/SingleExcitation/
+# /SimulateData/configFiles/test/
+
+/SimulateData
+!/SimulateData/sim_MultiExcitation.py
+!/SimulateData/__init__.py
+!/SimulateData/MakeMoreSimulationPlots.py
