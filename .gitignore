@@ -22,6 +22,7 @@ make_plots_for_thesis.py
 # still need to include the simulation data as used in thesis!
 # should do once benchmarking chapter is finished.
 /DataFiles
+!/DataFiles/maryam2.txt
 
 
 
