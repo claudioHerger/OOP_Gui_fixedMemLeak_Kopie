@@ -230,6 +230,7 @@ def run(retained_rSVs, retained_singular_values, retained_components, time_delay
         resulting_fit_params = result.params
 
     except (ValueError,TypeError) as error:
-        raise  # raises the caught exception again
+        raise ValueError(str(error) + "\n\nMaybe try it with another fit method (Fit method menu) or changed initial fit parameter values (button in bottom left corner),"
+                                +" or another start time-value or another set of components ...") # raises the caught exception again
 
     return result, resulting_fit_params
