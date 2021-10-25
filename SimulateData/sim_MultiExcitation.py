@@ -5,7 +5,10 @@ import numpy as np
 import time
 import os
 
-import matplotlib.pyplot as plt
+# make things a bit faster with multiprocessing:
+from concurrent import futures
+
+from matplotlib.figure import Figure
 import matplotlib
 import seaborn as sns
 
@@ -54,7 +57,6 @@ class MultiExcitation():
         self.save_and_format_data_matrix()
 
         return None
-
 
     # new "excitation" generated for each measurement at certain time delay
     def compute_data_matrix(self):
@@ -133,9 +135,10 @@ class MultiExcitation():
         yticklabels = [label_format.format(x) for x in yticklabels]
         xticklabels = [label_format.format(x) for x in xticklabels]
 
-        plt.figure(figsize=(10,7))
+        fig = Figure(figsize=(10,7))
+        ax = fig.add_subplot(1,1,1)
         cmap = sns.diverging_palette(220, 20, as_cmap=True)
-        ax = sns.heatmap(data, cmap=cmap, cbar_kws={'label': 'intensity'})
+        sns.heatmap(data, ax=ax, cmap=cmap, cbar_kws={'label': 'intensity'})
         cbar = ax.collections[0].colorbar
         cbar.ax.yaxis.label.set_size(17)        # taking a detour to set the fontsize of colorbar label
 
@@ -149,21 +152,17 @@ class MultiExcitation():
         # ax.set_title(type(self).__name__)
         ax.set_title("coarsly simulated time-resolved spectroscopy data")
 
-        plt.tight_layout()
+        fig.tight_layout()
 
         if self.results_dir != "" and not os.path.exists(self.final_dir):
             os.makedirs(os.getcwd()+"/simulatedData/"+self.results_dir)
 
-        plt.savefig(os.getcwd()+"/simulatedData/"+self.results_dir+"/"+self.save_heatmap_file_name)
-        plt.close()
+        fig.savefig(os.getcwd()+"/simulatedData/"+self.results_dir+"/"+self.save_heatmap_file_name)
 
         return None
 
 
 if __name__ == "__main__":
-    # start = time.time()
-    # test_ta_sim_obj = MultiExcitation(os.getcwd()+"/configFiles/test/test_config_file.ini", make_plots=True)
-    # print(f'MultiExcitation excecution time: {time.time()-start}')
 
     # config_files_dir = os.getcwd()+"/configFiles/wavelength_overlap/"
     # config_files_dir = os.getcwd()+"/configFiles/temporal_overlap/"
@@ -175,13 +174,16 @@ if __name__ == "__main__":
 
 
     files_in_dir = [f for f in os.listdir(config_files_dir) if os.path.isfile(os.path.join(config_files_dir, f))]
-    for file in files_in_dir:
-        print()
-        print(f'file: {file}')
-        start = time.time()
-        multi_excitation_obj = MultiExcitation(config_files_dir+file, results_dir=results_dir, make_plots=True)
-        multi_excitation_obj.run_simulation()
-        print(f'MultiExcitation excecution time: {time.time()-start}')
+    multi_excitation_objs = [MultiExcitation(config_files_dir+file, results_dir=results_dir, make_plots=True) for file in files_in_dir]
+
+    start = time.time()
+    with futures.ProcessPoolExecutor() as executor:
+        results = [executor.submit(multi_excitation_obj.run_simulation) for multi_excitation_obj in multi_excitation_objs]
+
+        for result in futures.as_completed(results):
+            print(result)
+
+    print(f'MultiExcitation excecution time: {time.time()-start}')
 
     # multi_excitation_obj = MultiExcitation(os.getcwd()+"/configFiles/wavelength_overlap/overlap_0.ini", results_dir=results_dir, make_plots=True)
     # multi_excitation_obj.run_simulation()
