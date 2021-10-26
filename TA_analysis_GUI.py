@@ -708,7 +708,7 @@ class GuiAppTAAnalysis(tk.Frame):
         nr_checkboxes_reconstruct_data = 10
         self.checkbutton_vars_reconstruct_data = [tk.IntVar(0) for _ in range(nr_checkboxes_reconstruct_data)]
 
-        # set some checkbuttons as checked -- for convenience when testing
+        # set some checkbuttons as checked -- for convenience when testing or otherwise
         for i in range(nr_checkboxes_reconstruct_data-8):
             self.checkbutton_vars_reconstruct_data[i].set(1)
 

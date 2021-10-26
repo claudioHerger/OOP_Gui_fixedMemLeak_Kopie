@@ -72,17 +72,11 @@ class initial_fit_parameters_Window(tk.Toplevel):
         'Removes the parameters for the last component.')
         self.btn_remove_parameters.grid(pady=10, sticky="se", row=99, column=2)
 
-        self.btn_show_rSVs_as_reconstructed_by_initial_fit_param_values = tk.Button(self, text="show rSVs as reconstructed\nby initial values", command=self.show_rightSVs_window)
+        self.btn_show_rSVs_as_reconstructed_by_initial_fit_param_values = tk.Button(self, text="show/update rSVs as reconstructed\nby initial values", command=self.update_show_rSVs_window)
         ttp_btn_show_rSVs_as_reconstructed_by_initial_fit_param_values = ToolTip.CreateToolTip(self.btn_show_rSVs_as_reconstructed_by_initial_fit_param_values, \
-        'open a window to compare the weighted right singular vectors $\sigma_i * V_i$ (of the checked components) with the fit function $f_i$ as computed'
+        'open or update a window to compare the weighted right singular vectors $\sigma_i * V_i$ (of the checked components) with the fit function $f_i$ as computed'
         ' from the entered initial fit parameter values', optional_x_direction_bump=150, optional_y_direction_bump=50)
-        self.btn_show_rSVs_as_reconstructed_by_initial_fit_param_values.grid(row=2, column=3, rowspan=2)
-
-        self.btn_update_show_rSVs_window = tk.Button(self, text="update show rSVs window\nwith new values", command=self.update_show_rSVs_window)
-        ttp_btn_update_show_rSVs_window = ToolTip.CreateToolTip(self.btn_update_show_rSVs_window, \
-        'update (or open) the window to compare the weighted right singular vectors $\sigma_i * V_i$ (of the checked components) with the fit function $f_i$ as computed'
-        ' from the entered initial fit parameter values.\n', optional_x_direction_bump=150, optional_y_direction_bump=50)
-        self.btn_update_show_rSVs_window.grid(row=5, column=3, rowspan=2)
+        self.btn_show_rSVs_as_reconstructed_by_initial_fit_param_values.grid(row=2, column=3, rowspan=2, padx=3)
 
         self.focus_set()
         self.bind("<Return>", lambda x: self.update_show_rSVs_window())
