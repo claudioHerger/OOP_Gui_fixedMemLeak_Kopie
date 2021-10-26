@@ -8,10 +8,11 @@ make_plots_for_thesis.py
 # DATAFILES:
 # still need to include the simulation data as used in thesis!
 # should do once benchmarking chapter is finished.
-/DataFiles
-# why is this not working?
+DataFiles/*
 !/DataFiles/maryam2.txt
 
+# ignored_folder/**
+# !ignored_folder/**/
 
 
 # SIMULATION DIRECTORY:
