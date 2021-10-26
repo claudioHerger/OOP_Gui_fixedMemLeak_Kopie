@@ -70,6 +70,7 @@ class DAS_Window(tk.Toplevel):
         self.DAS = self.data_obj.DAS
         self.wavelengths = self.data_obj.wavelengths
         self.decay_constants = ['{:.2f}'.format(self.data_obj.resulting_SVDGF_fit_parameters['tau_component%i' % (j)].value) for j in self.data_obj.components_list]
+        self.decay_constants_std_errors = ['{:.2f}'.format(self.data_obj.resulting_SVDGF_fit_parameters['tau_component%i' % (j)].stderr) for j in self.data_obj.components_list]
         self.filename = self.data_obj.filename
         self.start_time = self.data_obj.start_time
 
@@ -86,9 +87,9 @@ class DAS_Window(tk.Toplevel):
 
         for i in self.which_DAS_list:
             try:
-                self.ax.plot(self.wavelengths, self.DAS[:, i], label=fr'DAS_comp{i}, $\tau$ = {self.decay_constants[i]}', color=sns.color_palette("Set2")[i])
+                self.ax.plot(self.wavelengths, self.DAS[:, i], label=fr'DAS_comp{i}, $\tau$ = {self.decay_constants[i]} $\pm$ {self.decay_constants_std_errors[i]}', color=sns.color_palette("Set2")[i])
             except IndexError:
-                self.ax.plot(self.wavelengths, self.DAS[:, i], label=fr'DAS_comp{i}, $\tau$ = {self.decay_constants[i]}', color=sns.color_palette("husl", 8)[i-8])
+                self.ax.plot(self.wavelengths, self.DAS[:, i], label=fr'DAS_comp{i}, $\tau$ = {self.decay_constants[i]} $\pm$ {self.decay_constants_std_errors[i]}', color=sns.color_palette("husl", 8)[i-8])
 
         self.ax.legend()
         self.ax.set_xticks(self.xticks)
