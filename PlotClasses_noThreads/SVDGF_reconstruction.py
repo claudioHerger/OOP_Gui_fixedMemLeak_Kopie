@@ -502,7 +502,7 @@ class SVDGF_Heatmap():
         saveData.save_result_data(self.full_path_to_final_dir, self.result_data_to_save)
 
         # save data matrices
-        self.data_matrices_to_save = {"SVDGF_reconstruction_matrix": self.SVDGF_reconstructed_data.T, "difference_matrix": self.difference_data.T, "TA_after_start_time_matrix": self.TA_data_after_time.T, "difference_matrix_selected_DAS"+str(self.indeces_for_DAS_matrix): self.difference_matrix_selected_DAS.T}
+        self.data_matrices_to_save = {"SVDGF_reconstruction_matrix": self.SVDGF_reconstructed_data.T, "difference_matrix": self.difference_data.T, "data_matrix_after_start_time": self.TA_data_after_time.T, "difference_matrix_selected_DAS"+str(self.indeces_for_DAS_matrix): self.difference_matrix_selected_DAS.T}
         saveData.save_formatted_data_matrix_after_time(self.full_path_to_final_dir, self.time_delays, self.wavelengths, self.data_matrices_to_save)
 
         return None
