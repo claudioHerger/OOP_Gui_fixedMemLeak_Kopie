@@ -378,7 +378,8 @@ class initial_fit_parameters_Window(tk.Toplevel):
         try:
             if some_string.lower() in ("nan", "-nan", "-inf", "inf"):
                 return False
-            float(some_string.lstrip("0"))      # lstrip("0") removes leading "0"s. i think at some point python uses octal numeral system (base 8) (if i did not remove leading "0"s)
+            if some_string == "0": return True
+            float(some_string.lstrip("0"))   # lstrip("0") removes leading "0"s. i think at some point python uses octal numeral system (base 8) (if i did not remove leading "0"s)
             return True
         except ValueError:
             return False

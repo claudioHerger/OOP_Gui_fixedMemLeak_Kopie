@@ -356,7 +356,6 @@ class GuiAppTAAnalysis(tk.Frame):
         start_time = self.curr_reconstruct_data_start_time_value.get()
 
         self.initial_fit_parameter_values_window = initial_fit_parameter_values_Toplevel.initial_fit_parameters_Window(self, self.initial_fit_parameter_values_file, self.initial_fit_parameter_values, self.handler_assign_initial_fit_parameter_values, comp_list, use_target_model, self.target_model_fit_function_file, data_file_name, save_dir, start_time)
-        self.wait_window(self.initial_fit_parameter_values_window)
 
         return None
 

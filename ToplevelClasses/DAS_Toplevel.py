@@ -70,7 +70,10 @@ class DAS_Window(tk.Toplevel):
         self.DAS = self.data_obj.DAS
         self.wavelengths = self.data_obj.wavelengths
         self.decay_constants = ['{:.2f}'.format(self.data_obj.resulting_SVDGF_fit_parameters['tau_component%i' % (j)].value) for j in self.data_obj.components_list]
-        self.decay_constants_std_errors = ['{:.2f}'.format(self.data_obj.resulting_SVDGF_fit_parameters['tau_component%i' % (j)].stderr) for j in self.data_obj.components_list]
+        try:
+            self.decay_constants_std_errors = ['{:.2f}'.format(self.data_obj.resulting_SVDGF_fit_parameters['tau_component%i' % (j)].stderr) for j in self.data_obj.components_list]
+        except (AttributeError, TypeError):
+            self.decay_constants_std_errors = ["not computed" for j in self.data_obj.components_list]
         self.filename = self.data_obj.filename
         self.start_time = self.data_obj.start_time
 
