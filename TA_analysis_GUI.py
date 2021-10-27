@@ -12,7 +12,6 @@ import traceback
 import collections              # e.g. to check whether an object is iterable, has size attribute etc
 import lmfit
 import ast
-from datetime import datetime
 
 # threading
 import threading
@@ -33,6 +32,10 @@ class GuiAppTAAnalysis(tk.Frame):
         # the directory from where program is started
         self.base_directory = os.getcwd()        # Leads to Error if program is not started from directory where it is in
         self.config_files_directory = self.base_directory + "/configFiles/"
+        if not os.path.exists(self.config_files_directory):
+            os.mkdir(self.config_files_directory)
+        self.initial_fit_parameter_values_file = self.config_files_directory + "/Initial_fit_parameter_values.txt"
+        self.colormaps_dict_file = self.config_files_directory + "/colormaps_for_heatmaps.txt"
         self.target_model_fit_function_file = self.config_files_directory + "/target_model_summands.txt"
 
         self.read_initial_fit_parameter_values_from_file()
@@ -101,8 +104,6 @@ class GuiAppTAAnalysis(tk.Frame):
         return None
 
     def read_currently_used_cmaps_from_file(self):
-        self.colormaps_dict_file = self.config_files_directory + "/colormaps_for_heatmaps.txt"
-
         # if user has for some reason deleted the file, set default colormaps:
         if not os.path.exists(self.colormaps_dict_file):
             self.currently_used_cmaps_dict = {"ORIG": "", "SVD": "", "Fit": "", "SVD_diff": "", "Fit_diff": ""}
@@ -124,8 +125,6 @@ class GuiAppTAAnalysis(tk.Frame):
         return None
 
     def read_initial_fit_parameter_values_from_file(self):
-        self.initial_fit_parameter_values_file = self.config_files_directory + "/Initial_fit_parameter_values.txt"
-
         # if user has for some reason deleted the file that stores initial fit parameter dictionary, set default fit parameter values:
         if not os.path.exists(self.initial_fit_parameter_values_file):
             self.initial_fit_parameter_values = {"time_constants": [50], "amps_rSV0": [0.7]}
