@@ -9,7 +9,6 @@ matplotlib.use('TkAgg')         # to be able to use plt.close() without the gui 
 import platform
 import os
 import traceback
-import collections              # e.g. to check whether an object is iterable, has size attribute etc
 import lmfit
 import ast
 
@@ -58,7 +57,7 @@ class GuiAppTAAnalysis(tk.Frame):
         self.NR_OF_TABS = 10    # this should really be left below 50!
         self.NR_OF_DIFFERENCE_TABS = 2 * self.NR_OF_TABS
 
-        # some styling variables
+        # some colors
         self.blue = "cornflowerblue"
         self.gold = "#ffd700"
         self.orange = "orange"
@@ -66,6 +65,7 @@ class GuiAppTAAnalysis(tk.Frame):
         self.violet = "darkmagenta"
         self.grey = "lavender"
         self.flashwidgetcolor = "navyblue"
+        self.sanddollar = "#e5ddc8"
 
         # self.blue = "#01949a" # teal
         # self.gold = "#e5ddc8" # sanddollar
@@ -84,7 +84,7 @@ class GuiAppTAAnalysis(tk.Frame):
         self.ttk_Notebook_style.theme_use("default")
 
         # geometry, title etc of window
-        self.parent.config(bg=self.violet)
+        self.parent.config(bg=self.sanddollar)
         self.update_filename_in_title_and_truncated_filename_for_tab_header_callback("","","")
         self.make_window_fullscreen()
         root.update_idletasks()         # has to be done before checking the widget dimensions with winfo_.. as it else returns 1!
@@ -806,7 +806,6 @@ class GuiAppTAAnalysis(tk.Frame):
         self.make_menu_to_select_fit_method()
         self.set_fit_method_name('leastsq', 0)
 
-
         return None
 
     def make_menu_to_select_fit_method(self):
@@ -834,6 +833,8 @@ class GuiAppTAAnalysis(tk.Frame):
 
         self.menubar.add_cascade(label="Fit method", menu=self.fit_method_menu)
         self.parent.config(menu=self.menubar)
+
+        return None
 
     # Widget layout of GUI
     def initialize_GUI(self):
