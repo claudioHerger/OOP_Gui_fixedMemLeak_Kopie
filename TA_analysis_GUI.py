@@ -149,19 +149,19 @@ class GuiAppTAAnalysis(tk.Frame):
     def make_window_fullscreen(self):
         """ depending on OS different command"""
         # check the operating system:
-        self.operating_system = platform.system()
+        operationg_system = platform.system()
 
         # Windows:
-        if self.operating_system == 'Windows':
+        if operationg_system == 'Windows':
             root.wm_state('zoomed')
 
         # Linux:
-        if self.operating_system == 'Linux':
+        if operationg_system == 'Linux':
             # possibly:
             root.attributes('-fullscreen', True)
 
         # Mac:
-        if self.operating_system == 'Darwin':
+        if operationg_system == 'Darwin':
             root.wm_attributes('-fullscreen', 'true')
 
         return None
@@ -480,13 +480,6 @@ class GuiAppTAAnalysis(tk.Frame):
         return True
 
     """ methods to clear Gui variables and frames and tabs """
-    def remove_frms(self, lis_of_frame):
-        if isinstance(lis_of_frame, collections.abc.Iterable):
-            for frm in lis_of_frame:
-                frm.grid_remove()
-        else :
-            lis_of_frame.grid_remove()
-
     def return_some_gui_widgets_to_initial_state(self, button=None, label=None, tab_control=None):
         if button:
             button["state"] = tk.ACTIVE
