@@ -495,7 +495,7 @@ class SVDGF_Heatmap():
         # save data
         self.notebook_container_SVDGF.figs[self.tab_idx].savefig(self.full_path_to_final_dir+"/reconstruction_heatmap_DAS"+str(self.indeces_for_DAS_matrix)+".png")
         self.notebook_container_diff.figs[self.tab_idx_difference].savefig(self.full_path_to_final_dir+"/difference_heatmap_DAS"+str(self.indeces_for_DAS_matrix)+".png")
-        saveData.make_log_file(self.full_path_to_final_dir, filename=self.filename, start_time=self.start_time, components=self.components_list)
+        saveData.make_log_file(self.full_path_to_final_dir, filename=self.filename, start_time=self.start_time, components=self.components_list, use_user_defined_fit_function=self.use_user_defined_fit_function)
         self.result_data_to_save = {"retained_sing_values": self.retained_singular_values, "DAS": self.DAS, "fit_report_complete": lmfit.fit_report(self.fit_result), "time_delays": self.time_delays, "wavelengths": self.wavelengths, "retained_left_SVs": self.retained_lSVs, "retained_right_SVs": self.retained_rSVs}
         if self.parsed_summands_of_user_defined_fit_function: # if dictionary with parsed user defined fit function exists, add it to data to be saved.
             self.result_data_to_save["parsed_summands_of_user_defined_fit_function"] = self.parsed_summands_of_user_defined_fit_function
