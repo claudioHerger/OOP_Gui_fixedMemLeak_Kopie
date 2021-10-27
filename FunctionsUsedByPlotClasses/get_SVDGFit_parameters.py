@@ -159,12 +159,13 @@ def initialize_fit_parameters(retained_components, initial_fit_parameter_values)
         if (len(initial_fit_parameter_values[key]) <= minimumNrOfValues):
             minimumNrOfValues = len(initial_fit_parameter_values[key])
 
-    if (minimumNrOfValues < len(retained_components)):
+    # minimumNrOfValues-1 corresponds to the index of the highest component for which initial values have been defined
+    if (minimumNrOfValues-1 < retained_components[-1]):
         user_file_has_too_few_values = True
         tk.messagebox.showerror("Warning,", "There are insufficient parameter values in your initial fit parameter values file.\n"+
                                             "See the help button in the window where you can set the initial fit parameter values.\n"+
                                             "(Button 'Set initial fit parameter values'.)\n\n"+
-                                            "In the mean while, the program will use default initial values for the fit parameters, which have been found to work somewhat well.\n"+
+                                            "In the mean while, the program will use default initial values for the fit parameters:\n"+
                                             "all decay constants = 50.0, all amplitudes = 0.7")
 
     fit_params = lmfit.Parameters()
