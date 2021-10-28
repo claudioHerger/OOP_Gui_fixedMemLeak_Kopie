@@ -319,30 +319,26 @@ class GuiAppTAAnalysis(tk.Frame):
 
             return False
 
-    def handler_assign_matrix_dimension_values(self, new_dimension_indeces):
-        pass
+    def handler_assign_matrix_bounds_values(self, new_bounds_dict, new_start_time_value):
+        print(new_bounds_dict)
+        self.data_matrix_bounds_dict = new_bounds_dict
 
-    def set_matrix_dimension_values(self):
+        # need to assign that value too as it is used in gui e.g. for tab titles
+        self.curr_reconstruct_data_start_time_value.set(float(new_start_time_value))
+        return None
+
+    def set_matrix_bounds_values(self):
 
         if self.curr_reconstruct_data_file_strVar.get() == "no file selected":
             tk.showerror("error", "choose a data file first!")
             return None
 
         TA_data_after_time, time_delays, wavelengths = get_TA_data_after_start_time.run(self.curr_reconstruct_data_file_strVar.get(), "-99999")
-        # print(f'{time_delays=}')
 
-        wavelength_bounds = (wavelengths[0], wavelengths[-1])
-        time_delays_bounds = (time_delays[0], time_delays[-1])
-
-        matrix_bounds_window = MatrixBounds_Toplevel.MatrixBoundsWindow(self, time_delays, wavelengths)
+        matrix_bounds_window = MatrixBounds_Toplevel.MatrixBoundsWindow(self, time_delays, wavelengths, self.handler_assign_matrix_bounds_values)
         self.wait_window(matrix_bounds_window)
 
-
-        # finally
-        self.wavelength_bounds_indeces = (2, 599)
-        self.time_delays_bounds_indeces = (5, 200)
-
-
+        return None
 
     def set_curr_start_time_value(self):
         start_time_value_candidate = tk.simpledialog.askstring('Enter the start time value',
@@ -557,8 +553,20 @@ class GuiAppTAAnalysis(tk.Frame):
 
         return None
 
+    def check_if_matrix_bounds_set(self):
+        try:
+            self.data_matrix_bounds_dict["min_time_delay_index"]
+        except (AttributeError, KeyError) as error:
+            tk.messagebox.showinfo("error", "set data matrix bounds first!")
+            self.set_matrix_bounds_values()
+            return False
+        return True
+
     """ methods to make different kind of notebook tabs """
     def show_orig_data_heatmap(self):
+        if not (self.check_if_matrix_bounds_set()):
+            return None
+
         if self.too_many_such_tabs(self.nbCon_orig.tab_control, "next_tab_idx_orig", self.NR_OF_TABS):
             return None
 
@@ -579,7 +587,7 @@ class GuiAppTAAnalysis(tk.Frame):
             self.nbCon_orig.tab_control.grid(row=0, column=2, sticky="ne")
         self.nbCon_orig.add_indexed_tab(self.next_tab_idx_orig, title=str(self.curr_reconstruct_data_start_time_value.get()) + " " + self.truncated_filename)
 
-        self.nbCon_orig.data_objs[self.next_tab_idx_orig] = ORIGData.ORIGData_Heatmap(self, self.next_tab_idx_orig, self.curr_reconstruct_data_file_strVar.get(), self.curr_reconstruct_data_start_time_value.get(), self.truncated_filename, self.currently_used_cmaps_dict)
+        self.nbCon_orig.data_objs[self.next_tab_idx_orig] = ORIGData.ORIGData_Heatmap(self, self.next_tab_idx_orig, self.curr_reconstruct_data_file_strVar.get(), self.data_matrix_bounds_dict, self.truncated_filename, self.currently_used_cmaps_dict)
         thread_instance_orig = threading.Thread(target=self.nbCon_orig.data_objs[self.next_tab_idx_orig].make_data)
         thread_instance_orig.start()
         self.monitor_thread(thread_instance_orig, self.nbCon_orig.data_objs[self.next_tab_idx_orig], self.btn_show_orig_data_heatmap, self.lbl_reassuring_orig)
@@ -587,6 +595,9 @@ class GuiAppTAAnalysis(tk.Frame):
         return None
 
     def show_SVD_reconstructed_data_heatmap(self):
+        if not (self.check_if_matrix_bounds_set()):
+            return None
+
         if self.too_many_such_tabs(self.nbCon_SVD.tab_control, "next_tab_idx_SVD", self.NR_OF_TABS):
             return None
 
@@ -624,6 +635,9 @@ class GuiAppTAAnalysis(tk.Frame):
         return None
 
     def show_SVD_GlobalFit_reconstructed_data_heatmap(self):
+        if not (self.check_if_matrix_bounds_set()):
+            return None
+
         if self.too_many_such_tabs(self.nbCon_SVDGF.tab_control, "next_tab_idx_SVDGF", self.NR_OF_TABS):
             return None
 
@@ -703,7 +717,7 @@ class GuiAppTAAnalysis(tk.Frame):
         self.btn_change_reconstruct_start_time_value = tk.Button(self.frm_orig_data_tab1, text="change start time value", command=self.set_curr_start_time_value)
         self.btn_change_reconstruct_start_time_value.grid(row=2, column=0, padx=3, pady=5, sticky="ew")
 
-        self.btn_change_reconstruct_start_time_value = tk.Button(self.frm_orig_data_tab1, text="change matrix bounds", command=self.set_matrix_dimension_values)
+        self.btn_change_reconstruct_start_time_value = tk.Button(self.frm_orig_data_tab1, text="change matrix bounds", command=self.set_matrix_bounds_values)
         self.btn_change_reconstruct_start_time_value.grid(row=3, column=0, padx=3, pady=5, sticky="ew")
 
         """ widgets for SVD_reconstruction data heatmap generation """

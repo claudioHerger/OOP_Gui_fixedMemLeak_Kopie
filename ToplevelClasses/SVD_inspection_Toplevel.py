@@ -116,7 +116,7 @@ class SVD_inspection_Window(tk.Toplevel):
         return None
 
     def get_data(self):
-        self.data = self.data_obj.TA_data_after_time
+        self.data = self.data_obj.data_matrix
         self.time_delays = self.data_obj.time_delays
         self.wavelengths = self.data_obj.wavelengths
 
