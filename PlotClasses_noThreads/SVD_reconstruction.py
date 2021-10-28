@@ -9,7 +9,7 @@ import tkinter as tk
 import os
 
 # my own modules
-from FunctionsUsedByPlotClasses import get_TA_data_after_start_time, get_SVD_reconstructed_data_for_GUI, get_closest_nr_from_array_like
+from FunctionsUsedByPlotClasses import get_TA_data_after_start_time, get_SVD_reconstructed_data_for_GUI, get_closest_nr_from_array_like, get_retained_rightSVs_leftSVs_singularvs, get_retained_rightSVs_leftSVs_singularvs
 from SupportClasses import ToolTip, saveData, SmallToolbar
 from ToplevelClasses import Kinetics_Spectrum_Toplevel
 
@@ -220,6 +220,9 @@ class SVD_Heatmap():
             self.delete_attributes()
             return None
 
+        # get the selected rSVs, singular values and lSVs - input is TA data after time and self.components_list
+        self.retained_rSVs, self.retained_lSVs, self.retained_singular_values = get_retained_rightSVs_leftSVs_singularvs.run(self.TA_data_after_time, self.components_list)
+
         self.SVD_reconstructed_data, self.singular_values, self.U_matrix, self.VT_matrix = get_SVD_reconstructed_data_for_GUI.run(self.TA_data_after_time, self.components_list)
 
         self.difference_matrix = self.TA_data_after_time.astype(float) - self.SVD_reconstructed_data.astype(float)
@@ -239,7 +242,7 @@ class SVD_Heatmap():
 
         saveData.make_log_file(self.full_path_to_final_dir, filename=self.filename, start_time=self.start_time, components=self.components_list)
 
-        self.result_data_to_save = {"time_delays": self.time_delays, "wavelengths": self.wavelengths, "singular_values": self.singular_values, "U_matrix": self.U_matrix, "VT_matrix": self.VT_matrix}
+        self.result_data_to_save = {"time_delays": self.time_delays, "wavelengths": self.wavelengths, "singular_values": self.singular_values, "U_matrix": self.U_matrix, "VT_matrix": self.VT_matrix, "retained_right_SVs": self.retained_rSVs, "retained_left_SVs": self.retained_lSVs, "retained_sing_values": self.retained_singular_values,}
         saveData.save_result_data(self.full_path_to_final_dir, self.result_data_to_save)
 
         # save data matrices

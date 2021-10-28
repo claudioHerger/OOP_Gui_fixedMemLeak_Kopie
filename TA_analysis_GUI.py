@@ -59,7 +59,8 @@ class GuiAppTAAnalysis(tk.Frame):
 
         # some colors
         self.blue = "cornflowerblue"
-        self.gold = "#ffd700"
+        # self.gold = "#ffd700"
+        self.gold = "#ffd766"
         self.orange = "orange"
         self.complementary_blue = "#0028FF"
         self.violet = "darkmagenta"
