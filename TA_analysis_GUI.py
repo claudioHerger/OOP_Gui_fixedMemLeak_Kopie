@@ -19,7 +19,7 @@ import threading
 from PlotClasses_noThreads import ORIGData, SVDGF_reconstruction, SVD_reconstruction
 from FunctionsUsedByPlotClasses import get_TA_data_after_start_time
 from SupportClasses import ToolTip, NotebookContainer, saveData
-from ToplevelClasses import FitResult_Toplevel, DAS_Toplevel, initial_fit_parameter_values_Toplevel, target_model_Toplevel, ChooseColorMaps_Toplevel
+from ToplevelClasses import FitResult_Toplevel, DAS_Toplevel, initial_fit_parameter_values_Toplevel, target_model_Toplevel, ChooseColorMaps_Toplevel, MatrixBounds_Toplevel
 
 class GuiAppTAAnalysis(tk.Frame):
 
@@ -319,17 +319,28 @@ class GuiAppTAAnalysis(tk.Frame):
 
             return False
 
+    def handler_assign_matrix_dimension_values(self, new_dimension_indeces):
+        pass
+
     def set_matrix_dimension_values(self):
 
         if self.curr_reconstruct_data_file_strVar.get() == "no file selected":
             tk.showerror("error", "choose a data file first!")
             return None
 
-        self.TA_data_after_time, self.time_delays, self.wavelengths = get_TA_data_after_start_time.run(self.curr_reconstruct_data_file_strVar.get(), "-99999")
-        print(f'{self.time_delays=}')
+        TA_data_after_time, time_delays, wavelengths = get_TA_data_after_start_time.run(self.curr_reconstruct_data_file_strVar.get(), "-99999")
+        # print(f'{time_delays=}')
 
-        self.wavelength_bounds = (self.wavelengths[0], self.wavelengths[-1])
-        self.time_delays_bounds = (self.time_delays[0], self.time_delays[-1])
+        wavelength_bounds = (wavelengths[0], wavelengths[-1])
+        time_delays_bounds = (time_delays[0], time_delays[-1])
+
+        matrix_bounds_window = MatrixBounds_Toplevel.MatrixBoundsWindow(self, time_delays, wavelengths)
+        self.wait_window(matrix_bounds_window)
+
+
+        # finally
+        self.wavelength_bounds_indeces = (2, 599)
+        self.time_delays_bounds_indeces = (5, 200)
 
 
 
@@ -689,8 +700,11 @@ class GuiAppTAAnalysis(tk.Frame):
         self.btn_update_curr_reconstruct_data_file_strVar = tk.Button(self.frm_orig_data_tab1, text="change data file", command=lambda x=self.curr_reconstruct_data_file_strVar: self.set_curr_fileVar(x))
         self.btn_update_curr_reconstruct_data_file_strVar.grid(row=1, column=0, padx=3, pady=5, sticky="ew")
 
-        self.btn_change_reconstruct_start_time_value = tk.Button(self.frm_orig_data_tab1, text="change matrix dimensions", command=self.set_matrix_dimension_values)
+        self.btn_change_reconstruct_start_time_value = tk.Button(self.frm_orig_data_tab1, text="change start time value", command=self.set_curr_start_time_value)
         self.btn_change_reconstruct_start_time_value.grid(row=2, column=0, padx=3, pady=5, sticky="ew")
+
+        self.btn_change_reconstruct_start_time_value = tk.Button(self.frm_orig_data_tab1, text="change matrix bounds", command=self.set_matrix_dimension_values)
+        self.btn_change_reconstruct_start_time_value.grid(row=3, column=0, padx=3, pady=5, sticky="ew")
 
         """ widgets for SVD_reconstruction data heatmap generation """
         self.frm_update_reconstruct_data_tab1 = tk.Frame(self.frm_main, bg=self.gold,)
@@ -813,7 +827,7 @@ class GuiAppTAAnalysis(tk.Frame):
 
         """button to set colormaps for heatmaps"""
         self.btn_set_colormaps = tk.Button(self.frm_orig_data_tab1, text="set colormaps for\n heatmaps", command=self.set_colormaps_for_heatmaps)
-        self.btn_set_colormaps.grid(row=3, column=0, padx=3, pady=5, sticky="s")
+        self.btn_set_colormaps.grid(column=0, padx=3, pady=5, sticky="s")
         self.frm_orig_data_tab1.rowconfigure(self.btn_set_colormaps.grid_info()["row"], weight=1)
 
         """ menu to select fit method """
