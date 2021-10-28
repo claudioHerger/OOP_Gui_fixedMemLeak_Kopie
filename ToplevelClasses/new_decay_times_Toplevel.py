@@ -39,9 +39,7 @@ class new_decay_times_Window(tk.Toplevel):
 
         self.btn_ignore_and_quit = tk.Button(self, text="Hit Enter: Ignore and quit", command=lambda: self.ignore_and_quit())
         ttp_btn_ignore_and_quit = ToolTip.CreateToolTip(self.btn_ignore_and_quit, \
-        'Quit this window and use the last saved decay times for the DAS decays. '
-        'That means that if you have changed the decay times for this tab\\data object already, they will be used. '
-        'If you want to use the original fit result decay times, you need to copy them into the entries.')
+        'Quit this window and use the fit result decay times for the DAS decays. ')
         self.btn_ignore_and_quit.grid(padx=10, pady=10, sticky="se", column=3, row=self.btn_apply_new_decay_times.grid_info()["row"])
 
         self.grab_set()         # to keep the window in front of application until it gets closed
@@ -98,7 +96,7 @@ class new_decay_times_Window(tk.Toplevel):
         # get the decay times from entries
         self.new_decay_times = self.get_new_decay_times_from_entries()
         if self.new_decay_times == "invalid":
-            tk.messagebox.showerror("warning", ("you should put in values that can be parsed to floats (0 is not accepted as it will lead to DivideByZeroError)!\nComputation is halted!\n\nalso, explicit \"nan\" values are not accepted!"))
+            tk.messagebox.showerror("warning", "you should put in values that can be parsed to floats (0 is not accepted as it will lead to DivideByZeroError)!\nComputation is halted!\n\nalso, explicit \"nan\" values are not accepted!")
             self.lift()
             return None
 
