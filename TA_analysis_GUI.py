@@ -15,10 +15,9 @@ import ast
 # threading
 import threading
 
-# PlotClasses - used to create plots on gui
+# own modules:
 from PlotClasses_noThreads import ORIGData, SVDGF_reconstruction, SVD_reconstruction
-
-# SupportClasses - used to e.g. explain functionality of widget in gui
+from FunctionsUsedByPlotClasses import get_TA_data_after_start_time
 from SupportClasses import ToolTip, NotebookContainer, saveData
 from ToplevelClasses import FitResult_Toplevel, DAS_Toplevel, initial_fit_parameter_values_Toplevel, target_model_Toplevel, ChooseColorMaps_Toplevel
 
@@ -319,6 +318,20 @@ class GuiAppTAAnalysis(tk.Frame):
                                     f"Exception {type(error)} message: \n"+ str(error)+"\n")
 
             return False
+
+    def set_matrix_dimension_values(self):
+
+        if self.curr_reconstruct_data_file_strVar.get() == "no file selected":
+            tk.showerror("error", "choose a data file first!")
+            return None
+
+        self.TA_data_after_time, self.time_delays, self.wavelengths = get_TA_data_after_start_time.run(self.curr_reconstruct_data_file_strVar.get(), "-99999")
+        print(f'{self.time_delays=}')
+
+        self.wavelength_bounds = (self.wavelengths[0], self.wavelengths[-1])
+        self.time_delays_bounds = (self.time_delays[0], self.time_delays[-1])
+
+
 
     def set_curr_start_time_value(self):
         start_time_value_candidate = tk.simpledialog.askstring('Enter the start time value',
@@ -676,7 +689,7 @@ class GuiAppTAAnalysis(tk.Frame):
         self.btn_update_curr_reconstruct_data_file_strVar = tk.Button(self.frm_orig_data_tab1, text="change data file", command=lambda x=self.curr_reconstruct_data_file_strVar: self.set_curr_fileVar(x))
         self.btn_update_curr_reconstruct_data_file_strVar.grid(row=1, column=0, padx=3, pady=5, sticky="ew")
 
-        self.btn_change_reconstruct_start_time_value = tk.Button(self.frm_orig_data_tab1, text="change start time value", command=self.set_curr_start_time_value)
+        self.btn_change_reconstruct_start_time_value = tk.Button(self.frm_orig_data_tab1, text="change matrix dimensions", command=self.set_matrix_dimension_values)
         self.btn_change_reconstruct_start_time_value.grid(row=2, column=0, padx=3, pady=5, sticky="ew")
 
         """ widgets for SVD_reconstruction data heatmap generation """

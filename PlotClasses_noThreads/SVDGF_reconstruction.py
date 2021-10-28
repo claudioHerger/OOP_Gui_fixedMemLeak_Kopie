@@ -310,8 +310,6 @@ class SVDGF_Heatmap():
             # get the new decay times if user assigns new ones:
             self.how_to_continue = self.display_toplevel_to_change_decay_times_used_for_DAS()
 
-            if self.how_to_continue == "abort":
-                raise ValueError("you should put in values that can be parsed to floats!\nComputation is halted!\n\nalso, explicit \"nan\" values are not accepted!")
             if self.how_to_continue == "compute with old decay times":
                 self.SVDGF_reconstructed_data_selected_DAS = get_SVDGF_reconstructed_data.run(self.DAS[:,self.indeces_for_DAS_matrix], [self.user_selected_decay_times[x] for x in self.indeces_for_DAS_matrix], self.time_delays, self.wavelengths, self.indeces_for_DAS_matrix, self.start_time)
             if self.how_to_continue == "compute with new decay times":
@@ -347,13 +345,8 @@ class SVDGF_Heatmap():
         # this lets the program wait and execute further only once the toplevel has been closed
         self.parent.wait_window(self.new_times_toplevel)
 
-        if self.user_selected_decay_times == "invalid":
-            # reassign these times so when the user opens the "update" toplevel again, the entries are filled with useful values
-            self.user_selected_decay_times = ['{:.9f}'.format(self.resulting_SVDGF_fit_parameters['tau_component%i' % (j)].value) for j in self.components_list]
-            print(f'\n user has put in invalid times, stop computation!\n')
-            return "abort"
         if self.user_selected_decay_times is None:
-            self.user_selected_decay_times = ['{:.9f}'.format(self.resulting_SVDGF_fit_parameters['tau_component%i' % (j)].value) for j in self.components_list]
+            self.user_selected_decay_times = ['{:.2f}'.format(self.resulting_SVDGF_fit_parameters['tau_component%i' % (j)].value) for j in self.components_list]
             print(f'\n user has continued without changing decay times, continue computation with old decay times!\n')
             return "compute with old decay times"
 

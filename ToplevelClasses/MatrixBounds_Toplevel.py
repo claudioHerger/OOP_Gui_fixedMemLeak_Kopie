@@ -97,10 +97,6 @@ class new_decay_times_Window(tk.Toplevel):
     def assign_entered_decay_times(self):
         # get the decay times from entries
         self.new_decay_times = self.get_new_decay_times_from_entries()
-        if self.new_decay_times == "invalid":
-            tk.messagebox.showerror("warning", ("you should put in values that can be parsed to floats (0 is not accepted as it will lead to DivideByZeroError)!\nComputation is halted!\n\nalso, explicit \"nan\" values are not accepted!"))
-            self.lift()
-            return None
 
         # now assign the decay times in main class
         self.assign_method(self.new_decay_times)
@@ -121,9 +117,9 @@ class new_decay_times_Window(tk.Toplevel):
 
     def string_is_number(self, some_string):
         try:
-            if some_string.lower() == "nan" or some_string.lower() == "-nan" or some_string.strip("0") == ".":
+            if some_string.lower() == "nan" or some_string.lower() == "-nan":
                 return False
-            float(some_string.lstrip("0"))   # lstrip("0") removes leading "0"s. i think at some point python uses octal numeral system (base 8) (if i did not remove leading "0"s)
+            float(some_string.lstrip("0"))      # lstrip("0") removes leading "0"s. i think at some point python did use if i did not remove leading "0"s octal numeral system (base 8)
             return True
         except ValueError:
             return False
