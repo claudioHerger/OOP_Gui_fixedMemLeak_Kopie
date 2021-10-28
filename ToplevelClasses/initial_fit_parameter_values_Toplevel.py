@@ -264,9 +264,15 @@ class initial_fit_parameters_Window(tk.Toplevel):
                 try:
                     curr_list = ast.literal_eval(self.new_values_entries[entry_index].get())
                     if entry_index == 0:
-                        entry.insert(len(entry.get())-1, ", 50")
+                        if curr_list == []:
+                            entry.insert(len(entry.get())-1, "50")
+                        else:
+                            entry.insert(len(entry.get())-1, ", 50")
                     else:
-                        entry.insert(len(entry.get())-1, ", 0.7")
+                        if curr_list == []:
+                            entry.insert(len(entry.get())-1, "0.7")
+                        else:
+                            entry.insert(len(entry.get())-1, ", 0.7")
                 except SyntaxError:
                     tk.messagebox.showwarning(title="Warning.", message=f"One of your remaining entered lists could not be evaluated to a list.")
                     self.lift()
@@ -348,6 +354,10 @@ class initial_fit_parameters_Window(tk.Toplevel):
 
     def entries_contain_number_strings_only(self):
         self.new_initial_fit_parameter_values = {}
+
+        for i in range(len(self.new_values_entries)):
+            if self.new_values_entries[i].get() == "[]":
+                return "invalid"
 
         for i, label in enumerate(self.row_labels):
             try:

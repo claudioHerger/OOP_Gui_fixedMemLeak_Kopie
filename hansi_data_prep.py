@@ -50,7 +50,7 @@ def grid_data(filename, results_dir):
 
     write_dat = np.zeros((siz+1,siz+1))
 
-    write_dat[1:,1:] = dat_grid
+    write_dat[1:,1:] = dat_grid.T
     write_dat[0,1:] = new_t
     write_dat[1:,0] = new_w
 
