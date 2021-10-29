@@ -9,6 +9,7 @@ import tkinter as tk
 import os
 import lmfit
 import re
+from datetime import datetime
 import ast
 
 # my own modules
@@ -495,8 +496,9 @@ class SVDGF_Heatmap():
             os.makedirs(self.full_path_to_final_dir)
 
         # save data
-        self.notebook_container_SVDGF.figs[self.tab_idx].savefig(self.full_path_to_final_dir+"/reconstruction_heatmap_DAS"+str(self.indeces_for_DAS_matrix)+".png")
-        self.notebook_container_diff.figs[self.tab_idx_difference].savefig(self.full_path_to_final_dir+"/difference_heatmap_DAS"+str(self.indeces_for_DAS_matrix)+".png")
+        today = datetime.now() # including the time of saving into figure file name to prevent overwriting figure files if all DAS are used
+        self.notebook_container_SVDGF.figs[self.tab_idx].savefig(self.full_path_to_final_dir+"/reconstruction_heatmap_DAS"+str(self.indeces_for_DAS_matrix)+"_"+str(today.strftime("%H_%M_%S"))+".png")
+        self.notebook_container_diff.figs[self.tab_idx_difference].savefig(self.full_path_to_final_dir+"/difference_heatmap_DAS"+str(self.indeces_for_DAS_matrix)+"_"+str(today.strftime("%H_%M_%S"))+".png")
         saveData.make_log_file(self.full_path_to_final_dir, filename=self.filename, start_time=self.start_time, components=self.components_list, matrix_bounds_dict=self.matrix_bounds_dict, use_user_defined_fit_function=self.use_user_defined_fit_function)
         self.result_data_to_save = {"retained_sing_values": self.retained_singular_values, "DAS": self.DAS, "fit_report_complete": lmfit.fit_report(self.fit_result), "time_delays": self.time_delays, "wavelengths": self.wavelengths, "retained_left_SVs": self.retained_lSVs, "retained_right_SVs": self.retained_rSVs}
         if self.parsed_summands_of_user_defined_fit_function: # if dictionary with parsed user defined fit function exists, add it to data to be saved.
@@ -504,7 +506,10 @@ class SVDGF_Heatmap():
         saveData.save_result_data(self.full_path_to_final_dir, self.result_data_to_save)
 
         # save data matrices
-        self.data_matrices_to_save = {"SVDGF_reconstruction_matrix": self.SVDGF_reconstructed_data.T, "difference_matrix": self.difference_data.T, "data_matrix": self.data_matrix.T, "difference_matrix_selected_DAS"+str(self.indeces_for_DAS_matrix): self.difference_matrix_selected_DAS.T}
+        try:
+            self.data_matrices_to_save = {"SVDGF_reconstruction_matrix": self.SVDGF_reconstructed_data.T, "difference_matrix": self.difference_data.T, "data_matrix": self.data_matrix.T, "difference_matrix_selected_DAS"+str(self.indeces_for_DAS_matrix)+"_"+str(today.strftime("%H_%M_%S")): self.difference_matrix_selected_DAS.T, "SVDGF_reconstructed_data_selected_DAS"+str(self.indeces_for_DAS_matrix)+"_"+str(today.strftime("%H_%M_%S")): self.SVDGF_reconstructed_data_selected_DAS.T}
+        except AttributeError:
+            self.data_matrices_to_save = {"SVDGF_reconstruction_matrix": self.SVDGF_reconstructed_data.T, "difference_matrix": self.difference_data.T, "data_matrix": self.data_matrix.T, "difference_matrix_selected_DAS"+str(self.indeces_for_DAS_matrix)+"_"+str(today.strftime("%H_%M_%S")): self.difference_matrix_selected_DAS.T}
         saveData.save_formatted_data_matrix_after_time(self.full_path_to_final_dir, self.time_delays, self.wavelengths, self.data_matrices_to_save)
 
         return None
