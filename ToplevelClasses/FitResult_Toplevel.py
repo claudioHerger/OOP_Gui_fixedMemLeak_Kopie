@@ -3,14 +3,13 @@ import tkinter.scrolledtext as scrolledtext
 import os
 
 class FitResult_Window(tk.Toplevel):
-    def __init__(self, parent, tab_index, fit_report, data_obj):
+    def __init__(self, parent, tab_index, fit_report, filename):
         super().__init__(parent)
         self.parent = parent
         self.mapped = True
         self.geometry(f'900x400')
-        self.data_obj = data_obj
 
-        self.filename = os.path.basename(self.data_obj.filename)
+        self.filename = os.path.basename(filename)
         self.title('SVDGF fit results for tab: ' + str(tab_index + 1) + " - file: "+self.filename)
 
         self.scrtxt = scrolledtext.ScrolledText(self, undo=True, height=20, width=100)

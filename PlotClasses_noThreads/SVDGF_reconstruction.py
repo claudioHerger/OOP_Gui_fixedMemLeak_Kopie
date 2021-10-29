@@ -14,7 +14,7 @@ import ast
 
 # my own modules
 from FunctionsUsedByPlotClasses import get_DAS_from_lSVs_res_amplitudes, get_TA_data_after_start_time, get_retained_rightSVs_leftSVs_singularvs, get_SVDGFit_parameters
-from FunctionsUsedByPlotClasses import get_closest_nr_from_array_like, get_SVDGF_reconstructed_data
+from FunctionsUsedByPlotClasses import get_SVDGF_reconstructed_data
 from SupportClasses import ToolTip, saveData, SmallToolbar
 from ToplevelClasses import Kinetics_Spectrum_Toplevel, new_decay_times_Toplevel, CompareRightSVsWithFit_Toplevel
 

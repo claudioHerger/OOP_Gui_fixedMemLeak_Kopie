@@ -68,14 +68,6 @@ class GuiAppTAAnalysis(tk.Frame):
         self.flashwidgetcolor = "navyblue"
         self.sanddollar = "#e5ddc8"
 
-        # self.blue = "#01949a" # teal
-        # self.gold = "#e5ddc8" # sanddollar
-        # self.orange = "orange"
-        # self.complementary_blue = "#0028FF"
-        # self.violet = "#004369" # navyblue
-        # self.grey = "lavender"
-        # self.flashwidgetcolor = "navyblue"
-
         self.ttk_Notebook_style = ttk.Style()
         self.ttk_Notebook_style.theme_settings("default", settings={
             "TNotebook":    {"configure": {"background": self.grey, }},
@@ -529,7 +521,8 @@ class GuiAppTAAnalysis(tk.Frame):
         tab_index = int(self.ent_show_SVDGF_result_toplevel.get()) - 1
 
         try:
-            self.fit_report_toplevels.append(FitResult_Toplevel.FitResult_Window(self, tab_index, lmfit.fit_report(self.nbCon_SVDGF.data_objs[tab_index].fit_result), self.nbCon_SVDGF.data_objs[tab_index]))
+            data_obj = self.nbCon_SVDGF.data_objs[tab_index]
+            self.fit_report_toplevels.append(FitResult_Toplevel.FitResult_Window(self, tab_index, lmfit.fit_report(data_obj.fit_result), data_obj.filename))
 
         except (IndexError, AttributeError) as error:
             tk.messagebox.showerror("Warning, an exception occurred!", f"Exception {type(error)} message: \n"+ str(error)+"\n"
@@ -548,11 +541,13 @@ class GuiAppTAAnalysis(tk.Frame):
         tab_index = int(self.ent_show_DAS_toplevel.get()) - 1
 
         try:
-            self.DAS_toplevels.append(DAS_Toplevel.DAS_Window(self, tab_index, self.nbCon_SVDGF.data_objs[tab_index]))
+            data_obj = self.nbCon_SVDGF.data_objs[tab_index]
+            self.DAS_toplevels.append(DAS_Toplevel.DAS_Window(self, tab_index, data_obj.DAS, data_obj.wavelengths, data_obj.resulting_SVDGF_fit_parameters, data_obj.components_list, data_obj.filename, data_obj.start_time, data_obj.full_path_to_final_dir))
 
         except (IndexError, AttributeError) as error:
             tk.messagebox.showerror("Warning, an exception occurred!", f"Exception {type(error)} message: \n"+ str(error)+"\n"
                                     +"\nHave you already computed the fit for that tab?!")
+            print(error)
 
         return None
 

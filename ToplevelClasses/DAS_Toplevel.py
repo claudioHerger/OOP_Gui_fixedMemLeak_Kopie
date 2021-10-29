@@ -10,7 +10,7 @@ import gc
 from SupportClasses import ToolTip
 
 class DAS_Window(tk.Toplevel):
-    def __init__(self, parent, tab_index, data_obj):
+    def __init__(self, parent, tab_index, DAS, wavelengths, resulting_fit_parameters_dict, components_list, filename, start_time, full_path_to_final_dir):
         super().__init__(parent)
         self.parent = parent
         self.mapped = True
@@ -18,13 +18,24 @@ class DAS_Window(tk.Toplevel):
         self.dy = 40
         self.list_position = len(self.parent.DAS_toplevels)
         self.geometry(f'+{400+self.list_position*self.dx}+{100+self.list_position*self.dy}')
-        self.data_obj = data_obj
-        self.full_path_to_final_dir = self.data_obj.full_path_to_final_dir
 
-        self.filename = os.path.basename(self.data_obj.filename)
+        self.filename = os.path.basename(filename)
+        self.full_path_to_final_dir = full_path_to_final_dir
+
         self.title('DAS for SVDGF tab: ' + str(tab_index + 1) + " - file: "+self.filename)
         self.make_figure_and_frame()
-        self.get_data()
+
+        self.DAS = DAS
+        self.wavelengths = wavelengths
+        self.resulting_fit_parameters_dict = resulting_fit_parameters_dict
+        self.components_list = components_list
+
+        self.start_time = start_time
+        self.decay_constants = ['{:.2f}'.format(self.resulting_fit_parameters_dict['tau_component%i' % (j)].value) for j in self.components_list]
+        try:
+            self.decay_constants_std_errors = ['{:.2f}'.format(self.resulting_fit_parameters_dict['tau_component%i' % (j)].stderr) for j in self.components_list]
+        except TypeError:
+            self.decay_constants_std_errors = ["not computed" for _ in self.components_list]
 
         self.nr_of_DAS = self.DAS.shape[1]
         self.which_DAS_list = [i for i in range(self.nr_of_DAS)]
@@ -58,24 +69,11 @@ class DAS_Window(tk.Toplevel):
         self.fig = Figure(figsize=(7,5))
         self.ax = self.fig.add_subplot(1,1,1)
 
-        self.canvas = FigureCanvasTkAgg(self.fig, self.frm_DAS_figure)  # A tk.DrawingArea.
+        self.canvas = FigureCanvasTkAgg(self.fig, self.frm_DAS_figure)
         self.canvas.draw_idle()
 
         self.frm_DAS_figure.grid(row=0, columnspan=99)
         self.canvas.get_tk_widget().grid(row=0, column=0, sticky="nsew")
-
-        return None
-
-    def get_data(self):
-        self.DAS = self.data_obj.DAS
-        self.wavelengths = self.data_obj.wavelengths
-        self.decay_constants = ['{:.2f}'.format(self.data_obj.resulting_SVDGF_fit_parameters['tau_component%i' % (j)].value) for j in self.data_obj.components_list]
-        try:
-            self.decay_constants_std_errors = ['{:.2f}'.format(self.data_obj.resulting_SVDGF_fit_parameters['tau_component%i' % (j)].stderr) for j in self.data_obj.components_list]
-        except TypeError:
-            self.decay_constants_std_errors = ["not computed" for j in self.data_obj.components_list]
-        self.filename = self.data_obj.filename
-        self.start_time = self.data_obj.start_time
 
         return None
 
