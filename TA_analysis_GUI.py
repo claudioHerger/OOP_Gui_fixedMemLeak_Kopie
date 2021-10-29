@@ -287,7 +287,7 @@ class GuiAppTAAnalysis(tk.Frame):
             components_to_plot.append(lis_of_IntVars[checkbox].get())
 
         if 1 not in components_to_plot:
-            raise ValueError('You did not select any components!\nThat needs to be done for the SVD and SVDGF plots, and also to define a fit function.')
+            raise ValueError('You did not select any components!\nThat needs to be done for the SVD and SVDGF plots, and also to define a fit function or initial fit parameter values.')
 
         return components_to_plot
 
@@ -360,11 +360,15 @@ class GuiAppTAAnalysis(tk.Frame):
         save_dir = self.get_save_dir_for_initial_fit_params_window()
         use_target_model = bool(self.checkbox_var_use_target_model.get())
         data_file_name = self.curr_reconstruct_data_file_strVar.get()
-        comp_list = self.get_components_to_use()
+        self.components_to_use = self.get_components_to_use()
+        if (self.components_to_use is None):
+            # getting components failed, do nothing
+            return None
+
         if not (self.check_if_matrix_bounds_set()):
             print("no bounds set, continue with full matrix")
 
-        self.initial_fit_parameter_values_window = initial_fit_parameter_values_Toplevel.initial_fit_parameters_Window(self, self.initial_fit_parameter_values_file, self.initial_fit_parameter_values, self.handler_assign_initial_fit_parameter_values, comp_list, use_target_model, self.target_model_fit_function_file, data_file_name, save_dir, self.data_matrix_bounds_dict)
+        self.initial_fit_parameter_values_window = initial_fit_parameter_values_Toplevel.initial_fit_parameters_Window(self, self.initial_fit_parameter_values_file, self.initial_fit_parameter_values, self.handler_assign_initial_fit_parameter_values, self.components_to_use, use_target_model, self.target_model_fit_function_file, data_file_name, save_dir, self.data_matrix_bounds_dict)
 
         return None
 
