@@ -9,7 +9,7 @@ import tkinter as tk
 import os
 
 # my own modules
-from FunctionsUsedByPlotClasses import get_TA_data_after_start_time, get_SVD_reconstructed_data_for_GUI, get_closest_nr_from_array_like, get_retained_rightSVs_leftSVs_singularvs, get_retained_rightSVs_leftSVs_singularvs
+from FunctionsUsedByPlotClasses import get_TA_data_after_start_time, get_SVD_reconstructed_data_for_GUI, get_retained_rightSVs_leftSVs_singularvs, get_retained_rightSVs_leftSVs_singularvs
 from SupportClasses import ToolTip, saveData, SmallToolbar
 from ToplevelClasses import Kinetics_Spectrum_Toplevel
 

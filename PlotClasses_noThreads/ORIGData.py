@@ -11,7 +11,7 @@ import tkinter as tk
 import os
 
 # my own modules
-from FunctionsUsedByPlotClasses import get_TA_data_after_start_time, get_closest_nr_from_array_like
+from FunctionsUsedByPlotClasses import get_TA_data_after_start_time
 from SupportClasses import saveData, ToolTip, SmallToolbar
 from ToplevelClasses import SVD_inspection_Toplevel, Kinetics_Spectrum_Toplevel
 
