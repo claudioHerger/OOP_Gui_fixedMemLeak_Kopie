@@ -273,9 +273,9 @@ class SVDGF_Heatmap():
 
     def compare_rightSVs_with_fit(self):
         if not self.use_user_defined_fit_function:
-            compareWindow = CompareRightSVsWithFit_Toplevel.CompareWindow(self.parent, self.use_user_defined_fit_function, self.tab_idx_difference, self.components_list, self.time_delays, self.retained_rSVs, self.retained_singular_values, self.fit_result_decay_times_as_dict, self.fit_result_amplitudes, self.filename, self.full_path_to_final_dir)
+            compareWindow = CompareRightSVsWithFit_Toplevel.CompareWindow(self.parent, self.use_user_defined_fit_function, self.tab_idx_difference, self.components_list, self.time_delays, self.retained_rSVs, self.retained_singular_values, self.fit_result_decay_times_as_dict, self.fit_result_amplitudes, self.filename, self.full_path_to_final_dir, start_time=self.start_time, matrix_bounds_dict=self.matrix_bounds_dict)
         else:
-            compareWindow = CompareRightSVsWithFit_Toplevel.CompareWindow(self.parent, self.use_user_defined_fit_function, self.tab_idx_difference, self.components_list, self.time_delays, self.retained_rSVs, self.retained_singular_values, self.fit_result_decay_times_as_dict, self.fit_result_amplitudes, self.filename, self.full_path_to_final_dir, self.parsed_summands_of_user_defined_fit_function)
+            compareWindow = CompareRightSVsWithFit_Toplevel.CompareWindow(self.parent, self.use_user_defined_fit_function, self.tab_idx_difference, self.components_list, self.time_delays, self.retained_rSVs, self.retained_singular_values, self.fit_result_decay_times_as_dict, self.fit_result_amplitudes, self.filename, self.full_path_to_final_dir, self.parsed_summands_of_user_defined_fit_function, start_time=self.start_time, matrix_bounds_dict=self.matrix_bounds_dict)
 
         compareWindow.run()
 

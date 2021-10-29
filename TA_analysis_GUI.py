@@ -38,6 +38,7 @@ class GuiAppTAAnalysis(tk.Frame):
 
         self.read_initial_fit_parameter_values_from_file()
         self.read_currently_used_cmaps_from_file()
+        self.data_matrix_bounds_dict = {}
 
         # which files the user can select in the tk.filedialog.askopenfilename
         self.ftypes = [('txt files', '*.txt'), ('All files', '*.txt; *.csv'), ('CSV files', '*.csv')]
@@ -376,9 +377,10 @@ class GuiAppTAAnalysis(tk.Frame):
         use_target_model = bool(self.checkbox_var_use_target_model.get())
         data_file_name = self.curr_reconstruct_data_file_strVar.get()
         comp_list = self.get_components_to_use()
-        start_time = self.curr_reconstruct_data_start_time_value.get()
+        if not (self.check_if_matrix_bounds_set()):
+            print("no bounds set, continue with full matrix")
 
-        self.initial_fit_parameter_values_window = initial_fit_parameter_values_Toplevel.initial_fit_parameters_Window(self, self.initial_fit_parameter_values_file, self.initial_fit_parameter_values, self.handler_assign_initial_fit_parameter_values, comp_list, use_target_model, self.target_model_fit_function_file, data_file_name, save_dir, start_time)
+        self.initial_fit_parameter_values_window = initial_fit_parameter_values_Toplevel.initial_fit_parameters_Window(self, self.initial_fit_parameter_values_file, self.initial_fit_parameter_values, self.handler_assign_initial_fit_parameter_values, comp_list, use_target_model, self.target_model_fit_function_file, data_file_name, save_dir, self.data_matrix_bounds_dict)
 
         return None
 
@@ -505,7 +507,10 @@ class GuiAppTAAnalysis(tk.Frame):
 
     def check_if_matrix_bounds_set(self):
         try:
+            self.data_matrix_bounds_dict["min_wavelength_index"]
+            self.data_matrix_bounds_dict["max_wavelength_index"]
             self.data_matrix_bounds_dict["min_time_delay_index"]
+            self.data_matrix_bounds_dict["max_time_delay_index"]
         except (AttributeError, KeyError):
             return False
         return True
