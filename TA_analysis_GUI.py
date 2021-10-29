@@ -51,7 +51,7 @@ class GuiAppTAAnalysis(tk.Frame):
         self.curr_reconstruct_data_file_strVar.trace_add("write", self.update_filename_in_title_and_truncated_filename_for_tab_header_callback)
         self.curr_reconstruct_data_start_time_value = tk.DoubleVar()
         self.curr_reconstruct_data_start_time_value.trace_add("write", self.update_filename_in_title_and_truncated_filename_for_tab_header_callback)
-        self.curr_reconstruct_data_start_time_value.set(-999.0)
+        self.curr_reconstruct_data_start_time_value.set(-9999.0)
 
         # determine the number of tabs possible for all the different notebooks:
         self.NR_OF_TABS = 10    # this should really be left below 50!
@@ -312,7 +312,7 @@ class GuiAppTAAnalysis(tk.Frame):
 
         # resetting the matrix bounds dict when file is changed
         self.data_matrix_bounds_dict = {}
-        self.curr_reconstruct_data_start_time_value.set(-999.0)
+        self.curr_reconstruct_data_start_time_value.set(-9999.0)
 
     def string_is_number(self, some_string):
         try:
@@ -341,22 +341,6 @@ class GuiAppTAAnalysis(tk.Frame):
 
         matrix_bounds_window = MatrixBounds_Toplevel.MatrixBoundsWindow(self, time_delays, wavelengths, self.handler_assign_matrix_bounds_values)
         self.wait_window(matrix_bounds_window)
-
-        return None
-
-    def set_curr_start_time_value(self):
-        start_time_value_candidate = tk.simpledialog.askstring('Enter the start time value',
-                                                                'curr entered start time value is approx: \n' + str(self.curr_reconstruct_data_start_time_value.get())
-                                                                + "\nThe program will try to use the time delay that is closest to what you entered.", initialvalue=self.curr_reconstruct_data_start_time_value.get())
-
-        # user cancelled: do nothing
-        if start_time_value_candidate is None:
-            return None
-
-        # user did not cancel: check if i can parse entered start time to float:
-        if start_time_value_candidate!=None and self.string_is_number(start_time_value_candidate):
-            start_time_value_candidate.lstrip("0")
-            self.curr_reconstruct_data_start_time_value.set(float(start_time_value_candidate))
 
         return None
 
@@ -720,11 +704,8 @@ class GuiAppTAAnalysis(tk.Frame):
         self.btn_update_curr_reconstruct_data_file_strVar = tk.Button(self.frm_orig_data_tab1, text="change data file", command=lambda x=self.curr_reconstruct_data_file_strVar: self.set_curr_fileVar(x))
         self.btn_update_curr_reconstruct_data_file_strVar.grid(row=1, column=0, padx=3, pady=5, sticky="ew")
 
-        self.btn_change_reconstruct_start_time_value = tk.Button(self.frm_orig_data_tab1, text="change start time value", command=self.set_curr_start_time_value)
-        self.btn_change_reconstruct_start_time_value.grid(row=2, column=0, padx=3, pady=5, sticky="ew")
-
         self.btn_change_reconstruct_start_time_value = tk.Button(self.frm_orig_data_tab1, text="change matrix bounds", command=self.set_matrix_bounds_values)
-        self.btn_change_reconstruct_start_time_value.grid(row=3, column=0, padx=3, pady=5, sticky="ew")
+        self.btn_change_reconstruct_start_time_value.grid(row=2, column=0, padx=3, pady=5, sticky="ew")
 
         """ widgets for SVD_reconstruction data heatmap generation """
         self.frm_update_reconstruct_data_tab1 = tk.Frame(self.frm_main, bg=self.gold,)
