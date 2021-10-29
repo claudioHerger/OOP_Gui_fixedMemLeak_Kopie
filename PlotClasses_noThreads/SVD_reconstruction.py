@@ -14,11 +14,11 @@ from SupportClasses import ToolTip, saveData, SmallToolbar
 from ToplevelClasses import Kinetics_Spectrum_Toplevel
 
 class SVD_Heatmap():
-    def __init__(self, parent, filename, start_time, components_list, tab_idx, tab_idx_difference, colormaps_dict):
+    def __init__(self, parent, filename, matrix_bounds_dict, components_list, tab_idx, tab_idx_difference, colormaps_dict):
         """ A class to produce a plot of SVD-reconstructed data on the GUI:\n\n
             * parent is the Gui App that creates the instance of this class\n
             * filename is the full path of the datafile to be reconstructed\n
-            * start_time is the value of the start time. Starting from this time delay value, the data will be used for the reconstruction and plotting\n
+            * matrix_bounds_dict (dict): contains the indeces that dictate the which part of complete data matrix to use\n
             * components_list is a list of integers that represent the SVD components to be used for the reconstruction\n
             * tab_idx is used to put the plot on the correct that of the ttk notebook of the GUI\n
             * tab_idx_difference is the the same as tab_idx but used with the difference notebook\n
@@ -29,7 +29,12 @@ class SVD_Heatmap():
         self.notebook_container_diff = self.parent.nbCon_difference
 
         self.filename = filename
-        self.start_time = start_time
+        self.matrix_bounds_dict = matrix_bounds_dict
+        if not self.matrix_bounds_dict == {}:
+            self.min_wavelength_index = self.matrix_bounds_dict["min_wavelength_index"]
+            self.max_wavelength_index = self.matrix_bounds_dict["max_wavelength_index"]
+            self.min_time_delay_index = self.matrix_bounds_dict["min_time_delay_index"]
+            self.max_time_delay_index = self.matrix_bounds_dict["max_time_delay_index"]
         self.tab_idx = tab_idx
         self.tab_idx_difference = tab_idx_difference
         self.components_list = components_list
@@ -195,12 +200,16 @@ class SVD_Heatmap():
     # this is done in thread separate from gui main thread.
     def make_data(self):
         try:
-            self.TA_data_after_time, self.time_delays, self.wavelengths = get_TA_data_after_start_time.run(self.filename, self.start_time)
-            # update start time to the actual time delay that is closest to user input
-            self.start_time = str(get_closest_nr_from_array_like.run(self.time_delays, float(self.start_time)))
-            if (self.start_time == self.time_delays[-1]):
-                raise ValueError("The start time you entered was above the last time delay. Thus it was moved to the last time delay.\n"+
-                                "However, an SVD wont work in that case.")
+            self.data_matrix_complete, self.time_delays, self.wavelengths = get_TA_data_after_start_time.run(self.filename, "-999999")
+            if not self.matrix_bounds_dict == {}:
+                self.data_matrix = self.data_matrix_complete[self.min_wavelength_index:self.max_wavelength_index+1, self.min_time_delay_index:self.max_time_delay_index+1]
+                self.time_delays = self.time_delays[self.min_time_delay_index:self.max_time_delay_index+1]
+                self.wavelengths = self.wavelengths[self.min_wavelength_index:self.max_wavelength_index+1]
+            else:
+                self.data_matrix = self.data_matrix_complete
+
+            # set start time to the actual time delay that is closest to user input (is used in tab title)
+            self.start_time = self.time_delays[0]
 
             # already set paths to which data from this data object is to be saved - this way the path stays the same
             # and can also be used in corresponding Toplevel classes!
@@ -221,11 +230,11 @@ class SVD_Heatmap():
             return None
 
         # get the selected rSVs, singular values and lSVs - input is TA data after time and self.components_list
-        self.retained_rSVs, self.retained_lSVs, self.retained_singular_values = get_retained_rightSVs_leftSVs_singularvs.run(self.TA_data_after_time, self.components_list)
+        self.retained_rSVs, self.retained_lSVs, self.retained_singular_values = get_retained_rightSVs_leftSVs_singularvs.run(self.data_matrix, self.components_list)
 
-        self.SVD_reconstructed_data, self.singular_values, self.U_matrix, self.VT_matrix = get_SVD_reconstructed_data_for_GUI.run(self.TA_data_after_time, self.components_list)
+        self.SVD_reconstructed_data, self.singular_values, self.U_matrix, self.VT_matrix = get_SVD_reconstructed_data_for_GUI.run(self.data_matrix, self.components_list)
 
-        self.difference_matrix = self.TA_data_after_time.astype(float) - self.SVD_reconstructed_data.astype(float)
+        self.difference_matrix = self.data_matrix.astype(float) - self.SVD_reconstructed_data.astype(float)
 
         return None
 
@@ -240,13 +249,13 @@ class SVD_Heatmap():
         self.notebook_container_SVD.figs[self.tab_idx].savefig(self.full_path_to_final_dir+"/SVD_reconstruction_heatmap.png")
         self.notebook_container_diff.figs[self.tab_idx_difference].savefig(self.full_path_to_final_dir+"/SVD_difference_heatmap.png")
 
-        saveData.make_log_file(self.full_path_to_final_dir, filename=self.filename, start_time=self.start_time, components=self.components_list)
+        saveData.make_log_file(self.full_path_to_final_dir, filename=self.filename, start_time=self.start_time, components=self.components_list, matrix_bounds=self.matrix_bounds_dict)
 
         self.result_data_to_save = {"time_delays": self.time_delays, "wavelengths": self.wavelengths, "singular_values": self.singular_values, "U_matrix": self.U_matrix, "VT_matrix": self.VT_matrix, "retained_right_SVs": self.retained_rSVs, "retained_left_SVs": self.retained_lSVs, "retained_sing_values": self.retained_singular_values,}
         saveData.save_result_data(self.full_path_to_final_dir, self.result_data_to_save)
 
         # save data matrices
-        self.data_matrices_to_save = {"SVD_reconstruction_matrix": self.SVD_reconstructed_data.T, "difference_matrix": self.difference_data.T, "data_matrix_after_start_time": self.TA_data_after_time.T}
+        self.data_matrices_to_save = {"SVD_reconstruction_matrix": self.SVD_reconstructed_data.T, "difference_matrix": self.difference_data.T, "data_matrix": self.data_matrix.T}
         saveData.save_formatted_data_matrix_after_time(self.full_path_to_final_dir, self.time_delays, self.wavelengths, self.data_matrices_to_save)
 
         return None

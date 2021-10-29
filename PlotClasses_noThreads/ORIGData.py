@@ -33,10 +33,11 @@ class ORIGData_Heatmap():
         self.notebook_container = self.parent.nbCon_orig
         self.filename = filename
         self.matrix_bounds_dict = matrix_bounds_dict
-        self.min_wavelength_index = self.matrix_bounds_dict["min_wavelength_index"]
-        self.max_wavelength_index = self.matrix_bounds_dict["max_wavelength_index"]
-        self.min_time_delay_index = self.matrix_bounds_dict["min_time_delay_index"]
-        self.max_time_delay_index = self.matrix_bounds_dict["max_time_delay_index"]
+        if not self.matrix_bounds_dict == {}:
+            self.min_wavelength_index = self.matrix_bounds_dict["min_wavelength_index"]
+            self.max_wavelength_index = self.matrix_bounds_dict["max_wavelength_index"]
+            self.min_time_delay_index = self.matrix_bounds_dict["min_time_delay_index"]
+            self.max_time_delay_index = self.matrix_bounds_dict["max_time_delay_index"]
         self.tab_idx = tab_idx
         self.tab_title_filename = tab_title_filename
         self.colormaps_dict = colormaps_dict
@@ -106,7 +107,7 @@ class ORIGData_Heatmap():
         self.toolbar_orig.grid(row=0, column=4)
 
         self.tab_title = '{:,.1f}'.format(float(self.start_time)) + " " + self.tab_title_filename
-        # self.notebook_container.set_tab_title(self.notebook_container.tab_control.index("current"), title=f'{self.tab_idx+1}: ' + self.tab_title)
+        self.notebook_container.set_tab_title(self.notebook_container.tab_control.index("current"), title=f'{self.tab_idx+1}: ' + self.tab_title)
 
         self.btn_delete_attrs = tk.Button(self.notebook_container.figure_frames[self.tab_idx], text="remove tab", fg=self.parent.violet, command=lambda: self.remove_tab(self.notebook_container))
         self.btn_delete_attrs.grid(row=1, column=3, sticky="se")
@@ -144,15 +145,14 @@ class ORIGData_Heatmap():
         # get the data
         try:
             self.data_matrix_complete, self.time_delays, self.wavelengths = get_TA_data_after_start_time.run(self.filename, "-999999")
-            print(f'{self.data_matrix_complete.shape=}')
+            if not self.matrix_bounds_dict == {}:
+                self.data_matrix = self.data_matrix_complete[self.min_wavelength_index:self.max_wavelength_index+1, self.min_time_delay_index:self.max_time_delay_index+1]
+                self.time_delays = self.time_delays[self.min_time_delay_index:self.max_time_delay_index+1]
+                self.wavelengths = self.wavelengths[self.min_wavelength_index:self.max_wavelength_index+1]
+            else:
+                self.data_matrix = self.data_matrix_complete
 
-            self.data_matrix = self.data_matrix_complete[self.min_wavelength_index:self.max_wavelength_index+1, self.min_time_delay_index:self.max_time_delay_index+1]
-            self.time_delays = self.time_delays[self.min_time_delay_index:self.max_time_delay_index+1]
-            self.wavelengths = self.wavelengths[self.min_wavelength_index:self.max_wavelength_index+1]
-            print(f'{self.data_matrix.shape=}')
-
-            # update start time to the actual time delay that is closest to user input
-            # self.start_time = str(get_closest_nr_from_array_like.run(self.time_delays, float(self.start_time)))
+            # set start time to the actual time delay that is closest to user input (is used in tab title)
             self.start_time = self.time_delays[0]
 
             # already set paths to which data from this data object is to be saved - this way the path stays the same
@@ -191,7 +191,7 @@ class ORIGData_Heatmap():
         saveData.save_result_data(self.full_path_to_final_dir, self.result_data_to_save)
 
         # save data matrices
-        self.data_matrices_to_save = {"data_matrix_after_start_time": self.data_matrix.T}
+        self.data_matrices_to_save = {"data_matrix": self.data_matrix.T}
         saveData.save_formatted_data_matrix_after_time(self.full_path_to_final_dir, self.time_delays, self.wavelengths, self.data_matrices_to_save)
 
         return None

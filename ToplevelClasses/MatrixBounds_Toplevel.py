@@ -80,7 +80,8 @@ class MatrixBoundsWindow(tk.Toplevel):
 
         # # checking if min values are < max values
         if min_wavelength_index >= max_wavelength_index or min_time_delay_index >= max_time_delay_index:
-            tk.messagebox.showerror("error", f"min values need to be smaller than max values (at least their corresponding indeces do not comply at the moment)")
+            tk.messagebox.showerror("error", f"min values need to be smaller than max values (at least their corresponding indeces do not comply at the moment)\n"
+                                                +"(If you have entered values for min and max that are both larger/less than actual max/min value in time_delays/wavelengths this wont work either!)")
             return False
 
         self.bounds_dict["min_wavelength_index"] = min_wavelength_index
