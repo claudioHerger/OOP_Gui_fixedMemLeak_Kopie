@@ -12,6 +12,10 @@ hansi_data_prep.py
 # should do once benchmarking chapter is finished.
 DataFiles/*
 !/DataFiles/maryam2.txt
+!/DataFiles/wavelength_overlap/
+!/DataFiles/temporal_overlap/
+!/DataFiles/temporal_overlap_rednoise_f10/
+
 # !/DataFiles/gridded_hansi_data.txt
 
 
