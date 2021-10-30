@@ -12,7 +12,8 @@ hansi_data_prep.py
 # should do once benchmarking chapter is finished.
 DataFiles/*
 !/DataFiles/maryam2.txt
-!/DataFiles/gridded_hansi_data.txt
+# !/DataFiles/gridded_hansi_data.txt
+
 
 # ignored_folder/**
 # !ignored_folder/**/
