@@ -8,16 +8,11 @@ hansi_data_prep.py
 **/__pycache__
 
 # DATAFILES:
-# still need to include the simulation data as used in thesis!
-# should do once benchmarking chapter is finished.
-DataFiles/*
+/DataFiles/*
 !/DataFiles/maryam2.txt
 !/DataFiles/wavelength_overlap/
 !/DataFiles/temporal_overlap/
 !/DataFiles/temporal_overlap_rednoise_f10/
-
-# !/DataFiles/gridded_hansi_data.txt
-
 
 # ignored_folder/**
 # !ignored_folder/**/
@@ -26,7 +21,8 @@ DataFiles/*
 # SIMULATION DIRECTORY:
 # still need to include the simulation data as used in thesis!
 # should do once benchmarking chapter is finished.
-/SimulateData
+/SimulateData/*
+!/SimulateData/configFiles/
 !/SimulateData/sim_MultiExcitation.py
 !/SimulateData/__init__.py
 !/SimulateData/MakeMoreSimulationPlots.py
