@@ -9,16 +9,17 @@ import tkinter as tk
 import os
 import lmfit
 import re
+from datetime import datetime
 import ast
 
 # my own modules
 from FunctionsUsedByPlotClasses import get_DAS_from_lSVs_res_amplitudes, get_TA_data_after_start_time, get_retained_rightSVs_leftSVs_singularvs, get_SVDGFit_parameters
-from FunctionsUsedByPlotClasses import get_closest_nr_from_array_like, get_SVDGF_reconstructed_data
+from FunctionsUsedByPlotClasses import get_SVDGF_reconstructed_data
 from SupportClasses import ToolTip, saveData, SmallToolbar
 from ToplevelClasses import Kinetics_Spectrum_Toplevel, new_decay_times_Toplevel, CompareRightSVsWithFit_Toplevel
 
 class SVDGF_Heatmap():
-    def __init__(self, parent, filename, start_time, components_list, temp_resolution, time_zero, tab_idx, tab_idx_difference, initial_fit_parameter_values, user_defined_fit_function, colormaps_dict, target_model_configuration_file):
+    def __init__(self, parent, filename, matrix_bounds_dict, components_list, temp_resolution, time_zero, tab_idx, tab_idx_difference, initial_fit_parameter_values, user_defined_fit_function, colormaps_dict, target_model_configuration_file):
         """A class to make a heatmap of via SVD_GlobalFit reconstructed TA data.
         * the (default, i.e. non user defined) global fit should:\n
             # fit the selection (the selected components)\n
@@ -35,7 +36,7 @@ class SVDGF_Heatmap():
         Args:
             parent (GuiApp): the Gui App that creates the instance of this class.
             filename (str): full path of the datafile to be reconstructed
-            start_time (float): the value of the start time. Starting from this time delay value, the data will be used for the reconstruction and plotting
+            matrix_bounds_dict (dict): contains the indeces that dictate the which part of complete data matrix to use
             components_list (list of ints): list of integers that represent the SVD components to be used for the reconstruction
             temp_resolution (float): number that represents the temporal resolution of the used detector setup in data collection (FWHM) (might be used for convolution in fit function)
             time_zero (float): number used in the convolution of the fitting function (convolution might not be implemented)
@@ -56,7 +57,12 @@ class SVDGF_Heatmap():
         self.notebook_container_diff = self.parent.nbCon_difference
 
         self.filename = filename
-        self.start_time = start_time
+        self.matrix_bounds_dict = matrix_bounds_dict
+        if not self.matrix_bounds_dict == {}:
+            self.min_wavelength_index = self.matrix_bounds_dict["min_wavelength_index"]
+            self.max_wavelength_index = self.matrix_bounds_dict["max_wavelength_index"]
+            self.min_time_delay_index = self.matrix_bounds_dict["min_time_delay_index"]
+            self.max_time_delay_index = self.matrix_bounds_dict["max_time_delay_index"]
         self.tab_idx = tab_idx
         self.tab_idx_difference = tab_idx_difference
         self.components_list = components_list
@@ -268,9 +274,9 @@ class SVDGF_Heatmap():
 
     def compare_rightSVs_with_fit(self):
         if not self.use_user_defined_fit_function:
-            compareWindow = CompareRightSVsWithFit_Toplevel.CompareWindow(self.parent, self.use_user_defined_fit_function, self.tab_idx_difference, self.components_list, self.time_delays, self.retained_rSVs, self.retained_singular_values, self.fit_result_decay_times_as_dict, self.fit_result_amplitudes, self.filename, self.full_path_to_final_dir)
+            compareWindow = CompareRightSVsWithFit_Toplevel.CompareWindow(self.parent, self.use_user_defined_fit_function, self.tab_idx_difference, self.components_list, self.time_delays, self.retained_rSVs, self.retained_singular_values, self.fit_result_decay_times_as_dict, self.fit_result_amplitudes, self.filename, self.full_path_to_final_dir, start_time=self.start_time, matrix_bounds_dict=self.matrix_bounds_dict)
         else:
-            compareWindow = CompareRightSVsWithFit_Toplevel.CompareWindow(self.parent, self.use_user_defined_fit_function, self.tab_idx_difference, self.components_list, self.time_delays, self.retained_rSVs, self.retained_singular_values, self.fit_result_decay_times_as_dict, self.fit_result_amplitudes, self.filename, self.full_path_to_final_dir, self.parsed_summands_of_user_defined_fit_function)
+            compareWindow = CompareRightSVsWithFit_Toplevel.CompareWindow(self.parent, self.use_user_defined_fit_function, self.tab_idx_difference, self.components_list, self.time_delays, self.retained_rSVs, self.retained_singular_values, self.fit_result_decay_times_as_dict, self.fit_result_amplitudes, self.filename, self.full_path_to_final_dir, self.parsed_summands_of_user_defined_fit_function, start_time=self.start_time, matrix_bounds_dict=self.matrix_bounds_dict)
 
         compareWindow.run()
 
@@ -315,7 +321,7 @@ class SVDGF_Heatmap():
             if self.how_to_continue == "compute with new decay times":
                 self.SVDGF_reconstructed_data_selected_DAS = get_SVDGF_reconstructed_data.run(self.DAS[:,self.indeces_for_DAS_matrix], [self.user_selected_decay_times[x] for x in self.indeces_for_DAS_matrix], self.time_delays, self.wavelengths, self.indeces_for_DAS_matrix, self.start_time)
 
-            self.difference_matrix_selected_DAS = self.TA_data_after_time.astype(float) - self.SVDGF_reconstructed_data_selected_DAS.astype(float)
+            self.difference_matrix_selected_DAS = self.data_matrix.astype(float) - self.SVDGF_reconstructed_data_selected_DAS.astype(float)
 
         except (ValueError, FloatingPointError) as error:
             tk.messagebox.showerror("Warning, an exception occurred!", f"Exception {type(error)} message: \n"+ str(error)
@@ -394,12 +400,16 @@ class SVDGF_Heatmap():
     def make_data(self):
         # compute the SVDGF data for plot. the needed data (SVDGF_reconstructed_data, time_delays and wavelengths) are assigned to self
         try:
-            self.TA_data_after_time, self.time_delays, self.wavelengths = get_TA_data_after_start_time.run(self.filename, self.start_time)
-            # update start time to the actual time delay that is closest to user input
-            self.start_time = str(get_closest_nr_from_array_like.run(self.time_delays, float(self.start_time)))
-            if (self.start_time == self.time_delays[-1]):
-                raise ValueError("The start time you entered was above the last time delay. Thus it was moved to the last time delay.\n"+
-                                "However, an SVD and thus a fit wont work in that case.")
+            self.data_matrix_complete, self.time_delays, self.wavelengths = get_TA_data_after_start_time.run(self.filename, "-999999")
+            if not self.matrix_bounds_dict == {}:
+                self.data_matrix = self.data_matrix_complete[self.min_wavelength_index:self.max_wavelength_index+1, self.min_time_delay_index:self.max_time_delay_index+1]
+                self.time_delays = self.time_delays[self.min_time_delay_index:self.max_time_delay_index+1]
+                self.wavelengths = self.wavelengths[self.min_wavelength_index:self.max_wavelength_index+1]
+            else:
+                self.data_matrix = self.data_matrix_complete
+
+            # set start time to the actual time delay that is closest to user input (is used in tab title)
+            self.start_time = self.time_delays[0]
 
             # already set paths to which data from this data object is to be saved - this way the path stays the same
             # and can also be used in corresponding Toplevel classes!
@@ -416,7 +426,7 @@ class SVDGF_Heatmap():
             return None
 
         # get the selected rSVs, singular values and lSVs - input is TA data after time and self.components_list
-        self.retained_rSVs, self.retained_lSVs, self.retained_singular_values = get_retained_rightSVs_leftSVs_singularvs.run(self.TA_data_after_time, self.components_list)
+        self.retained_rSVs, self.retained_lSVs, self.retained_singular_values = get_retained_rightSVs_leftSVs_singularvs.run(self.data_matrix, self.components_list)
 
         # get the parsed summands of user defined fit function, if the corresponding checkbox in main gui is checked:
         self.parsed_summands_of_user_defined_fit_function = []
@@ -424,7 +434,7 @@ class SVDGF_Heatmap():
             try:
                 self.summands_of_user_defined_fit_function = self.get_summands_of_user_defined_fit_function_from_file(self.target_model_configuration_file)
                 self.parsed_summands_of_user_defined_fit_function = self.parse_summands_of_user_defined_fit_function_to_actual_code(self.summands_of_user_defined_fit_function)
-            except ValueError as error:
+            except (ValueError, KeyError) as error:
                 tk.messagebox.showerror("Warning,", "an exception occurred!""\nProbably due to a problem with the user defined fit function file!\n"+
                                     f"Exception {type(error)} message: \n"+ str(error)+"\n")
 
@@ -471,7 +481,7 @@ class SVDGF_Heatmap():
             return None
 
         # the difference matrix between full reconstruction data and original data
-        self.difference_matrix = self.TA_data_after_time.astype(float) - self.SVDGF_reconstructed_data.astype(float)
+        self.difference_matrix = self.data_matrix.astype(float) - self.SVDGF_reconstructed_data.astype(float)
         # the difference matrix between reconstruction data using only selected DAS and original data
         # is used in Kinetics_Spectrum_Toplevel class, thus i set it here already
         self.difference_matrix_selected_DAS = self.difference_matrix
@@ -486,16 +496,20 @@ class SVDGF_Heatmap():
             os.makedirs(self.full_path_to_final_dir)
 
         # save data
-        self.notebook_container_SVDGF.figs[self.tab_idx].savefig(self.full_path_to_final_dir+"/reconstruction_heatmap_DAS"+str(self.indeces_for_DAS_matrix)+".png")
-        self.notebook_container_diff.figs[self.tab_idx_difference].savefig(self.full_path_to_final_dir+"/difference_heatmap_DAS"+str(self.indeces_for_DAS_matrix)+".png")
-        saveData.make_log_file(self.full_path_to_final_dir, filename=self.filename, start_time=self.start_time, components=self.components_list, use_user_defined_fit_function=self.use_user_defined_fit_function)
+        today = datetime.now() # including the time of saving into figure file name to prevent overwriting figure files if all DAS are used
+        self.notebook_container_SVDGF.figs[self.tab_idx].savefig(self.full_path_to_final_dir+"/reconstruction_heatmap_DAS"+str(self.indeces_for_DAS_matrix)+"_"+str(today.strftime("%H_%M_%S"))+".png")
+        self.notebook_container_diff.figs[self.tab_idx_difference].savefig(self.full_path_to_final_dir+"/difference_heatmap_DAS"+str(self.indeces_for_DAS_matrix)+"_"+str(today.strftime("%H_%M_%S"))+".png")
+        saveData.make_log_file(self.full_path_to_final_dir, filename=self.filename, start_time=self.start_time, components=self.components_list, matrix_bounds_dict=self.matrix_bounds_dict, use_user_defined_fit_function=self.use_user_defined_fit_function)
         self.result_data_to_save = {"retained_sing_values": self.retained_singular_values, "DAS": self.DAS, "fit_report_complete": lmfit.fit_report(self.fit_result), "time_delays": self.time_delays, "wavelengths": self.wavelengths, "retained_left_SVs": self.retained_lSVs, "retained_right_SVs": self.retained_rSVs}
         if self.parsed_summands_of_user_defined_fit_function: # if dictionary with parsed user defined fit function exists, add it to data to be saved.
             self.result_data_to_save["parsed_summands_of_user_defined_fit_function"] = self.parsed_summands_of_user_defined_fit_function
         saveData.save_result_data(self.full_path_to_final_dir, self.result_data_to_save)
 
         # save data matrices
-        self.data_matrices_to_save = {"SVDGF_reconstruction_matrix": self.SVDGF_reconstructed_data.T, "difference_matrix": self.difference_data.T, "data_matrix_after_start_time": self.TA_data_after_time.T, "difference_matrix_selected_DAS"+str(self.indeces_for_DAS_matrix): self.difference_matrix_selected_DAS.T}
+        try:
+            self.data_matrices_to_save = {"SVDGF_reconstruction_matrix": self.SVDGF_reconstructed_data.T, "difference_matrix": self.difference_data.T, "data_matrix": self.data_matrix.T, "difference_matrix_selected_DAS"+str(self.indeces_for_DAS_matrix)+"_"+str(today.strftime("%H_%M_%S")): self.difference_matrix_selected_DAS.T, "SVDGF_reconstructed_data_selected_DAS"+str(self.indeces_for_DAS_matrix)+"_"+str(today.strftime("%H_%M_%S")): self.SVDGF_reconstructed_data_selected_DAS.T}
+        except AttributeError:
+            self.data_matrices_to_save = {"SVDGF_reconstruction_matrix": self.SVDGF_reconstructed_data.T, "difference_matrix": self.difference_data.T, "data_matrix": self.data_matrix.T, "difference_matrix_selected_DAS"+str(self.indeces_for_DAS_matrix)+"_"+str(today.strftime("%H_%M_%S")): self.difference_matrix_selected_DAS.T}
         saveData.save_formatted_data_matrix_after_time(self.full_path_to_final_dir, self.time_delays, self.wavelengths, self.data_matrices_to_save)
 
         return None

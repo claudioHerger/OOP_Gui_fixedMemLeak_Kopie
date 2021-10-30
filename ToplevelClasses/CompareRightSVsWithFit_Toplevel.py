@@ -18,7 +18,7 @@ import tkinter as tk
 
 class CompareWindow(tk.Toplevel):
 
-    def __init__(self, parent, is_target_model, tab_index, components, time_steps, rightSVs, singular_values, decay_times_parameter_values, amplitudes_parameter_values, data_file_name, save_dir, parsed_summands_of_user_defined_fit_function=None, is_from_initial_values_window=None):
+    def __init__(self, parent, is_target_model, tab_index, components, time_steps, rightSVs, singular_values, decay_times_parameter_values, amplitudes_parameter_values, data_file_name, save_dir, parsed_summands_of_user_defined_fit_function=None, is_from_initial_values_window=None, start_time=None, matrix_bounds_dict=None):
         """Compare the right singular vectors (kinetics) of data matrix with the fit results in a plot.
 
         Args:
@@ -39,7 +39,7 @@ class CompareWindow(tk.Toplevel):
         super().__init__(parent)
         self.parent = parent
         self.tab_index = tab_index
-        self.components = components
+        self.components_list = components
         self.time_steps_strings = time_steps
         self.time_steps = [float(time_step) for time_step in time_steps]
 
@@ -55,6 +55,8 @@ class CompareWindow(tk.Toplevel):
         self.first_plot = True
 
         self.is_from_initial_values_window = is_from_initial_values_window
+        self.start_time = start_time
+        self.matrix_bounds_dict = matrix_bounds_dict
 
         return None
 
@@ -78,14 +80,14 @@ class CompareWindow(tk.Toplevel):
 
         self.figure_canvas.get_tk_widget().grid(row=0, column=0)
         self.btn_save_curr_figure.grid(row=2, column=0, sticky="sw", pady=3)
-        self.btn_update_plot.grid(row=2, column=len(self.components)-1, sticky="se", padx=3 , pady=3)
-        self.btn_quit.grid(row=2, column=len(self.components), sticky="se", pady=3)
+        self.btn_update_plot.grid(row=2, column=len(self.components_list)-1, sticky="se", padx=3 , pady=3)
+        self.btn_quit.grid(row=2, column=len(self.components_list), sticky="se", pady=3)
 
         return None
 
     def make_frame_figure_and_axes(self):
         frm_figure = tk.Frame(self)
-        frm_figure.grid(row=0, columnspan=len(self.components))
+        frm_figure.grid(row=0, columnspan=len(self.components_list))
 
         # some styling for plots
         matplotlib.style.use("seaborn")
@@ -98,54 +100,54 @@ class CompareWindow(tk.Toplevel):
         return fig, axes, canvas
 
     def put_check_buttons_on_window(self):
-        self.check_button_variables = [tk.IntVar(0) for _ in self.components]
+        self.check_button_variables = [tk.IntVar(0) for _ in self.components_list]
         self.check_button_variables[0].set(1)
-        self.check_buttons = [tk.Checkbutton(self, text=str(self.components[component_index]), onvalue=1, offvalue=0, variable=self.check_button_variables[component_index]) for component_index in range(len(self.components))]
-        for check_button_index in range(len(self.components)):
+        self.check_buttons = [tk.Checkbutton(self, text=str(self.components_list[component_index]), onvalue=1, offvalue=0, variable=self.check_button_variables[component_index]) for component_index in range(len(self.components_list))]
+        for check_button_index in range(len(self.components_list)):
             self.check_buttons[check_button_index].grid(row=1, column=check_button_index, sticky="sw")
 
         return None
 
     def compute_weighted_rSVs(self):
-        weighted_rSVs = np.zeros((len(self.components), len(self.time_steps)))
-        for component_index in range(len(self.components)):
+        weighted_rSVs = np.zeros((len(self.components_list), len(self.time_steps)))
+        for component_index in range(len(self.components_list)):
             sing_value = self.singular_values[component_index]
             weighted_rSVs[component_index, :] = sing_value*self.rightSVs[component_index, :]
 
         return weighted_rSVs
 
     def reconstruct_rSVs_from_fit_results_using_intial_values(self, decay_times, amplitudes):
-        reconstructed_rSVs_from_fit_results = np.zeros(shape=(len(self.components), len(self.time_steps)))
+        reconstructed_rSVs_from_fit_results = np.zeros(shape=(len(self.components_list), len(self.time_steps)))
         self.decay_times = decay_times
         decay_constants = list(self.decay_times.values())
         self.amplitudes = amplitudes
         time_steps_array = self.time_steps = np.array(self.time_steps)
 
-        for component_index in range(len(self.components)):
+        for component_index in range(len(self.components_list)):
             curr_amplitudes = []
-            for component in self.components:
+            for component in self.components_list:
                 curr_amplitudes.append(self.amplitudes[f'amp_rSV{component_index}_component{component}'])
             if not self.is_target_model:
                 reconstructed_rSVs_from_fit_results[component_index, :] = get_SVDGFit_parameters.model_func(time_steps_array, curr_amplitudes, decay_constants, index_of_first_increased_time_interval=0, gaussian_for_convolution=0)
             else:
-                reconstructed_rSVs_from_fit_results[component_index, :] = get_SVDGFit_parameters.model_func_user_defined(time_steps_array, curr_amplitudes, decay_constants, self.components, self.parsed_summands_of_user_defined_fit_function)
+                reconstructed_rSVs_from_fit_results[component_index, :] = get_SVDGFit_parameters.model_func_user_defined(time_steps_array, curr_amplitudes, decay_constants, self.components_list, self.parsed_summands_of_user_defined_fit_function)
 
         self.reconstructed_rSVs_from_fit_results = reconstructed_rSVs_from_fit_results
         return reconstructed_rSVs_from_fit_results
 
     def reconstruct_rSVs_from_fit_results(self):
-        reconstructed_rSVs_from_fit_results = np.zeros(shape=(len(self.components), len(self.time_steps)))
+        reconstructed_rSVs_from_fit_results = np.zeros(shape=(len(self.components_list), len(self.time_steps)))
         decay_constants = list(self.decay_times.values())
         time_steps_array = self.time_steps = np.array(self.time_steps)
 
-        for component_index in range(len(self.components)):
+        for component_index in range(len(self.components_list)):
             curr_amplitudes = []
-            for component in self.components:
+            for component in self.components_list:
                 curr_amplitudes.append(self.amplitudes[f'amp_rSV{component_index}_component{component}'])
             if not self.is_target_model:
                 reconstructed_rSVs_from_fit_results[component_index, :] = get_SVDGFit_parameters.model_func(time_steps_array, curr_amplitudes, decay_constants, index_of_first_increased_time_interval=0, gaussian_for_convolution=0)
             else:
-                reconstructed_rSVs_from_fit_results[component_index, :] = get_SVDGFit_parameters.model_func_user_defined(time_steps_array, curr_amplitudes, decay_constants, self.components, self.parsed_summands_of_user_defined_fit_function)
+                reconstructed_rSVs_from_fit_results[component_index, :] = get_SVDGFit_parameters.model_func_user_defined(time_steps_array, curr_amplitudes, decay_constants, self.components_list, self.parsed_summands_of_user_defined_fit_function)
 
         return reconstructed_rSVs_from_fit_results
 
@@ -163,17 +165,17 @@ class CompareWindow(tk.Toplevel):
 
             self.first_plot = False
 
-        self.currently_plotted_components = [component for component_index, component in enumerate(self.components) if self.check_button_variables[component_index].get() == 1]
-        for i in range(len(self.components)):
+        self.currently_plotted_components = [component for component_index, component in enumerate(self.components_list) if self.check_button_variables[component_index].get() == 1]
+        for i in range(len(self.components_list)):
             if (self.check_button_variables[i].get() == 1):
                 try:
-                    self.axes.plot(self.xaxis, self.weighted_rSVs[i,:], label=f"rSV {self.components[i]}", color=sns.color_palette("Set2")[i])
+                    self.axes.plot(self.xaxis, self.weighted_rSVs[i,:], label=f"rSV {self.components_list[i]}", color=sns.color_palette("Set2")[i])
                     varied_color = (sns.color_palette("Set2")[i][0], sns.color_palette("Set2")[i][1]*0.1, sns.color_palette("Set2")[i][2]*(1.1))
-                    self.axes.plot(self.xaxis, self.reconstructed_rSVs_from_fit_results[i,:], label=f'fit for rSV {self.components[i]}', linestyle="--", color=varied_color)
+                    self.axes.plot(self.xaxis, self.reconstructed_rSVs_from_fit_results[i,:], label=f'fit for rSV {self.components_list[i]}', linestyle="--", color=varied_color)
                 except IndexError:
-                    self.axes.plot(self.xaxis, self.weighted_rSVs[i,:], label=f"rSV {self.components[i]}", color=sns.color_palette("husl", 8)[i-8])
+                    self.axes.plot(self.xaxis, self.weighted_rSVs[i,:], label=f"rSV {self.components_list[i]}", color=sns.color_palette("husl", 8)[i-8])
                     varied_color = (sns.color_palette("husl", 8)[i-8][0], sns.color_palette("husl", 8)[i-8][1]*0.1, sns.color_palette("husl", 8)[i-8][2]*(1.1))
-                    self.axes.plot(self.xaxis, self.reconstructed_rSVs_from_fit_results[i,:], label=f'fit for rSV {self.components[i]}', linestyle="--", color=varied_color)
+                    self.axes.plot(self.xaxis, self.reconstructed_rSVs_from_fit_results[i,:], label=f'fit for rSV {self.components_list[i]}', linestyle="--", color=varied_color)
 
         self.axes.set_xticks(self.rightSVs_xticks)
         self.axes.set_xticklabels(self.rightSVs_xticklabels, rotation=0)
@@ -199,8 +201,15 @@ class CompareWindow(tk.Toplevel):
         if not os.path.exists(self.save_dir):
             os.makedirs(self.save_dir)
 
+        saveData.make_log_file(self.save_dir, filename=self.data_file_name, start_time=self.start_time, components=self.components_list, matrix_bounds=self.matrix_bounds_dict, parsed_target_model_summands=self.parsed_summands_of_user_defined_fit_function)
+
         # save current figure:
         self.figure.savefig(self.save_dir+"/rightSVs_"+str(self.currently_plotted_components)+"_Vs_Fit.png")
+
+        data_dict = {'initial_decay_constants_values': self.decay_times, 'initial_amplitudes_values':self.amplitudes, 'right_SVectors':self.rightSVs, 'singular_values':self.singular_values}
+        if self.is_target_model:
+            data_dict['user_defined_model_summands'] = self.parsed_summands_of_user_defined_fit_function
+        saveData.save_result_data(self.save_dir, data_dict)
 
         return None
 
@@ -217,6 +226,8 @@ class CompareWindow(tk.Toplevel):
         # check if directory exists:
         if not os.path.exists(final_dir):
             os.makedirs(final_dir)
+
+        saveData.make_log_file(final_dir, filename=self.data_file_name, start_time=self.start_time, components=self.components_list, matrix_bounds=self.matrix_bounds_dict, parsed_target_model_summands=self.parsed_summands_of_user_defined_fit_function)
 
         data_dict = {'initial_decay_constants_values': self.decay_times, 'initial_amplitudes_values':self.amplitudes, 'right_SVectors':self.rightSVs, 'singular_values':self.singular_values}
         if self.is_target_model:

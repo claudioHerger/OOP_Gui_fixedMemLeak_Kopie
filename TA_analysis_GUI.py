@@ -38,6 +38,7 @@ class GuiAppTAAnalysis(tk.Frame):
 
         self.read_initial_fit_parameter_values_from_file()
         self.read_currently_used_cmaps_from_file()
+        self.data_matrix_bounds_dict = {}
 
         # which files the user can select in the tk.filedialog.askopenfilename
         self.ftypes = [('txt files', '*.txt'), ('All files', '*.txt; *.csv'), ('CSV files', '*.csv')]
@@ -46,11 +47,11 @@ class GuiAppTAAnalysis(tk.Frame):
         self.curr_reconstruct_data_file_strVar = tk.StringVar()
         self.curr_reconstruct_data_file_strVar.set("no file selected")
         # self.curr_reconstruct_data_file_strVar.set(self.base_directory+"/DataFiles/simulatedTAData_formatted.txt")
-        self.curr_reconstruct_data_file_strVar.set(self.base_directory+"/DataFiles/data_full_0.txt")
+        # self.curr_reconstruct_data_file_strVar.set(self.base_directory+"/DataFiles/data_full_0.txt")
         self.curr_reconstruct_data_file_strVar.trace_add("write", self.update_filename_in_title_and_truncated_filename_for_tab_header_callback)
         self.curr_reconstruct_data_start_time_value = tk.DoubleVar()
         self.curr_reconstruct_data_start_time_value.trace_add("write", self.update_filename_in_title_and_truncated_filename_for_tab_header_callback)
-        self.curr_reconstruct_data_start_time_value.set(-999.0)
+        self.curr_reconstruct_data_start_time_value.set(-9999.0)
 
         # determine the number of tabs possible for all the different notebooks:
         self.NR_OF_TABS = 10    # this should really be left below 50!
@@ -66,14 +67,6 @@ class GuiAppTAAnalysis(tk.Frame):
         self.grey = "lavender"
         self.flashwidgetcolor = "navyblue"
         self.sanddollar = "#e5ddc8"
-
-        # self.blue = "#01949a" # teal
-        # self.gold = "#e5ddc8" # sanddollar
-        # self.orange = "orange"
-        # self.complementary_blue = "#0028FF"
-        # self.violet = "#004369" # navyblue
-        # self.grey = "lavender"
-        # self.flashwidgetcolor = "navyblue"
 
         self.ttk_Notebook_style = ttk.Style()
         self.ttk_Notebook_style.theme_settings("default", settings={
@@ -286,7 +279,7 @@ class GuiAppTAAnalysis(tk.Frame):
             components_to_plot.append(lis_of_IntVars[checkbox].get())
 
         if 1 not in components_to_plot:
-            raise ValueError('You did not select any components!\nThat needs to be done for the SVD and SVDGF plots, and also to define a fit function.')
+            raise ValueError('You did not select any components!\nThat needs to be done for the SVD and SVDGF plots, and also to define a fit function or initial fit parameter values.')
 
         return components_to_plot
 
@@ -309,6 +302,10 @@ class GuiAppTAAnalysis(tk.Frame):
         if filename != "":
             file_var.set(filename)
 
+        # resetting the matrix bounds dict when file is changed
+        self.data_matrix_bounds_dict = {}
+        self.curr_reconstruct_data_start_time_value.set(-9999.0)
+
     def string_is_number(self, some_string):
         try:
             float(some_string)
@@ -319,44 +316,23 @@ class GuiAppTAAnalysis(tk.Frame):
 
             return False
 
-    def handler_assign_matrix_dimension_values(self, new_dimension_indeces):
-        pass
+    def handler_assign_matrix_bounds_values(self, new_bounds_dict, new_start_time_value):
+        self.data_matrix_bounds_dict = new_bounds_dict
 
-    def set_matrix_dimension_values(self):
+        # need to assign that value too as it is used in gui e.g. for tab titles
+        self.curr_reconstruct_data_start_time_value.set(float(new_start_time_value))
+        return None
+
+    def set_matrix_bounds_values(self):
 
         if self.curr_reconstruct_data_file_strVar.get() == "no file selected":
-            tk.showerror("error", "choose a data file first!")
+            tk.messagebox.showerror("error", "choose a data file first!")
             return None
 
         TA_data_after_time, time_delays, wavelengths = get_TA_data_after_start_time.run(self.curr_reconstruct_data_file_strVar.get(), "-99999")
-        # print(f'{time_delays=}')
 
-        wavelength_bounds = (wavelengths[0], wavelengths[-1])
-        time_delays_bounds = (time_delays[0], time_delays[-1])
-
-        matrix_bounds_window = MatrixBounds_Toplevel.MatrixBoundsWindow(self, time_delays, wavelengths)
+        matrix_bounds_window = MatrixBounds_Toplevel.MatrixBoundsWindow(self, time_delays, wavelengths, self.handler_assign_matrix_bounds_values)
         self.wait_window(matrix_bounds_window)
-
-
-        # finally
-        self.wavelength_bounds_indeces = (2, 599)
-        self.time_delays_bounds_indeces = (5, 200)
-
-
-
-    def set_curr_start_time_value(self):
-        start_time_value_candidate = tk.simpledialog.askstring('Enter the start time value',
-                                                                'curr entered start time value is approx: \n' + str(self.curr_reconstruct_data_start_time_value.get())
-                                                                + "\nThe program will try to use the time delay that is closest to what you entered.", initialvalue=self.curr_reconstruct_data_start_time_value.get())
-
-        # user cancelled: do nothing
-        if start_time_value_candidate is None:
-            return None
-
-        # user did not cancel: check if i can parse entered start time to float:
-        if start_time_value_candidate!=None and self.string_is_number(start_time_value_candidate):
-            start_time_value_candidate.lstrip("0")
-            self.curr_reconstruct_data_start_time_value.set(float(start_time_value_candidate))
 
         return None
 
@@ -376,10 +352,15 @@ class GuiAppTAAnalysis(tk.Frame):
         save_dir = self.get_save_dir_for_initial_fit_params_window()
         use_target_model = bool(self.checkbox_var_use_target_model.get())
         data_file_name = self.curr_reconstruct_data_file_strVar.get()
-        comp_list = self.get_components_to_use()
-        start_time = self.curr_reconstruct_data_start_time_value.get()
+        self.components_to_use = self.get_components_to_use()
+        if (self.components_to_use is None):
+            # getting components failed, do nothing
+            return None
 
-        self.initial_fit_parameter_values_window = initial_fit_parameter_values_Toplevel.initial_fit_parameters_Window(self, self.initial_fit_parameter_values_file, self.initial_fit_parameter_values, self.handler_assign_initial_fit_parameter_values, comp_list, use_target_model, self.target_model_fit_function_file, data_file_name, save_dir, start_time)
+        if not (self.check_if_matrix_bounds_set()):
+            print("no bounds set, continue with full matrix")
+
+        self.initial_fit_parameter_values_window = initial_fit_parameter_values_Toplevel.initial_fit_parameters_Window(self, self.initial_fit_parameter_values_file, self.initial_fit_parameter_values, self.handler_assign_initial_fit_parameter_values, self.components_to_use, use_target_model, self.target_model_fit_function_file, data_file_name, save_dir, self.data_matrix_bounds_dict)
 
         return None
 
@@ -504,6 +485,16 @@ class GuiAppTAAnalysis(tk.Frame):
 
         return True
 
+    def check_if_matrix_bounds_set(self):
+        try:
+            self.data_matrix_bounds_dict["min_wavelength_index"]
+            self.data_matrix_bounds_dict["max_wavelength_index"]
+            self.data_matrix_bounds_dict["min_time_delay_index"]
+            self.data_matrix_bounds_dict["max_time_delay_index"]
+        except (AttributeError, KeyError):
+            return False
+        return True
+
     """ methods to clear Gui variables and frames and tabs """
     def return_some_gui_widgets_to_initial_state(self, button=None, label=None, tab_control=None):
         if button:
@@ -530,7 +521,8 @@ class GuiAppTAAnalysis(tk.Frame):
         tab_index = int(self.ent_show_SVDGF_result_toplevel.get()) - 1
 
         try:
-            self.fit_report_toplevels.append(FitResult_Toplevel.FitResult_Window(self, tab_index, lmfit.fit_report(self.nbCon_SVDGF.data_objs[tab_index].fit_result), self.nbCon_SVDGF.data_objs[tab_index]))
+            data_obj = self.nbCon_SVDGF.data_objs[tab_index]
+            self.fit_report_toplevels.append(FitResult_Toplevel.FitResult_Window(self, tab_index, lmfit.fit_report(data_obj.fit_result), data_obj.filename))
 
         except (IndexError, AttributeError) as error:
             tk.messagebox.showerror("Warning, an exception occurred!", f"Exception {type(error)} message: \n"+ str(error)+"\n"
@@ -549,16 +541,21 @@ class GuiAppTAAnalysis(tk.Frame):
         tab_index = int(self.ent_show_DAS_toplevel.get()) - 1
 
         try:
-            self.DAS_toplevels.append(DAS_Toplevel.DAS_Window(self, tab_index, self.nbCon_SVDGF.data_objs[tab_index]))
+            data_obj = self.nbCon_SVDGF.data_objs[tab_index]
+            self.DAS_toplevels.append(DAS_Toplevel.DAS_Window(self, tab_index, data_obj.DAS, data_obj.wavelengths, data_obj.resulting_SVDGF_fit_parameters, data_obj.components_list, data_obj.filename, data_obj.start_time, data_obj.full_path_to_final_dir))
 
         except (IndexError, AttributeError) as error:
             tk.messagebox.showerror("Warning, an exception occurred!", f"Exception {type(error)} message: \n"+ str(error)+"\n"
                                     +"\nHave you already computed the fit for that tab?!")
+            print(error)
 
         return None
 
     """ methods to make different kind of notebook tabs """
     def show_orig_data_heatmap(self):
+        if not (self.check_if_matrix_bounds_set()):
+            print("no bounds set, continue with full matrix")
+
         if self.too_many_such_tabs(self.nbCon_orig.tab_control, "next_tab_idx_orig", self.NR_OF_TABS):
             return None
 
@@ -579,7 +576,7 @@ class GuiAppTAAnalysis(tk.Frame):
             self.nbCon_orig.tab_control.grid(row=0, column=2, sticky="ne")
         self.nbCon_orig.add_indexed_tab(self.next_tab_idx_orig, title=str(self.curr_reconstruct_data_start_time_value.get()) + " " + self.truncated_filename)
 
-        self.nbCon_orig.data_objs[self.next_tab_idx_orig] = ORIGData.ORIGData_Heatmap(self, self.next_tab_idx_orig, self.curr_reconstruct_data_file_strVar.get(), self.curr_reconstruct_data_start_time_value.get(), self.truncated_filename, self.currently_used_cmaps_dict)
+        self.nbCon_orig.data_objs[self.next_tab_idx_orig] = ORIGData.ORIGData_Heatmap(self, self.next_tab_idx_orig, self.curr_reconstruct_data_file_strVar.get(), self.data_matrix_bounds_dict, self.truncated_filename, self.currently_used_cmaps_dict)
         thread_instance_orig = threading.Thread(target=self.nbCon_orig.data_objs[self.next_tab_idx_orig].make_data)
         thread_instance_orig.start()
         self.monitor_thread(thread_instance_orig, self.nbCon_orig.data_objs[self.next_tab_idx_orig], self.btn_show_orig_data_heatmap, self.lbl_reassuring_orig)
@@ -587,6 +584,9 @@ class GuiAppTAAnalysis(tk.Frame):
         return None
 
     def show_SVD_reconstructed_data_heatmap(self):
+        if not (self.check_if_matrix_bounds_set()):
+            print("no bounds set, continue with full matrix")
+
         if self.too_many_such_tabs(self.nbCon_SVD.tab_control, "next_tab_idx_SVD", self.NR_OF_TABS):
             return None
 
@@ -616,7 +616,7 @@ class GuiAppTAAnalysis(tk.Frame):
             self.nbCon_difference.tab_control.grid(row=1, column=2, sticky="ne")
         self.nbCon_difference.add_indexed_tab(self.next_tab_idx_difference, title="SVD "+str(self.next_tab_idx_SVD+1))
 
-        self.nbCon_SVD.data_objs[self.next_tab_idx_SVD] = SVD_reconstruction.SVD_Heatmap(self, self.curr_reconstruct_data_file_strVar.get(), self.curr_reconstruct_data_start_time_value.get(), self.components_to_use, self.next_tab_idx_SVD, self.next_tab_idx_difference, self.currently_used_cmaps_dict)
+        self.nbCon_SVD.data_objs[self.next_tab_idx_SVD] = SVD_reconstruction.SVD_Heatmap(self, self.curr_reconstruct_data_file_strVar.get(), self.data_matrix_bounds_dict, self.components_to_use, self.next_tab_idx_SVD, self.next_tab_idx_difference, self.currently_used_cmaps_dict)
         thread_instance_SVD = threading.Thread(target=self.nbCon_SVD.data_objs[self.next_tab_idx_SVD].make_data)
         thread_instance_SVD.start()
         self.monitor_thread(thread_instance_SVD, self.nbCon_SVD.data_objs[self.next_tab_idx_SVD], self.btn_show_SVD_reconstructed_data_heatmap, self.lbl_reassuring_SVD)
@@ -624,6 +624,9 @@ class GuiAppTAAnalysis(tk.Frame):
         return None
 
     def show_SVD_GlobalFit_reconstructed_data_heatmap(self):
+        if not (self.check_if_matrix_bounds_set()):
+            print("no bounds set, continue with full matrix")
+
         if self.too_many_such_tabs(self.nbCon_SVDGF.tab_control, "next_tab_idx_SVDGF", self.NR_OF_TABS):
             return None
 
@@ -658,7 +661,7 @@ class GuiAppTAAnalysis(tk.Frame):
             self.nbCon_difference.tab_control.grid(row=1, column=2, sticky="ne")
         self.nbCon_difference.add_indexed_tab(self.next_tab_idx_difference, title="SVDGF "+str(self.next_tab_idx_SVDGF+1))
 
-        self.nbCon_SVDGF.data_objs[self.next_tab_idx_SVDGF] = SVDGF_reconstruction.SVDGF_Heatmap(self, self.curr_reconstruct_data_file_strVar.get(), self.curr_reconstruct_data_start_time_value.get(), self.components_to_use, self.temporal_resolution_in_ps, self.time_zero_in_ps, self.next_tab_idx_SVDGF, self.next_tab_idx_difference, self.initial_fit_parameter_values, bool(self.checkbox_var_use_target_model.get()), self.currently_used_cmaps_dict, self.target_model_fit_function_file)
+        self.nbCon_SVDGF.data_objs[self.next_tab_idx_SVDGF] = SVDGF_reconstruction.SVDGF_Heatmap(self, self.curr_reconstruct_data_file_strVar.get(), self.data_matrix_bounds_dict, self.components_to_use, self.temporal_resolution_in_ps, self.time_zero_in_ps, self.next_tab_idx_SVDGF, self.next_tab_idx_difference, self.initial_fit_parameter_values, bool(self.checkbox_var_use_target_model.get()), self.currently_used_cmaps_dict, self.target_model_fit_function_file)
         thread_instance_SVDGF = threading.Thread(target=self.nbCon_SVDGF.data_objs[self.next_tab_idx_SVDGF].make_data)
         thread_instance_SVDGF.start()
         self.monitor_thread(thread_instance_SVDGF, self.nbCon_SVDGF.data_objs[self.next_tab_idx_SVDGF], self.btn_show_SVDGF_reconstructed_data_heatmap, self.lbl_reassuring_SVDGF)
@@ -700,11 +703,8 @@ class GuiAppTAAnalysis(tk.Frame):
         self.btn_update_curr_reconstruct_data_file_strVar = tk.Button(self.frm_orig_data_tab1, text="change data file", command=lambda x=self.curr_reconstruct_data_file_strVar: self.set_curr_fileVar(x))
         self.btn_update_curr_reconstruct_data_file_strVar.grid(row=1, column=0, padx=3, pady=5, sticky="ew")
 
-        self.btn_change_reconstruct_start_time_value = tk.Button(self.frm_orig_data_tab1, text="change start time value", command=self.set_curr_start_time_value)
+        self.btn_change_reconstruct_start_time_value = tk.Button(self.frm_orig_data_tab1, text="change matrix bounds", command=self.set_matrix_bounds_values)
         self.btn_change_reconstruct_start_time_value.grid(row=2, column=0, padx=3, pady=5, sticky="ew")
-
-        self.btn_change_reconstruct_start_time_value = tk.Button(self.frm_orig_data_tab1, text="change matrix bounds", command=self.set_matrix_dimension_values)
-        self.btn_change_reconstruct_start_time_value.grid(row=3, column=0, padx=3, pady=5, sticky="ew")
 
         """ widgets for SVD_reconstruction data heatmap generation """
         self.frm_update_reconstruct_data_tab1 = tk.Frame(self.frm_main, bg=self.gold,)

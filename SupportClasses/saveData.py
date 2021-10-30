@@ -28,7 +28,7 @@ def get_final_path(base_dir, date_dir, result_type, final_dir, data_file):
 def make_log_file(final_dir, **kwargs):
     today = datetime.now()
 
-    with open(final_dir+"/logfile.txt", "a") as myfile:
+    with open(final_dir+"/logfile_"+str(today.strftime("%a %d %b %H_%M_%S"))+".txt", "w") as myfile:
         myfile.write(today.strftime("%a %d %b %H:%M:%S %Y")+"\n")
 
         for (kw,arg) in kwargs.items():
@@ -41,7 +41,7 @@ def save_result_data(final_dir, data_dict):
         if kw in ["DAS", "U_matrix", "VT_matrix", "retained_left_SVs"] :
             np.savetxt(final_dir+"/"+kw+".txt", arg, delimiter = '\t', fmt='%.7e')
         else:
-            with open(final_dir+"/"+kw+".txt", "a") as myfile:
+            with open(final_dir+"/"+kw+".txt", "w") as myfile:
                 # myfile.write(kw+":\n") if i wanted a header in each file
                 myfile.write(str(arg))
 

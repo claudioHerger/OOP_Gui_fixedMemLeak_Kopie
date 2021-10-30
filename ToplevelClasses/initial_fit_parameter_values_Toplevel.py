@@ -9,7 +9,7 @@ from SupportClasses import ToolTip
 from ToplevelClasses import CompareRightSVsWithFit_Toplevel
 
 class initial_fit_parameters_Window(tk.Toplevel):
-    def __init__(self, parent, initial_values_file_name, current_values, assign_handler, components_list, use_user_defined_fit_function, target_model_configuration_file, data_file_name, full_path_to_final_dir, start_time):
+    def __init__(self, parent, initial_values_file_name, current_values, assign_handler, components_list, use_user_defined_fit_function, target_model_configuration_file, data_file_name, full_path_to_final_dir, matrix_bounds_dict):
         """a toplevel window to inspect the initial fit parameter values in the SVDGF procedure.
         Whenever these values are changed, the new ones will be used for each fit until the user selects to change them again.
         In order to reuse these selected values once the user quits and restarts the program, the values are written to a file.
@@ -25,7 +25,7 @@ class initial_fit_parameters_Window(tk.Toplevel):
             target_model_configuration_file (str): path to target model configuration file.
             data_file_name (str): path to data file
             full_path_to_final_dir (str): path to save figures and data to (figure in compare window).
-            start_time (str of float): the approximate time step value to cut off data matrix when making SVD.
+            matrix_bounds_dict (dict): contains the indeces that dictate the which part of complete data matrix to use
         """
 
 
@@ -42,7 +42,12 @@ class initial_fit_parameters_Window(tk.Toplevel):
         self.use_user_defined_fit_function = use_user_defined_fit_function
         self.data_file_name = data_file_name
         self.full_path_to_final_dir = full_path_to_final_dir
-        self.start_time = start_time
+        self.matrix_bounds_dict = matrix_bounds_dict
+        if not self.matrix_bounds_dict == {}:
+            self.min_wavelength_index = self.matrix_bounds_dict["min_wavelength_index"]
+            self.max_wavelength_index = self.matrix_bounds_dict["max_wavelength_index"]
+            self.min_time_delay_index = self.matrix_bounds_dict["min_time_delay_index"]
+            self.max_time_delay_index = self.matrix_bounds_dict["max_time_delay_index"]
         self.target_model_configuration_file = target_model_configuration_file
 
         self.btn_quit = tk.Button(self, text="Quit", command=lambda: self.ignore_and_quit())
@@ -168,22 +173,24 @@ class initial_fit_parameters_Window(tk.Toplevel):
             return None
 
         try:
-            # get data
-            self.TA_data_after_time, self.time_delays, self.wavelengths = get_TA_data_after_start_time.run(self.data_file_name, self.start_time)
-            # update start time to the actual time delay that is closest to user input
-            self.start_time = str(get_closest_nr_from_array_like.run(self.time_delays, float(self.start_time)))
-            if (self.start_time == self.time_delays[-1]):
-                raise ValueError("The start time you entered was above the last time delay. Thus it was moved to the last time delay.\n"+
-                                "However, an SVD and thus a fit wont work in that case.")
+            self.data_matrix_complete, self.time_delays, self.wavelengths = get_TA_data_after_start_time.run(self.data_file_name, "-999999")
+            if not self.matrix_bounds_dict == {}:
+                self.data_matrix = self.data_matrix_complete[self.min_wavelength_index:self.max_wavelength_index+1, self.min_time_delay_index:self.max_time_delay_index+1]
+                self.time_delays = self.time_delays[self.min_time_delay_index:self.max_time_delay_index+1]
+                self.wavelengths = self.wavelengths[self.min_wavelength_index:self.max_wavelength_index+1]
+            else:
+                self.data_matrix = self.data_matrix_complete
+            # set start time to the actual time delay that is closest to user input (is used in tab title)
+            self.start_time = self.time_delays[0]
         except ValueError as error:
             tk.messagebox.showerror("error", str(error)+"\n\nTherefore you wont have any right singular vectors to compare.")
             self.lift()
             return None
 
-        self.time_delays = self.time_delays[self.time_delays.index(self.start_time):]
+        # self.time_delays = self.time_delays[self.time_delays.index(self.start_time):]
 
         # get the selected rSVs, singular values and lSVs - input is TA data after time and self.components_list
-        self.retained_rSVs, self.retained_lSVs, self.retained_singular_values = get_retained_rightSVs_leftSVs_singularvs.run(self.TA_data_after_time, self.components_list)
+        self.retained_rSVs, self.retained_lSVs, self.retained_singular_values = get_retained_rightSVs_leftSVs_singularvs.run(self.data_matrix, self.components_list)
 
         # parse model function if used
         if self.use_user_defined_fit_function:
@@ -199,9 +206,9 @@ class initial_fit_parameters_Window(tk.Toplevel):
         # make the window
         try:
             if not self.use_user_defined_fit_function:
-                self.compareWindow = CompareRightSVsWithFit_Toplevel.CompareWindow(self.parent, self.use_user_defined_fit_function, 0, self.components_list, self.time_delays, self.retained_rSVs, self.retained_singular_values, self.initial_decay_constants_dict, self.initial_amplitude_values_dict, self.data_file_name, self.full_path_to_final_dir, is_from_initial_values_window=True)
+                self.compareWindow = CompareRightSVsWithFit_Toplevel.CompareWindow(self.parent, self.use_user_defined_fit_function, 0, self.components_list, self.time_delays, self.retained_rSVs, self.retained_singular_values, self.initial_decay_constants_dict, self.initial_amplitude_values_dict, self.data_file_name, self.full_path_to_final_dir, is_from_initial_values_window=True, start_time=self.start_time, matrix_bounds_dict=self.matrix_bounds_dict)
             else:
-                self.compareWindow = CompareRightSVsWithFit_Toplevel.CompareWindow(self.parent, self.use_user_defined_fit_function, 0, self.components_list, self.time_delays, self.retained_rSVs, self.retained_singular_values, self.initial_decay_constants_dict, self.initial_amplitude_values_dict, self.data_file_name, self.full_path_to_final_dir, parsed_summands_of_user_defined_fit_function=self.parsed_summands_of_user_defined_fit_function, is_from_initial_values_window=True)
+                self.compareWindow = CompareRightSVsWithFit_Toplevel.CompareWindow(self.parent, self.use_user_defined_fit_function, 0, self.components_list, self.time_delays, self.retained_rSVs, self.retained_singular_values, self.initial_decay_constants_dict, self.initial_amplitude_values_dict, self.data_file_name, self.full_path_to_final_dir, parsed_summands_of_user_defined_fit_function=self.parsed_summands_of_user_defined_fit_function, is_from_initial_values_window=True, start_time=self.start_time, matrix_bounds_dict=self.matrix_bounds_dict)
             self.compareWindow.run()
         except KeyError as error:
             tk.messagebox.showerror("error", "an error occured when trying to open the window to compare the right SVs with the fit function output using the entered initial values!\n"

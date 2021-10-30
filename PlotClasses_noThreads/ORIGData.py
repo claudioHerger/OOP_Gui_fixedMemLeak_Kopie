@@ -11,12 +11,12 @@ import tkinter as tk
 import os
 
 # my own modules
-from FunctionsUsedByPlotClasses import get_TA_data_after_start_time, get_closest_nr_from_array_like
+from FunctionsUsedByPlotClasses import get_TA_data_after_start_time
 from SupportClasses import saveData, ToolTip, SmallToolbar
 from ToplevelClasses import SVD_inspection_Toplevel, Kinetics_Spectrum_Toplevel
 
 class ORIGData_Heatmap():
-    def __init__(self, parent, tab_idx, filename, start_time, tab_title_filename, colormaps_dict):
+    def __init__(self, parent, tab_idx, filename, matrix_bounds_dict, tab_title_filename, colormaps_dict):
         """A class used to create a heatmap of a data matrix read from a file. \n
         The plot will be put on a tab of a ttk notebook.
 
@@ -24,7 +24,7 @@ class ORIGData_Heatmap():
             parent (GuiAppTAAnalysis): the Gui App that creates the instance of this class\
             tab_idx (int): the index of the tab that is added to the ttk notebook.
             filename (String): the full path to the datafile
-            start_time (float or string): the value of the start time starting from which the data will be used for the plot
+            matrix_bounds_dict (dict): contains the indeces that dictate the which part of complete data matrix to use
             tab_title_filename (string): filename possibly truncated so that tab titles do not become too large
             colormaps_dict (dict): dictionary containing the colormap names for the heatmaps
         """
@@ -32,7 +32,12 @@ class ORIGData_Heatmap():
         self.parent = parent
         self.notebook_container = self.parent.nbCon_orig
         self.filename = filename
-        self.start_time = start_time
+        self.matrix_bounds_dict = matrix_bounds_dict
+        if not self.matrix_bounds_dict == {}:
+            self.min_wavelength_index = self.matrix_bounds_dict["min_wavelength_index"]
+            self.max_wavelength_index = self.matrix_bounds_dict["max_wavelength_index"]
+            self.min_time_delay_index = self.matrix_bounds_dict["min_time_delay_index"]
+            self.max_time_delay_index = self.matrix_bounds_dict["max_time_delay_index"]
         self.tab_idx = tab_idx
         self.tab_title_filename = tab_title_filename
         self.colormaps_dict = colormaps_dict
@@ -49,7 +54,7 @@ class ORIGData_Heatmap():
         self.axes.get_figure().set_figwidth(self.parent.heatmaps_figure_geometry_list[0])
         self.axes.get_figure().set_figheight(self.parent.heatmaps_figure_geometry_list[1])
 
-        self.data = self.TA_data_after_time.astype(float)
+        self.data = self.data_matrix.astype(float)
         self.base_filename = os.path.basename(self.filename)
         self.time_index = self.time_delays.index(str(self.start_time))
         self.time_delays = self.time_delays[self.time_index:]
@@ -139,9 +144,16 @@ class ORIGData_Heatmap():
     def make_data(self):
         # get the data
         try:
-            self.TA_data_after_time, self.time_delays, self.wavelengths = get_TA_data_after_start_time.run(self.filename, self.start_time)
-            # update start time to the actual time delay that is closest to user input
-            self.start_time = str(get_closest_nr_from_array_like.run(self.time_delays, float(self.start_time)))
+            self.data_matrix_complete, self.time_delays, self.wavelengths = get_TA_data_after_start_time.run(self.filename, "-999999")
+            if not self.matrix_bounds_dict == {}:
+                self.data_matrix = self.data_matrix_complete[self.min_wavelength_index:self.max_wavelength_index+1, self.min_time_delay_index:self.max_time_delay_index+1]
+                self.time_delays = self.time_delays[self.min_time_delay_index:self.max_time_delay_index+1]
+                self.wavelengths = self.wavelengths[self.min_wavelength_index:self.max_wavelength_index+1]
+            else:
+                self.data_matrix = self.data_matrix_complete
+
+            # set start time to the actual time delay that is closest to user input (is used in tab title)
+            self.start_time = self.time_delays[0]
 
             # already set paths to which data from this data object is to be saved - this way the path stays the same
             # and can also be used in corresponding Toplevel classes!
@@ -173,13 +185,13 @@ class ORIGData_Heatmap():
         # save data
         self.notebook_container.figs[self.tab_idx].savefig(self.full_path_to_final_dir+"/originalData.png")
 
-        saveData.make_log_file(self.full_path_to_final_dir, filename=self.filename, start_time=self.start_time)
+        saveData.make_log_file(self.full_path_to_final_dir, filename=self.filename, start_time=self.start_time, matrix_bounds=self.matrix_bounds_dict)
 
         self.result_data_to_save = {"time_delays": self.time_delays, "wavelengths": self.wavelengths}
         saveData.save_result_data(self.full_path_to_final_dir, self.result_data_to_save)
 
         # save data matrices
-        self.data_matrices_to_save = {"data_matrix_after_start_time": self.TA_data_after_time.T}
+        self.data_matrices_to_save = {"data_matrix": self.data_matrix.T}
         saveData.save_formatted_data_matrix_after_time(self.full_path_to_final_dir, self.time_delays, self.wavelengths, self.data_matrices_to_save)
 
         return None
@@ -190,7 +202,7 @@ class ORIGData_Heatmap():
         return None
 
     def inspect_data_matrix_via_toplevel(self):
-        data_dict_for_toplevel = {"type": "original data", "time_delays": self.time_delays, "wavelengths": self.wavelengths, "data_matrix": self.TA_data_after_time, "save_dir": self.full_path_to_final_dir, "data_file": self.filename}
+        data_dict_for_toplevel = {"type": "original data", "time_delays": self.time_delays, "wavelengths": self.wavelengths, "data_matrix": self.data_matrix, "save_dir": self.full_path_to_final_dir, "data_file": self.filename}
         Kinetics_Spectrum_Toplevel.Kinetics_Spectrum_Window(self.parent, self.tab_idx, data_dict_for_toplevel)
 
         return None
