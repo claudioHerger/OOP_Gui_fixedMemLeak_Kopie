@@ -1,4 +1,4 @@
-python==3.8.10
+# the python==3.8.10 version was used in developement
 asteval==0.9.25
 cycler==0.10.0
 future==0.18.2
