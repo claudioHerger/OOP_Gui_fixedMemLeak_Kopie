@@ -117,7 +117,7 @@ class DAS_Window(tk.Toplevel):
             return None
 
     def make_checkbuttons(self):
-        self.DAS_checkbutton_vars = [tk.IntVar(0) for _ in range(self.nr_of_DAS)]
+        self.DAS_checkbutton_vars = [tk.IntVar() for _ in range(self.nr_of_DAS)]
 
         for i in range(self.nr_of_DAS):
             self.DAS_checkbutton_vars[i].set(0)

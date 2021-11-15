@@ -89,8 +89,8 @@ class SVD_inspection_Window(tk.Toplevel):
         return None
 
     def make_checkbuttons(self):
-        self.leftSVs_checkbutton_vars = [tk.IntVar(0) for _ in range(self.max_nr_of_sing_vectors)]
-        self.rightSVs_checkbutton_vars = [tk.IntVar(0) for _ in range(self.max_nr_of_sing_vectors)]
+        self.leftSVs_checkbutton_vars = [tk.IntVar() for _ in range(self.max_nr_of_sing_vectors)]
+        self.rightSVs_checkbutton_vars = [tk.IntVar() for _ in range(self.max_nr_of_sing_vectors)]
 
         for i in range(self.max_nr_of_sing_vectors):
             if i in self.leftSVs_components_list:

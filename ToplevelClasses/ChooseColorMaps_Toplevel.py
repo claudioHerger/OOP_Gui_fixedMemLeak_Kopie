@@ -92,7 +92,7 @@ class SetColorMapWindow(tk.Toplevel):
         self.lbl_use_cmap_for_what = tk.Label(self, text="use this colormap for:")
         self.lbl_use_cmap_for_what.grid(row=2, column=0, columnspan=2, )
 
-        self.check_button_variables = [tk.IntVar(0) for _ in self.currently_used_colormaps_dict]
+        self.check_button_variables = [tk.IntVar() for _ in self.currently_used_colormaps_dict]
         self.check_buttons = [tk.Checkbutton(self, text=key, onvalue=1, offvalue=0, variable=self.check_button_variables[index]) for index, key in enumerate(self.currently_used_colormaps_dict.keys())]
         for index in range(len(self.currently_used_colormaps_dict)):
             self.check_button_variables[index].set(1)

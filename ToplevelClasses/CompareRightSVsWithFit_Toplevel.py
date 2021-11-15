@@ -100,7 +100,7 @@ class CompareWindow(tk.Toplevel):
         return fig, axes, canvas
 
     def put_check_buttons_on_window(self):
-        self.check_button_variables = [tk.IntVar(0) for _ in self.components_list]
+        self.check_button_variables = [tk.IntVar() for _ in self.components_list]
         self.check_button_variables[0].set(1)
         self.check_buttons = [tk.Checkbutton(self, text=str(self.components_list[component_index]), onvalue=1, offvalue=0, variable=self.check_button_variables[component_index]) for component_index in range(len(self.components_list))]
         for check_button_index in range(len(self.components_list)):

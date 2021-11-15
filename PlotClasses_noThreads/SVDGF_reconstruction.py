@@ -290,7 +290,7 @@ class SVDGF_Heatmap():
 
     def make_DAS_checkbuttons(self):
         self.nr_of_checkbuttons = len(self.components_list)
-        self.checkbutton_vars = [tk.IntVar(0) for _ in range(self.nr_of_checkbuttons)]
+        self.checkbutton_vars = [tk.IntVar() for _ in range(self.nr_of_checkbuttons)]
 
         for i in range(self.nr_of_checkbuttons):
             self.checkbutton_vars[i].set(1)
