@@ -86,7 +86,7 @@ class ORIGData_Heatmap():
         sns.heatmap(self.data, ax = self.axes, cbar_kws={'label': 'amplitude'}, cmap=self.cm)
 
         self.axes.set_yticks(self.yticks)
-        self.axes.set_yticklabels(self.yticklabels, fontsize=14)
+        self.axes.set_yticklabels(self.yticklabels, rotation=0, fontsize=14)
         self.axes.set_xticks(self.xticks)
         self.axes.set_xticklabels(self.xticklabels, rotation=30, fontsize=14)
 
