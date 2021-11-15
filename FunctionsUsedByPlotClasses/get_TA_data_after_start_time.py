@@ -23,6 +23,9 @@ def load_complete_data(data_file):
     #         data = [x.replace('\n', '').split() for x in file]
     #         data = np.array(data)
     #         data = data.T
+    elif data_file.endswith(".dat"):
+        with open(data_file, 'r') as file:
+            data = [x.replace('\n', '').split() for x in file]
     elif data_file.endswith(".csv"):
         with open(data_file, 'r') as file:
             data = [x.replace('\n', '').split(",") for x in file]

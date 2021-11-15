@@ -41,7 +41,7 @@ class GuiAppTAAnalysis(tk.Frame):
         self.data_matrix_bounds_dict = {}
 
         # which files the user can select in the tk.filedialog.askopenfilename
-        self.ftypes = [('txt files', '*.txt'), ('All files', '*.txt; *.csv'), ('CSV files', '*.csv')]
+        self.ftypes = [('All files', '*.txt; *.csv; *.dat'), ('TXT files', '*.txt'), ('CSV files', '*.csv'), ('DAT files', '*.dat')]
 
         # set initial data file variable etc.
         self.curr_reconstruct_data_file_strVar = tk.StringVar()
