@@ -725,7 +725,7 @@ class GuiAppTAAnalysis(tk.Frame):
 
         # listing component checkbuttons and placing them
         nr_checkboxes_reconstruct_data = 10
-        self.checkbutton_vars_reconstruct_data = [tk.IntVar(0) for _ in range(nr_checkboxes_reconstruct_data)]
+        self.checkbutton_vars_reconstruct_data = [tk.IntVar() for _ in range(nr_checkboxes_reconstruct_data)]
 
         # # set some checkbuttons as checked -- for convenience when testing or otherwise
         # for i in range(nr_checkboxes_reconstruct_data-8):
@@ -815,7 +815,7 @@ class GuiAppTAAnalysis(tk.Frame):
         self.btn_set_target_model_fit_function.grid(sticky="sw", padx=10, pady=5, ipady=2, ipadx=5, column=0)
         self.frm_update_reconstruct_data_tab1.rowconfigure(self.btn_set_target_model_fit_function.grid_info()["row"], weight=1)   # so that the new button is at the bottom of frame
 
-        self.checkbox_var_use_target_model = tk.IntVar(0)
+        self.checkbox_var_use_target_model = tk.IntVar()
         self.checkbox_use_target_model = tk.Checkbutton(self.frm_update_reconstruct_data_tab1, text="", bg=self.gold, activebackground=self.gold, variable=self.checkbox_var_use_target_model, onvalue=1, offvalue=0, state=tk.DISABLED)
         ttp_checkbox_use_target_model = ToolTip.CreateToolTip(self.checkbox_use_target_model, \
         'If checked, and the user entered fit function has been successfully parsed,'
