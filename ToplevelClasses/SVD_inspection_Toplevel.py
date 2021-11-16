@@ -296,7 +296,7 @@ class SVD_inspection_Window(tk.Toplevel):
         self.delete_attributes()
 
         # puts main window to front again if it is not "behind" this toplevel for some reason
-        self.parent.parent.lift()
+        # self.parent.parent.lift()
 
         return None
 
