@@ -5,7 +5,7 @@ import tkinter as tk
 import tkinter.ttk as ttk
 
 import matplotlib
-matplotlib.use('TkAgg')         # to be able to use plt.close() without the gui closing too! - and/or some other things
+matplotlib.use('TkAgg')
 import platform
 import os
 import traceback
@@ -63,7 +63,8 @@ class GuiAppTAAnalysis(tk.Frame):
         self.gold = "#ffd766"
         self.orange = "orange"
         self.complementary_blue = "#0028FF"
-        self.violet = "darkmagenta"
+        # self.violet = "darkmagenta"
+        self.violet = "black"
         self.grey = "lavender"
         self.flashwidgetcolor = "navyblue"
         self.sanddollar = "#e5ddc8"
