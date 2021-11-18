@@ -747,7 +747,7 @@ class GuiAppTAAnalysis(tk.Frame):
         self.nbCon_SVD = NotebookContainer.NotebookContainer(self, self.frm_main, self.NR_OF_TABS, figsize=(10,5))
 
         """ widgets for SVD_GlobalFit_reconstruction heatmap generation, this reconstruction also uses widgets and variables for SVD_reconstruction! """
-        self.lbl_temporal_resolution = tk.Label(self.frm_update_reconstruct_data_tab1, text="set temporal res [fs]: ", fg=self.violet)
+        self.lbl_temporal_resolution = tk.Label(self.frm_update_reconstruct_data_tab1, text="set temporal res:", fg=self.violet)
         self.ent_temporal_resolution_in_fs = tk.Entry(self.frm_update_reconstruct_data_tab1, width=6, fg=self.violet, validate="key", justify=tk.RIGHT, validatecommand=(self.register(self.test_value_digits_only),'%P','%d'))
         self.ent_temporal_resolution_in_fs.insert(0, 0)
         ttp_lbl_temporal_resolution = ToolTip.CreateToolTip(self.lbl_temporal_resolution, \
@@ -761,7 +761,7 @@ class GuiAppTAAnalysis(tk.Frame):
         grid_info_lbl_temporal_resolution = self.lbl_temporal_resolution.grid_info()
         self.ent_temporal_resolution_in_fs.grid(row=grid_info_lbl_temporal_resolution["row"], padx=3, pady=5, sticky="e")
 
-        self.lbl_time_zero = tk.Label(self.frm_update_reconstruct_data_tab1, text="time zero [fs]: ", fg=self.violet)
+        self.lbl_time_zero = tk.Label(self.frm_update_reconstruct_data_tab1, text="time zero: ", fg=self.violet)
         self.ent_time_zero = tk.Entry(self.frm_update_reconstruct_data_tab1, width=6, fg=self.violet, validate="key", justify=tk.RIGHT, validatecommand=(self.register(self.test_value_digits_only),'%P','%d'))
         self.ent_time_zero.insert(0, 0)
         ttp_lbl_time_zero = ToolTip.CreateToolTip(self.lbl_time_zero, \
