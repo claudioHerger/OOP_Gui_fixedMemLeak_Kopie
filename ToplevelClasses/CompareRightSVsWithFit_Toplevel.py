@@ -1,6 +1,7 @@
 import os
 import gc
 from datetime import datetime
+from matplotlib import colors
 
 import numpy as np
 import matplotlib
@@ -90,8 +91,8 @@ class CompareWindow(tk.Toplevel):
         frm_figure.grid(row=0, columnspan=len(self.components_list))
 
         # some styling for plots
-        matplotlib.style.use("seaborn")
-        matplotlib.rcParams.update({'axes.labelsize': 14.0, 'axes.titlesize': 14.0, 'xtick.labelsize':14, 'ytick.labelsize':14, 'legend.fontsize':12, "axes.edgecolor":"black", "axes.linewidth":1})
+        matplotlib.style.use("default")
+        matplotlib.rcParams.update({'axes.labelsize': 14.0, 'axes.titlesize': 14.0, 'xtick.labelsize':14, 'ytick.labelsize':14, 'legend.fontsize':12, "axes.edgecolor":"black", "axes.linewidth":1, "axes.grid": True, "grid.linestyle":"--"})
 
         fig = Figure(figsize=(7,5))
         axes = fig.add_subplot(1,1,1)
@@ -165,17 +166,12 @@ class CompareWindow(tk.Toplevel):
 
             self.first_plot = False
 
+        cmap =  matplotlib.cm.get_cmap("tab20")
         self.currently_plotted_components = [component for component_index, component in enumerate(self.components_list) if self.check_button_variables[component_index].get() == 1]
         for i in range(len(self.components_list)):
             if (self.check_button_variables[i].get() == 1):
-                try:
-                    self.axes.plot(self.xaxis, self.weighted_rSVs[i,:], label=f"rSV {self.components_list[i]}", color=sns.color_palette("Set2")[i])
-                    varied_color = (sns.color_palette("Set2")[i][0], sns.color_palette("Set2")[i][1]*0.1, sns.color_palette("Set2")[i][2]*(1.1))
-                    self.axes.plot(self.xaxis, self.reconstructed_rSVs_from_fit_results[i,:], label=f'fit for rSV {self.components_list[i]}', linestyle="--", color=varied_color)
-                except IndexError:
-                    self.axes.plot(self.xaxis, self.weighted_rSVs[i,:], label=f"rSV {self.components_list[i]}", color=sns.color_palette("husl", 8)[i-8])
-                    varied_color = (sns.color_palette("husl", 8)[i-8][0], sns.color_palette("husl", 8)[i-8][1]*0.1, sns.color_palette("husl", 8)[i-8][2]*(1.1))
-                    self.axes.plot(self.xaxis, self.reconstructed_rSVs_from_fit_results[i,:], label=f'fit for rSV {self.components_list[i]}', linestyle="--", color=varied_color)
+                self.axes.plot(self.xaxis, self.weighted_rSVs[i,:], label=f"rSV {self.components_list[i]}", color=cmap((2*i+1)*(1/20)))
+                self.axes.plot(self.xaxis, self.reconstructed_rSVs_from_fit_results[i,:], label=f'fit for rSV {self.components_list[i]}', linestyle="--", color=cmap((2*i)*(1/20)))
 
         self.axes.set_xticks(self.rightSVs_xticks)
         self.axes.set_xticklabels(self.rightSVs_xticklabels, rotation=0)

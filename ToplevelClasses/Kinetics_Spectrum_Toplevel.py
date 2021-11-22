@@ -59,8 +59,9 @@ class Kinetics_Spectrum_Window(tk.Toplevel):
         self.btn_save_current_figures.grid(padx=3, pady=5, sticky="sw", column=0, row=2)
 
         # some styling for plots
-        matplotlib.style.use("seaborn")
-        matplotlib.rcParams.update({'axes.labelsize': 12.0, 'axes.titlesize': 14.0, 'xtick.labelsize':10, 'ytick.labelsize':12.0, "axes.edgecolor":"black", "axes.linewidth":1})
+        matplotlib.style.use("default")
+        matplotlib.rcParams.update({'axes.labelsize': 12.0, 'axes.titlesize': 14.0, 'xtick.labelsize':10, 'ytick.labelsize':12.0, "axes.edgecolor":"black", "axes.linewidth":1, "axes.grid": True, "grid.linestyle":"--"})
+
         self.cmap = matplotlib.cm.get_cmap('rainbow')
 
         self.get_data()
@@ -100,7 +101,7 @@ class Kinetics_Spectrum_Window(tk.Toplevel):
         self.wavelength_kinetics_axes = self.wavelength_kinetics_fig.add_subplot(1,1,1)
 
         self.num_ticks = 10
-        self.label_format = '{:.3f}'
+        self.label_format = '{:.1f}'
 
         # the index of the position of self.yticks
         self.xticks = np.linspace(0, len(self.time_delays) - 1, self.num_ticks, dtype=np.int)

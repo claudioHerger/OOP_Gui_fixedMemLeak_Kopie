@@ -75,8 +75,8 @@ class SVD_inspection_Window(tk.Toplevel):
         self.btn_save_current_figures.grid(padx=3, pady=5, sticky="sw", column=0, row=99)
 
         # some styling for plots
-        matplotlib.style.use("seaborn")
-        matplotlib.rcParams.update({'axes.labelsize': 12.0, 'axes.titlesize': 14.0, 'xtick.labelsize':10, 'ytick.labelsize':12.0, "axes.edgecolor":"black", "axes.linewidth":1})
+        matplotlib.style.use("default")
+        matplotlib.rcParams.update({'axes.labelsize': 12.0, 'axes.titlesize': 14.0, 'xtick.labelsize':10, 'ytick.labelsize':12.0, "axes.edgecolor":"black", "axes.linewidth":1, "axes.grid":True, "grid.linestyle":"--"})
 
         self.get_data()
         self.make_all_figures_and_axes()
@@ -226,21 +226,22 @@ class SVD_inspection_Window(tk.Toplevel):
 
     def update_sing_values_plot(self, event=None):
         """ event = None is needed because used as callback"""
+        nr_of_singular_values_to_plot = int(self.ent_nr_of_sing_values.get())
 
-        # check if user wants to plot more singular values than are stored:
-        if (int(self.ent_nr_of_sing_values.get()) >= self.max_nr_of_sing_values):
-            tk.messagebox.showerror("Warning, an exception occurred!",
-                                    f"The program only stored the first {self.max_nr_of_sing_values-1} singular values!\n"
-                                    +f"If you want to see more, you would need to change one line of the code of\n {__name__}")
+        # check if user wants to plot more singular values than are stored or if they want to plot 0 singular values
+        if (nr_of_singular_values_to_plot <= 0 or nr_of_singular_values_to_plot >= self.max_nr_of_sing_values):
+            tk.messagebox.showerror("Warning, ", f"please enter a number larger than 0 and lower than {self.max_nr_of_sing_values}.")
+            self.lift()
             return None
 
         self.sing_values_axes.clear()
 
-        self.num_xticks = 10
-        self.sing_values_xaxis = [i+1 for i in range(int(self.ent_nr_of_sing_values.get()))]
-        self.sing_values_xticks = np.linspace(1, int(self.ent_nr_of_sing_values.get()), self.num_xticks, dtype=np.int)
+        self.num_xticks = nr_of_singular_values_to_plot if (nr_of_singular_values_to_plot<10) else 10
+        self.sing_values_xaxis = [i for i in range(nr_of_singular_values_to_plot)]
+        self.sing_values_xticks = np.linspace(0, nr_of_singular_values_to_plot-1, self.num_xticks, dtype=np.int)
 
-        self.sing_values_axes.plot(self.sing_values_xaxis, self.singValues[:int(self.ent_nr_of_sing_values.get())], marker="o", linewidth=0, markersize=10)
+
+        self.sing_values_axes.plot(self.sing_values_xaxis, self.singValues[:nr_of_singular_values_to_plot], marker="o", linewidth=0, markersize=10)
 
         self.sing_values_axes.set_yscale("log")
         self.sing_values_axes.set_ylabel("log(singular value)")
@@ -248,9 +249,9 @@ class SVD_inspection_Window(tk.Toplevel):
         self.sing_values_axes.set_xticks(self.sing_values_xticks)
         self.sing_values_axes.set_title("singular values")
 
-        if int(self.ent_nr_of_sing_values.get()) <= 12:
+        if nr_of_singular_values_to_plot <= 12:
             label_format = '{:,.2f}'
-            value_labels = [label_format.format(x) for x in self.singValues[:int(self.ent_nr_of_sing_values.get())]]
+            value_labels = [label_format.format(x) for x in self.singValues[:nr_of_singular_values_to_plot]]
             text_str = "values: "+ str(value_labels[0])
             for label in value_labels[1:]:
                 text_str += "\n"+" "*10 + str(label)

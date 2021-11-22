@@ -82,6 +82,9 @@ class SVDGF_Heatmap():
         self.initial_fit_parameter_values = initial_fit_parameter_values
         self.colormaps_dict = colormaps_dict
 
+        self.num_ticks = 10
+        self.label_format = '{:.1f}'
+
         return None
 
     def return_gui_to_initial_state(self):
@@ -109,9 +112,6 @@ class SVDGF_Heatmap():
         self.base_filename = os.path.splitext(os.path.basename(self.filename))[0]
         self.time_index = self.time_delays.index(str(self.start_time))
         self.time_delays = self.time_delays[self.time_index:]
-
-        self.num_ticks = 10
-        self.label_format = '{:.2f}'
 
         # the index of the position of self.yticks
         self.yticks = np.linspace(0, len(self.wavelengths) - 1, self.num_ticks, dtype=np.int)
@@ -167,9 +167,6 @@ class SVDGF_Heatmap():
             self.axes_difference.get_figure().set_figheight(self.parent.heatmaps_figure_geometry_list[1])
 
         self.difference_data = self.difference_matrix_selected_DAS.astype(float)
-
-        self.num_ticks = 10
-        self.label_format = '{:.2f}'
 
         # the index of the position of self.yticks
         self.yticks = np.linspace(0, len(self.wavelengths) - 1, self.num_ticks, dtype=np.int)

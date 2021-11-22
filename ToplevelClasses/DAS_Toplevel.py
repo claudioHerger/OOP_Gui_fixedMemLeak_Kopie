@@ -63,8 +63,8 @@ class DAS_Window(tk.Toplevel):
         self.num_ticks = 5
         self.label_format = '{:.1f}'
 
-        matplotlib.style.use("seaborn")
-        matplotlib.rcParams.update({'axes.labelsize': 14.0, 'axes.titlesize': 14.0, 'xtick.labelsize':14, 'ytick.labelsize':14, 'legend.fontsize':12, "axes.edgecolor":"black", "axes.linewidth":1})
+        matplotlib.style.use("default")
+        matplotlib.rcParams.update({'axes.labelsize': 14.0, 'axes.titlesize': 14.0, 'xtick.labelsize':14, 'ytick.labelsize':14, 'legend.fontsize':12, "axes.edgecolor":"black", "axes.linewidth":1, "axes.grid": True, "grid.linestyle":"--"})
 
         self.fig = Figure(figsize=(7,5))
         self.ax = self.fig.add_subplot(1,1,1)
@@ -87,15 +87,12 @@ class DAS_Window(tk.Toplevel):
         self.xticklabels = [self.label_format.format(x) for x in self.xticklabels]
 
         for i in self.which_DAS_list:
-            try:
-                self.ax.plot(self.wavelengths, self.DAS[:, i], label=fr'DAS_comp{self.components_list[i]}, $\tau$ = {self.decay_constants[i]} $\pm$ {self.decay_constants_std_errors[i]}', color=sns.color_palette("Set2")[i])
-            except IndexError:
-                self.ax.plot(self.wavelengths, self.DAS[:, i], label=fr'DAS_comp{self.components_list[i]}, $\tau$ = {self.decay_constants[i]} $\pm$ {self.decay_constants_std_errors[i]}', color=sns.color_palette("husl", 8)[i-8])
+            self.ax.plot(self.wavelengths, self.DAS[:, i], label=fr'DAS_comp{self.components_list[i]}, $\tau$ = {self.decay_constants[i]} $\pm$ {self.decay_constants_std_errors[i]}')
 
         self.ax.legend()
         self.ax.set_xticks(self.xticks)
         self.ax.set_xticklabels(self.xticklabels)
-        self.ax.set_ylabel("amplitude")
+        self.ax.set_ylabel("DAS amplitude")
         self.ax.set_xlabel("wavelengths")
         self.basefilename = os.path.splitext(os.path.basename(self.filename))[0]
         self.ax.set_title("DAS for " + self.basefilename + " start time:" + self.label_format.format(float(self.start_time)))
