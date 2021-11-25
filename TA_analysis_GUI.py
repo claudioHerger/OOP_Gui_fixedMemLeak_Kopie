@@ -46,7 +46,6 @@ class GuiAppTAAnalysis(tk.Frame):
         # set initial data file variable etc.
         self.curr_reconstruct_data_file_strVar = tk.StringVar()
         self.curr_reconstruct_data_file_strVar.set("no file selected")
-        # self.curr_reconstruct_data_file_strVar.set(self.base_directory+"/DataFiles/simulatedTAData_formatted.txt")
         # self.curr_reconstruct_data_file_strVar.set(self.base_directory+"/DataFiles/overlap_0.txt")
         self.curr_reconstruct_data_file_strVar.trace_add("write", self.update_filename_in_title_and_truncated_filename_for_tab_header_callback)
         self.curr_reconstruct_data_start_time_value = tk.DoubleVar()
